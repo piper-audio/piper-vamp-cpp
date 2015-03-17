@@ -1,7 +1,9 @@
 
+CXX		:= g++
+
 OBJECTS		:= test.o vampipe_apply.o vampipe_types.o
 
-CXXFLAGS	:= -g -std=c++11 -Wall -Werror
+CXXFLAGS	:= -Wno-unknown-pragmas -Iext -g -std=c++11 -Wall -Werror
 
 LDFLAGS		+= -lvamp-hostsdk -ldl
 
