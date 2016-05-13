@@ -14,6 +14,11 @@
 #include <vamp-hostsdk/Plugin.h>
 #include <vamp-hostsdk/PluginLoader.h>
 
+/**
+ * Convert the structures laid out in the Vamp SDK classes into JSON
+ * (and back again) following the schema in the vamp-json-schema
+ * project repo.
+ */
 class VampJson
 {
 public:

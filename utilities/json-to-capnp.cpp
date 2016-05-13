@@ -1,6 +1,6 @@
 
 #include "VampJson.h"
-#include "vampipe-convert.h"
+#include "VampnProto.h"
 
 #include <iostream>
 #include <sstream>
@@ -55,17 +55,17 @@ handle_input(::capnp::MallocMessageBuilder &message, string input)
 
     } else if (type == "feature") {
 	auto f = message.initRoot<Feature>();
-	VampSDKConverter::buildFeature
+	VampnProto::buildFeature
 	    (f, VampJson::toFeature(payload));
 
     } else if (type == "featureset") {
 	auto fs = message.initRoot<FeatureSet>();
-	VampSDKConverter::buildFeatureSet
+	VampnProto::buildFeatureSet
 	    (fs, VampJson::toFeatureSet(payload));
 
     } else if (type == "loadrequest") {
 	auto req = message.initRoot<LoadRequest>();
-	VampSDKConverter::buildLoadRequest
+	VampnProto::buildLoadRequest
 	    (req, VampJson::toLoadRequest(payload));
 	
     } else if (type == "loadresponse") {
@@ -76,30 +76,30 @@ handle_input(::capnp::MallocMessageBuilder &message, string input)
 
     } else if (type == "outputdescriptor") {
 	auto od = message.initRoot<OutputDescriptor>();
-	VampSDKConverter::buildOutputDescriptor
+	VampnProto::buildOutputDescriptor
 	    (od, VampJson::toOutputDescriptor(payload));
 
     } else if (type == "parameterdescriptor") {
 	auto pd = message.initRoot<ParameterDescriptor>();
-	VampSDKConverter::buildParameterDescriptor
+	VampnProto::buildParameterDescriptor
 	    (pd, VampJson::toParameterDescriptor(payload));
 
     } else if (type == "pluginconfiguration") {
 	auto pc = message.initRoot<PluginConfiguration>();
 	auto config = VampJson::toPluginConfiguration(payload);
-	VampSDKConverter::buildPluginConfiguration(pc, config);
+	VampnProto::buildPluginConfiguration(pc, config);
 
     } else if (type == "pluginstaticdata") {
 	auto pc = message.initRoot<PluginStaticData>();
 	auto sd = VampJson::toPluginStaticData(payload);
- 	VampSDKConverter::buildPluginStaticData(pc, sd);
+ 	VampnProto::buildPluginStaticData(pc, sd);
 
     } else if (type == "processblock") {
 	throw VampJson::Failure("not implemented yet"); ///!!!
 
     } else if (type == "realtime") {
 	auto b = message.initRoot<RealTime>();
-	VampSDKConverter::buildRealTime
+	VampnProto::buildRealTime
 	    (b, VampJson::toRealTime(payload));
 	
     } else if (type == "valueextents") {

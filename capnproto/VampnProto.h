@@ -14,16 +14,16 @@ namespace vampipe
 
 /**
  * Convert the structures laid out in the Vamp SDK classes into Cap'n
- * Proto structures.
+ * Proto structures (and back again).
  * 
- * At least some of this will be necessary for any implementation that
- * is using the C++ Vamp SDK to provide its reference structures. An
- * implementation could alternatively use the Cap'n Proto structures
- * directly, and interact with Vamp plugins using the Vamp C API,
- * without using the C++ Vamp SDK classes at all.
+ * At least some of this will be necessary for any implementation
+ * using Cap'n Proto that uses the C++ Vamp SDK to provide its
+ * reference structures. An implementation could alternatively use the
+ * Cap'n Proto structures directly, and interact with Vamp plugins
+ * using the Vamp C API, without using the C++ Vamp SDK classes at
+ * all.
  */
-
-class VampSDKConverter
+class VampnProto
 {
 public:
     typedef ::capnp::MallocMessageBuilder MsgBuilder;
