@@ -14,10 +14,50 @@ using namespace Vamp::HostExt;
 using namespace json11;
 using namespace vampipe;
 
-static map<uint32_t, Plugin *> loadedPlugins;
-static set<uint32_t> initialisedPlugins;
+class Mapper : public PluginHandleMapper
+{
+public:
+    Mapper() : m_nextHandle(1) { }
 
-static uint32_t nextHandle = 1; // plugin handle type must fit in JSON number
+    void addPlugin(Plugin *p) {
+	if (m_rplugins.find(p) == m_rplugins.end()) {
+	    int32_t h = m_nextHandle++;
+	    m_plugins[h] = p;
+	    m_rplugins[p] = h;
+	}
+    }
+    
+    int32_t pluginToHandle(Plugin *p) {
+	if (m_rplugins.find(p) == m_rplugins.end()) {
+	    throw NotFound();
+	}
+	return m_rplugins[p];
+    }
+    
+    Plugin *handleToPlugin(int32_t h) {
+	if (m_plugins.find(h) == m_plugins.end()) {
+	    throw NotFound();
+	}
+	return m_plugins[h];
+    }
+
+    bool isInitialised(int32_t h) {
+	return m_initialisedPlugins.find(h) != m_initialisedPlugins.end();
+    }
+
+    void markInitialised(int32_t h) {
+	m_initialisedPlugins.insert(h);
+    }
+    
+private:
+//!!! + mutex
+    int32_t m_nextHandle; // plugin handle type must fit in JSON number
+    map<uint32_t, Plugin *> m_plugins;
+    map<Plugin *, uint32_t> m_rplugins;
+    set<uint32_t> m_initialisedPlugins;
+};
+
+static Mapper mapper;
 
 Vamp::HostExt::LoadResponse
 loadPlugin(json11::Json j) {
@@ -72,20 +112,10 @@ handle_load(Json j)
     if (!loadResponse.plugin) {
 	throw VampJson::Failure("plugin load failed");
     }
-    
-    uint32_t h = nextHandle++;
-    loadedPlugins[h] = loadResponse.plugin;
 
-    Json::object response;
-    response["pluginHandle"] = double(h);
-    response["staticData"] =
-	VampJson::fromPluginStaticData(loadResponse.staticData);
-    response["defaultConfiguration"] =
-	VampJson::fromPluginConfiguration(loadResponse.defaultConfiguration);
-
-    cerr << "Loaded plugin: handle is " << h << endl;
+    mapper.addPlugin(loadResponse.plugin);
     
-    return Json(response);
+    return VampJson::fromLoadResponse(loadResponse, mapper);
 }
 
 Json
@@ -99,26 +129,23 @@ handle_configure(Json j)
 	throw VampJson::Failure("malformed configuration request: " + err);
     }
 
-    uint32_t handle = j["pluginHandle"].int_value();
+    int32_t handle = j["pluginHandle"].int_value();
 
-    if (loadedPlugins.find(handle) == loadedPlugins.end()) {
-	throw VampJson::Failure("unknown plugin handle");
-    }
-
-    if (initialisedPlugins.find(handle) != initialisedPlugins.end()) {
+    if (mapper.isInitialised(handle)) {
 	throw VampJson::Failure("plugin has already been initialised");
     }
 
-    Plugin *plugin = loadedPlugins[handle];
+    Plugin *plugin = mapper.handleToPlugin(handle);
     
     Json config = j["configuration"];
 
     configurePlugin(plugin, config);
 
-    initialisedPlugins.insert(handle);
+    mapper.markInitialised(handle);
 
     cerr << "Configured and initialised plugin " << handle << endl;
 
+    //!!! to VampJson:
     Json::object jout;
     Json::array outs;
     Vamp::Plugin::OutputList vouts = plugin->getOutputDescriptors();
@@ -200,6 +227,8 @@ int main(int, char **)
 	    Json result = handle(line);
 	    cout << success_response(result).dump() << endl;
 	} catch (const VampJson::Failure &e) {
+	    cout << error_response(e.what()).dump() << endl;
+	} catch (const PluginHandleMapper::NotFound &e) {
 	    cout << error_response(e.what()).dump() << endl;
 	}
     }
