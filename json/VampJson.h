@@ -701,21 +701,52 @@ public:
     }
 
     static json11::Json
+    fromConfigurationRequest(const Vamp::HostExt::ConfigurationRequest &cr,
+                             PluginHandleMapper &mapper) {
+
+        json11::Json::object jo;
+
+        jo["pluginHandle"] = mapper.pluginToHandle(cr.plugin);
+        jo["configuration"] = fromPluginConfiguration(cr.configuration);
+        
+        return json11::Json(jo);
+    }
+
+    static Vamp::HostExt::ConfigurationRequest
+    toConfigurationRequest(json11::Json j,
+                           PluginHandleMapper &mapper) {
+
+        std::string err;
+
+        if (!j.has_shape({
+                    { "pluginHandle", json11::Json::NUMBER },
+                    { "configuration", json11::Json::OBJECT } }, err)) {
+            throw Failure("malformed configuration request: " + err);
+        }
+
+        Vamp::HostExt::ConfigurationRequest cr;
+        cr.plugin = mapper.handleToPlugin(j["pluginHandle"].int_value());
+        cr.configuration = toPluginConfiguration(j["configuration"]);
+        return cr;
+    }
+
+    static json11::Json
     fromConfigurationResponse(const Vamp::HostExt::ConfigurationResponse &cr) {
 
-        json11::Json::object jout;
+        json11::Json::object jo;
         
         json11::Json::array outs;
         for (auto &d: cr.outputs) {
             outs.push_back(fromOutputDescriptor(d));
         }
-        jout["outputList"] = outs;
+        jo["outputList"] = outs;
         
-        return json11::Json(jout);
+        return json11::Json(jo);
     }
 
-    static Vamp::HostExt::ConfigurationResponse toConfigurationResponse(json11::Json j) {
-
+    static Vamp::HostExt::ConfigurationResponse
+    toConfigurationResponse(json11::Json j) {
+        
         Vamp::HostExt::ConfigurationResponse cr;
 
         if (!j["outputList"].is_array()) {

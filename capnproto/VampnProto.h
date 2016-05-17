@@ -142,6 +142,7 @@ public:
         od.hasFixedBinCount = r.getHasFixedBinCount();
         if (od.hasFixedBinCount) {
             od.binCount = r.getBinCount();
+            od.binNames.clear();
             for (const auto &n: r.getBinNames()) {
                 od.binNames.push_back(n);
             }
@@ -201,6 +202,7 @@ public:
             pd.quantizeStep = r.getQuantizeStep();
         }
 
+        pd.valueNames.clear();
         for (const auto &n: r.getValueNames()) {
             pd.valueNames.push_back(n);
         }
@@ -248,6 +250,7 @@ public:
 
         f.label = r.getLabel();
 
+        f.values.clear();
         for (auto v: r.getValues()) {
             f.values.push_back(v);
         }
@@ -275,6 +278,7 @@ public:
     readFeatureSet(Vamp::Plugin::FeatureSet &fs,
                    const FeatureSet::Reader &r) {
 
+        fs.clear();
         for (const auto &p: r.getFeaturePairs()) {
             Vamp::Plugin::FeatureList vfl;
             for (const auto &f: p.getFeatures()) {
@@ -366,6 +370,7 @@ public:
         d.copyright = r.getCopyright();
         d.pluginVersion = r.getPluginVersion();
 
+        d.category.clear();
         for (auto c: r.getCategory()) {
             d.category.push_back(c);
         }
@@ -373,18 +378,21 @@ public:
         d.minChannelCount = r.getMinChannelCount();
         d.maxChannelCount = r.getMaxChannelCount();
 
+        d.parameters.clear();
         for (auto p: r.getParameters()) {
             Vamp::Plugin::ParameterDescriptor pd;
             readParameterDescriptor(pd, p);
             d.parameters.push_back(pd);
         }
 
+        d.programs.clear();
         for (auto p: r.getPrograms()) {
             d.programs.push_back(p);
         }
 
         d.inputDomain = toInputDomain(r.getInputDomain());
 
+        d.basicOutputInfo.clear();
         for (auto o: r.getBasicOutputInfo()) {
             Vamp::HostExt::PluginStaticData::Basic b;
             readBasicDescriptor(b, o);
@@ -492,6 +500,50 @@ public:
         readPluginStaticData(resp.staticData, r.getStaticData());
         readPluginConfiguration(resp.defaultConfiguration,
                                 r.getDefaultConfiguration());
+    }
+
+    static void
+    buildConfigurationRequest(ConfigurationRequest::Builder &b,
+                              const Vamp::HostExt::ConfigurationRequest &cr,
+                              PluginHandleMapper &mapper) {
+
+        b.setPluginHandle(mapper.pluginToHandle(cr.plugin));
+        auto c = b.initConfiguration();
+        buildPluginConfiguration(c, cr.configuration);
+    }
+
+    static void
+    readConfigurationRequest(Vamp::HostExt::ConfigurationRequest &cr,
+                             const ConfigurationRequest::Reader &r,
+                             PluginHandleMapper &mapper) {
+
+        auto h = r.getPluginHandle();
+        cr.plugin = mapper.handleToPlugin(h);
+        auto c = r.getConfiguration();
+        readPluginConfiguration(cr.configuration, c);
+    }
+
+    static void
+    buildConfigurationResponse(ConfigurationResponse::Builder &b,
+                               const Vamp::HostExt::ConfigurationResponse &cr) {
+
+        auto olist = b.initOutputs(cr.outputs.size());
+        for (size_t i = 0; i < cr.outputs.size(); ++i) {
+            auto od = olist[i];
+            buildOutputDescriptor(od, cr.outputs[i]);
+        }
+    }
+
+    static void
+    readConfigurationResponse(Vamp::HostExt::ConfigurationResponse &cr,
+                              const ConfigurationResponse::Reader &r) {
+
+        cr.outputs.clear();
+        for (const auto &o: r.getOutputs()) {
+            Vamp::Plugin::OutputDescriptor desc;
+            readOutputDescriptor(desc, o);
+            cr.outputs.push_back(desc);
+        }
     }
 };
 
