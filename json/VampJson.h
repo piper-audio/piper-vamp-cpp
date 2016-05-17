@@ -149,7 +149,7 @@ public:
         }
         return json11::Json(jo);
     }
-
+    
     static Vamp::Plugin::OutputDescriptor
     toOutputDescriptor(json11::Json j) {
 
@@ -658,7 +658,7 @@ public:
                     { "pluginKey", json11::Json::STRING },
                     { "inputSampleRate", json11::Json::NUMBER },
                     { "adapterFlags", json11::Json::ARRAY } }, err)) {
-            throw VampJson::Failure("malformed load request: " + err);
+            throw Failure("malformed load request: " + err);
         }
     
         Vamp::HostExt::LoadRequest req;
@@ -690,7 +690,7 @@ public:
                     { "pluginHandle", json11::Json::NUMBER },
                     { "staticData", json11::Json::OBJECT },
                     { "defaultConfiguration", json11::Json::OBJECT } }, err)) {
-            throw VampJson::Failure("malformed load response: " + err);
+            throw Failure("malformed load response: " + err);
         }
 
         Vamp::HostExt::LoadResponse resp;
@@ -698,6 +698,35 @@ public:
         resp.staticData = toPluginStaticData(j["staticData"]);
         resp.defaultConfiguration = toPluginConfiguration(j["defaultConfiguration"]);
         return resp;
+    }
+
+    static json11::Json
+    fromConfigurationResponse(const Vamp::HostExt::ConfigurationResponse &cr) {
+
+        json11::Json::object jout;
+        
+        json11::Json::array outs;
+        for (auto &d: cr.outputs) {
+            outs.push_back(fromOutputDescriptor(d));
+        }
+        jout["outputList"] = outs;
+        
+        return json11::Json(jout);
+    }
+
+    static Vamp::HostExt::ConfigurationResponse toConfigurationResponse(json11::Json j) {
+
+        Vamp::HostExt::ConfigurationResponse cr;
+
+        if (!j["outputList"].is_array()) {
+            throw Failure("array expected for output list");
+        }
+
+        for (const auto &o: j["outputList"].array_items()) {
+            cr.outputs.push_back(toOutputDescriptor(o));
+        }
+
+        return cr;
     }
 };
 

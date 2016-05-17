@@ -73,7 +73,7 @@ loadPlugin(json11::Json j) {
     return response;
 }
     
-Vamp::Plugin::OutputList
+Vamp::HostExt::ConfigurationResponse
 configurePlugin(Vamp::Plugin *plugin, json11::Json j) {
     
     auto config = VampJson::toPluginConfiguration(j);
@@ -83,8 +83,10 @@ configurePlugin(Vamp::Plugin *plugin, json11::Json j) {
     if (outputs.empty()) {
 	throw VampJson::Failure("plugin initialisation failed (invalid channelCount, stepSize, blockSize?)");
     }
-    
-    return outputs;
+
+    Vamp::HostExt::ConfigurationResponse response;
+    response.outputs = outputs;
+    return response;
 }
 
 Json
@@ -139,21 +141,13 @@ handle_configure(Json j)
     
     Json config = j["configuration"];
 
-    configurePlugin(plugin, config);
+    auto response = configurePlugin(plugin, config);
 
     mapper.markInitialised(handle);
 
     cerr << "Configured and initialised plugin " << handle << endl;
 
-    //!!! to VampJson:
-    Json::object jout;
-    Json::array outs;
-    Vamp::Plugin::OutputList vouts = plugin->getOutputDescriptors();
-    for (auto &o: vouts) {
-	outs.push_back(VampJson::fromOutputDescriptor(o));
-    }
-    jout["outputList"] = outs;
-    return Json(jout);
+    return VampJson::fromConfigurationResponse(response);
 }
 
 Json
