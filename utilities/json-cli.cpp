@@ -12,6 +12,7 @@ using namespace std;
 using namespace Vamp;
 using namespace Vamp::HostExt;
 using namespace json11;
+using namespace vampipe;
 
 static map<uint32_t, Plugin *> loadedPlugins;
 static set<uint32_t> initialisedPlugins;

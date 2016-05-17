@@ -14,6 +14,10 @@
 #include <vamp-hostsdk/Plugin.h>
 #include <vamp-hostsdk/PluginLoader.h>
 
+#include "bits/PluginHandleMapper.h"
+
+namespace vampipe {
+
 /**
  * Convert the structures laid out in the Vamp SDK classes into JSON
  * (and back again) following the schema in the vamp-json-schema
@@ -663,7 +667,40 @@ public:
         req.adapterFlags = toAdapterFlags(j["adapterFlags"]);
         return req;
     }
+
+    static json11::Json
+    fromLoadResponse(Vamp::HostExt::LoadResponse resp,
+                     PluginHandleMapper &mapper) {
+
+        json11::Json::object jo;
+        jo["pluginHandle"] = double(mapper.pluginToHandle(resp.plugin));
+        jo["staticData"] = fromPluginStaticData(resp.staticData);
+        jo["defaultConfiguration"] =
+            fromPluginConfiguration(resp.defaultConfiguration);
+        return json11::Json(jo);
+    }
+
+    static Vamp::HostExt::LoadResponse
+    toLoadResponse(json11::Json j,
+                   PluginHandleMapper &mapper) {
+
+        std::string err;
+
+        if (!j.has_shape({
+                    { "pluginHandle", json11::Json::NUMBER },
+                    { "staticData", json11::Json::OBJECT },
+                    { "defaultConfiguration", json11::Json::OBJECT } }, err)) {
+            throw VampJson::Failure("malformed load response: " + err);
+        }
+
+        Vamp::HostExt::LoadResponse resp;
+        resp.plugin = mapper.handleToPlugin(j["pluginHandle"].int_value());
+        resp.staticData = toPluginStaticData(j["staticData"]);
+        resp.defaultConfiguration = toPluginConfiguration(j["defaultConfiguration"]);
+        return resp;
+    }
 };
 
+}
 
 #endif

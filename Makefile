@@ -1,6 +1,6 @@
 
 CXXFLAGS	:= -Wall -Werror -std=c++11
-INCFLAGS	:= -Ivamp-plugin-sdk -Ijson -Icapnproto
+INCFLAGS	:= -Ivamp-plugin-sdk -Ijson -Icapnproto -I.
 LDFLAGS		:= -Lvamp-plugin-sdk -Wl,-Bstatic -lvamp-hostsdk -Wl,-Bdynamic -lcapnp -lkj -ldl
 
 all:	bin/vamp-json-cli bin/vamp-json-to-capnp

@@ -9,6 +9,8 @@
 #include <vamp-hostsdk/PluginLoader.h>
 #include <vamp-hostsdk/PluginStaticData.h>
 
+#include "bits/PluginHandleMapper.h"
+
 namespace vampipe
 {
 
@@ -467,6 +469,29 @@ public:
             }
         }
         req.adapterFlags = flags;
+    }
+
+    static void
+    buildLoadResponse(LoadResponse::Builder &b,
+                      const Vamp::HostExt::LoadResponse &resp,
+                      PluginHandleMapper &mapper) {
+
+        b.setPluginHandle(mapper.pluginToHandle(resp.plugin));
+        auto sd = b.initStaticData();
+        buildPluginStaticData(sd, resp.staticData);
+        auto conf = b.initDefaultConfiguration();
+        buildPluginConfiguration(conf, resp.defaultConfiguration);
+    }
+
+    static void
+    readLoadResponse(Vamp::HostExt::LoadResponse &resp,
+                     const LoadResponse::Reader &r,
+                     PluginHandleMapper &mapper) {
+
+        resp.plugin = mapper.handleToPlugin(r.getPluginHandle());
+        readPluginStaticData(resp.staticData, r.getStaticData());
+        readPluginConfiguration(resp.defaultConfiguration,
+                                r.getDefaultConfiguration());
     }
 };
 
