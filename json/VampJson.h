@@ -759,6 +759,29 @@ public:
 
         return cr;
     }
+
+    static json11::Json
+    fromProcessRequest(const Vamp::HostExt::ProcessRequest &r,
+                       PluginHandleMapper &mapper) {
+
+        json11::Json::object jo;
+        jo["pluginHandle"] = mapper.pluginToHandle(r.plugin);
+
+        json11::Json::object io;
+        io["timestamp"] = fromRealTime(r.timestamp);
+
+        json11::Json::array chans;
+        for (size_t i = 0; i < r.inputBuffers.size(); ++i) {
+            json11::Json::object c;
+            c["b64values"] = fromFloatBuffer(r.inputBuffers[i].data(),
+                                             r.inputBuffers[i].size());
+            chans.push_back(c);
+        }
+        io["inputBuffers"] = chans;
+        
+        jo["processInput"] = io;
+        return json11::Json(jo);
+    }
 };
 
 }

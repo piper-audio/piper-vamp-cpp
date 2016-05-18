@@ -77,15 +77,15 @@ Vamp::HostExt::ConfigurationResponse
 configurePlugin(Vamp::Plugin *plugin, json11::Json j) {
     
     auto config = VampJson::toPluginConfiguration(j);
+    Vamp::HostExt::ConfigurationRequest req;
+    req.plugin = plugin;
+    req.configuration = config;
     auto loader = Vamp::HostExt::PluginLoader::getInstance();
-    auto outputs = loader->configurePlugin(plugin, config);
 
-    if (outputs.empty()) {
+    auto response = loader->configurePlugin(req);
+    if (response.outputs.empty()) {
 	throw VampJson::Failure("plugin initialisation failed (invalid channelCount, stepSize, blockSize?)");
     }
-
-    Vamp::HostExt::ConfigurationResponse response;
-    response.outputs = outputs;
     return response;
 }
 
