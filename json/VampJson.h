@@ -640,7 +640,7 @@ public:
     }
 
     static json11::Json
-    fromLoadRequest(Vamp::HostExt::LoadRequest req) {
+    fromLoadRequest(const Vamp::HostExt::LoadRequest &req) {
 
         json11::Json::object jo;
         jo["pluginKey"] = req.pluginKey;
@@ -669,7 +669,7 @@ public:
     }
 
     static json11::Json
-    fromLoadResponse(Vamp::HostExt::LoadResponse resp,
+    fromLoadResponse(const Vamp::HostExt::LoadResponse &resp,
                      PluginHandleMapper &mapper) {
 
         json11::Json::object jo;
@@ -780,6 +780,150 @@ public:
         io["inputBuffers"] = chans;
         
         jo["processInput"] = io;
+        return json11::Json(jo);
+    }
+
+    static Vamp::HostExt::ProcessRequest
+    toProcessRequest(json11::Json j, PluginHandleMapper &mapper) {
+
+        std::string err;
+
+        if (!j.has_shape({
+                    { "pluginHandle", json11::Json::NUMBER },
+                    { "processInput", json11::Json::OBJECT } }, err)) {
+            throw Failure("malformed process request: " + err);
+        }
+
+        auto input = j["processInput"];
+
+        if (!input.has_shape({
+                    { "timestamp", json11::Json::OBJECT },
+                    { "inputBuffers", json11::Json::ARRAY } }, err)) {
+            throw Failure("malformed process request: " + err);
+        }
+
+        Vamp::HostExt::ProcessRequest r;
+        r.plugin = mapper.handleToPlugin(j["pluginHandle"].int_value());
+
+        r.timestamp = toRealTime(input["timestamp"]);
+
+        for (auto a: input["inputBuffers"].array_items()) {
+            if (a["b64values"].is_string()) {
+                r.inputBuffers.push_back(toFloatBuffer
+                                         (a["b64values"].string_value()));
+            } else if (a["values"].is_array()) {
+                std::vector<float> buf;
+                for (auto v : a["values"].array_items()) {
+                    buf.push_back(v.number_value());
+                }
+                r.inputBuffers.push_back(buf);
+            } else {
+                throw Failure("expected values or b64values in inputBuffers object");
+            }
+        }
+
+        return r;
+    }
+
+    static json11::Json
+    fromVampRequest_List() {
+
+        json11::Json::object jo;
+        jo["type"] = "list";
+        return json11::Json(jo);
+    }
+
+    static json11::Json
+    fromVampResponse_List(std::string errorText,
+                          const std::vector<Vamp::HostExt::PluginStaticData> &d) {
+
+        json11::Json::object jo;
+        jo["success"] = (errorText == "");
+        jo["errorText"] = errorText;
+
+        json11::Json::array arr;
+        for (const auto &a: d) {
+            arr.push_back(fromPluginStaticData(a));
+        }
+        jo["response"] = arr;
+        return json11::Json(jo);
+    }
+    
+    static json11::Json
+    fromVampRequest_Load(const Vamp::HostExt::LoadRequest &req) {
+
+        json11::Json::object jo;
+        jo["type"] = "load";
+        jo["content"] = fromLoadRequest(req);
+        return json11::Json(jo);
+    }    
+
+    static json11::Json
+    fromVampResponse_Load(const Vamp::HostExt::LoadResponse &resp,
+                          PluginHandleMapper &mapper) {
+
+        json11::Json::object jo;
+        jo["success"] = (resp.plugin != 0);
+        jo["errorText"] = "";
+        jo["response"] = fromLoadResponse(resp, mapper);
+        return json11::Json(jo);
+    }
+
+    static json11::Json
+    fromVampRequest_Configure(const Vamp::HostExt::ConfigurationRequest &req,
+                              PluginHandleMapper &mapper) {
+
+        json11::Json::object jo;
+        jo["type"] = "configure";
+        jo["content"] = fromConfigurationRequest(req, mapper);
+        return json11::Json(jo);
+    }    
+
+    static json11::Json
+    fromVampResponse_Configure(const Vamp::HostExt::ConfigurationResponse &resp) {
+        
+        json11::Json::object jo;
+        jo["success"] = (!resp.outputs.empty());
+        jo["errorText"] = "";
+        jo["response"] = fromConfigurationResponse(resp);
+        return json11::Json(jo);
+    }
+    
+    static json11::Json
+    fromVampRequest_Process(const Vamp::HostExt::ProcessRequest &req,
+                            PluginHandleMapper &mapper) {
+
+        json11::Json::object jo;
+        jo["type"] = "process";
+        jo["content"] = fromProcessRequest(req, mapper);
+        return json11::Json(jo);
+    }    
+
+    static json11::Json
+    fromVampResponse_Process(const Vamp::HostExt::ProcessResponse &resp) {
+        
+        json11::Json::object jo;
+        jo["success"] = true;
+        jo["errorText"] = "";
+        jo["response"] = fromFeatureSet(resp.features);
+        return json11::Json(jo);
+    }
+    
+    static json11::Json
+    fromVampRequest_Finish() {
+
+        json11::Json::object jo;
+        jo["type"] = "finish";
+        return json11::Json(jo);
+    }    
+    
+    static json11::Json
+    fromVampResponse_Finish(const Vamp::HostExt::ProcessResponse &resp) {
+
+        json11::Json::object jo;
+        jo["success"] = true;
+        jo["errorText"] = "";
+        jo["response"] = fromFeatureSet(resp.features);
         return json11::Json(jo);
     }
 };

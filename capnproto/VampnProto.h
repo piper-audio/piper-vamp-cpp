@@ -622,8 +622,8 @@ public:
 
     static void
     buildVampResponse_List(VampResponse::Builder &b,
-                          const std::vector<Vamp::HostExt::PluginStaticData> &d,
-                          std::string errorText = "") {
+                           std::string errorText,
+                           const std::vector<Vamp::HostExt::PluginStaticData> &d) {
         b.setSuccess(errorText == "");
         b.setErrorText(errorText);
         auto r = b.getResponse().initList(d.size());
@@ -644,6 +644,8 @@ public:
     buildVampResponse_Load(VampResponse::Builder &b,
                            const Vamp::HostExt::LoadResponse &resp,
                            PluginHandleMapper &mapper) {
+        b.setSuccess(resp.plugin != 0);
+        b.setErrorText("");
         auto u = b.getResponse().initLoad();
         buildLoadResponse(u, resp, mapper);
     }
@@ -659,6 +661,8 @@ public:
     static void
     buildVampResponse_Configure(VampResponse::Builder &b,
                                 const Vamp::HostExt::ConfigurationResponse &cr) {
+        b.setSuccess(!cr.outputs.empty());
+        b.setErrorText("");
         auto u = b.getResponse().initConfigure();
         buildConfigurationResponse(u, cr);
     }
@@ -674,8 +678,23 @@ public:
     static void
     buildVampResponse_Process(VampResponse::Builder &b,
                                 const Vamp::HostExt::ProcessResponse &pr) {
+        b.setSuccess(true);
+        b.setErrorText("");
         auto u = b.getResponse().initProcess();
         buildProcessResponse(u, pr);
+    }
+    
+    static void
+    buildVampRequest_Finish(VampRequest::Builder &b) {
+
+        b.getRequest().setFinish();
+    }
+    
+    static void
+    buildVampResponse_Finish(VampResponse::Builder &b,
+                             const Vamp::HostExt::ProcessResponse &pr) {
+
+        buildVampResponse_Process(b, pr);
     }
 };
 
