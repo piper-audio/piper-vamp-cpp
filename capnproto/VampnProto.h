@@ -601,35 +601,82 @@ public:
     }
 
     static void
-    buildVampListRequest(VampRequest::Builder &b) {
+    buildProcessResponse(ProcessResponse::Builder &b,
+                         const Vamp::HostExt::ProcessResponse &pr) {
+
+        auto f = b.initFeatures();
+        buildFeatureSet(f, pr.features);
+    }
+    
+    static void
+    readProcessResponse(Vamp::HostExt::ProcessResponse &pr,
+                        const ProcessResponse::Reader &r) {
+
+        readFeatureSet(pr.features, r.getFeatures());
+    }
+
+    static void
+    buildVampRequest_List(VampRequest::Builder &b) {
         b.getRequest().setList();
     }
 
     static void
-    buildVampLoadRequest(VampRequest::Builder &b,
-                         const Vamp::HostExt::LoadRequest &req) {
+    buildVampResponse_List(VampResponse::Builder &b,
+                          const std::vector<Vamp::HostExt::PluginStaticData> &d,
+                          std::string errorText = "") {
+        b.setSuccess(errorText == "");
+        b.setErrorText(errorText);
+        auto r = b.getResponse().initList(d.size());
+        for (size_t i = 0; i < d.size(); ++i) {
+            auto rd = r[i];
+            buildPluginStaticData(rd, d[i]);
+        }
+    }
+    
+    static void
+    buildVampRequest_Load(VampRequest::Builder &b,
+                          const Vamp::HostExt::LoadRequest &req) {
         auto u = b.getRequest().initLoad();
         buildLoadRequest(u, req);
     }
 
     static void
-    buildVampConfigureRequest(VampRequest::Builder &b,
-                              const Vamp::HostExt::ConfigurationRequest &cr,
-                              PluginHandleMapper &mapper) {
+    buildVampResponse_Load(VampResponse::Builder &b,
+                           const Vamp::HostExt::LoadResponse &resp,
+                           PluginHandleMapper &mapper) {
+        auto u = b.getResponse().initLoad();
+        buildLoadResponse(u, resp, mapper);
+    }
+
+    static void
+    buildVampRequest_Configure(VampRequest::Builder &b,
+                               const Vamp::HostExt::ConfigurationRequest &cr,
+                               PluginHandleMapper &mapper) {
         auto u = b.getRequest().initConfigure();
         buildConfigurationRequest(u, cr, mapper);
     }
 
     static void
-    buildVampProcessRequest(VampRequest::Builder &b,
-                            const Vamp::HostExt::ProcessRequest &pr,
-                            PluginHandleMapper &mapper) {
+    buildVampResponse_Configure(VampResponse::Builder &b,
+                                const Vamp::HostExt::ConfigurationResponse &cr) {
+        auto u = b.getResponse().initConfigure();
+        buildConfigurationResponse(u, cr);
+    }
+    
+    static void
+    buildVampRequest_Process(VampRequest::Builder &b,
+                             const Vamp::HostExt::ProcessRequest &pr,
+                             PluginHandleMapper &mapper) {
         auto u = b.getRequest().initProcess();
         buildProcessRequest(u, pr, mapper);
     }
-
-
-    //...!!! and responses
+    
+    static void
+    buildVampResponse_Process(VampResponse::Builder &b,
+                                const Vamp::HostExt::ProcessResponse &pr) {
+        auto u = b.getResponse().initProcess();
+        buildProcessResponse(u, pr);
+    }
 };
 
 }
