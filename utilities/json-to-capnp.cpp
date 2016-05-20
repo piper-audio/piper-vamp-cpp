@@ -2,8 +2,6 @@
 #include "VampJson.h"
 #include "VampnProto.h"
 
-#include "bits/ConstantPluginHandleMapper.h"
-
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -37,6 +35,27 @@ json_input(string input)
     return j;
 }
 
+class PreservingPluginHandleMapper : public PluginHandleMapper
+{
+public:
+    PreservingPluginHandleMapper() : m_handle(0), m_plugin(0) { }
+
+    virtual int32_t pluginToHandle(Vamp::Plugin *p) {
+	if (p == m_plugin) return m_handle;
+	else throw NotFound();
+    }
+
+    virtual Vamp::Plugin *handleToPlugin(int32_t h) {
+	m_handle = h;
+	m_plugin = reinterpret_cast<Vamp::Plugin *>(1);
+	return m_plugin;
+    }
+
+private:
+    int32_t m_handle;
+    Vamp::Plugin *m_plugin;
+};
+
 void 
 handle_input(::capnp::MallocMessageBuilder &message, string input)
 {
@@ -50,7 +69,11 @@ handle_input(::capnp::MallocMessageBuilder &message, string input)
 	throw VampJson::Failure("can't convert Basic block on its own");
 
     } else if (type == "configurationrequest") {
-	throw VampJson::Failure("not implemented yet"); ///!!!
+
+	auto req = message.initRoot<ConfigurationRequest>();
+	PreservingPluginHandleMapper mapper;
+	VampnProto::buildConfigurationRequest
+	    (req, VampJson::toConfigurationRequest(payload, mapper), mapper);
 
     } else if (type == "configurationresponse") {
 	throw VampJson::Failure("not implemented yet"); ///!!!
