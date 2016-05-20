@@ -133,23 +133,151 @@ handle_input(::capnp::MallocMessageBuilder &message, string input)
 				type);
     }
 }
-    
-int main(int, char **)
-{
-    string input;
 
-    while (getline(cin, input)) {
-	try {
-	    ::capnp::MallocMessageBuilder message;
-	    handle_input(message, input);
-	    writePackedMessageToFd(1, message); // stdout
-	    return 0;
-	} catch (const VampJson::Failure &e) {
-	    cerr << "Failed to convert JSON to Cap'n Proto message: "
-		 << e.what() << endl;
-	    return 1;
+void usage()
+{
+    string myname = "vampipe-convert";
+    cerr << "\n" << myname <<
+	": Convert Vamp request and response messages between formats\n\n"
+	"    Usage:  " << myname << " -i <informat> -o <outformat>\n\n"
+	"Where <informat> and <outformat> may be \"json\" or \"capnp\".\n"
+	"Messages are read from stdin and written to stdout.\n" << endl;
+    exit(2);
+}
+
+class RequestOrResponse
+{
+public:
+    enum Type {
+	List, Load, Configure, Process, Finish, Eof
+    };
+    RequestOrResponse() : // nothing by default
+	type(Eof),
+	success(false),
+	finishPlugin(0) { }
+
+    Type type;
+    bool success;
+    string errorText;
+
+    PreservingPluginHandleMapper mapper;
+    
+    Vamp::HostExt::LoadRequest loadRequest;
+    Vamp::HostExt::LoadResponse loadResponse;
+    Vamp::HostExt::ConfigurationRequest configurationRequest;
+    Vamp::HostExt::ConfigurationResponse configurationResponse;
+    Vamp::HostExt::ProcessRequest processRequest;
+    Vamp::HostExt::ProcessResponse processResponse;
+    Vamp::Plugin *finishPlugin;
+    Vamp::HostExt::ProcessResponse finishResponse;
+    
+};
+
+RequestOrResponse
+readInputJson()
+{
+    RequestOrResponse rr;
+    string input;
+    if (!getline(cin, input)) {
+	rr.type = RequestOrResponse::Eof;
+	return rr;
+    }
+
+    Json j = json_input(input);
+    string type = j["type"].string_value();
+
+    if (type == "list") {
+	rr.type = RequestOrResponse::List;
+
+    } else if (type == "load") {
+	//!!! ah, we need a way to know whether we're dealing with a request or response here
+	rr.type = RequestOrResponse::Load;
+	rr.loadRequest = VampJson::toLoadRequest(j["content"]);
+
+    } else if (type == "configure") {
+	rr.type = RequestOrResponse::Configure;
+	rr.configurationRequest =
+	    VampJson::toConfigurationRequest(j["content"], rr.mapper);
+
+    } else if (type == "process") {
+	rr.type = RequestOrResponse::Process;
+	rr.processRequest =
+	    VampJson::toProcessRequest(j["content"], rr.mapper);
+
+    } else if (type == "finish") {
+	rr.type = RequestOrResponse::Finish;
+	//!!! VampJsonify
+	rr.finishPlugin = rr.mapper.handleToPlugin(j["content"]["pluginHandle"].int_value());
+
+    } else {
+	throw runtime_error("unknown or unexpected request/response type \"" +
+			    type + "\"");
+    }
+
+    return rr;
+}
+
+RequestOrResponse
+readInput(string format)
+{
+    if (format == "json") {
+	return readInputJson();
+    } else {
+	throw runtime_error("unknown or unimplemented format \"" + format + "\"");
+    }
+}
+
+void
+writeOutput(string format, const RequestOrResponse &rr)
+{
+    throw runtime_error("writeOutput not implemented yet");
+    
+}
+
+int main(int argc, char **argv)
+{
+    if (argc != 5) {
+	usage();
+    }
+
+    string informat, outformat;
+    
+    for (int i = 1; i + 1 < argc; ++i) {
+
+	string arg = argv[i];
+	
+	if (arg == "-i") {
+	    if (informat != "") usage();
+	    else informat = argv[++i];
+
+	} else if (arg == "-o") {
+	    if (outformat != "") usage();
+	    else outformat = argv[++i];
+
+	} else {
+	    usage();
 	}
     }
+
+    if (informat == "" || outformat == "") {
+	usage();
+    }
+
+    while (true) {
+
+	try {
+
+	    RequestOrResponse rr = readInput(informat);
+	    if (rr.type == RequestOrResponse::Eof) break;
+	    writeOutput(outformat, rr);
+	    
+	} catch (std::exception &e) {
+	    cerr << "Error: " << e.what() << endl;
+	    exit(1);
+	}
+    }
+
+    exit(0);
 }
 
 

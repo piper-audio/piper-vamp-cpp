@@ -709,7 +709,7 @@ public:
     
     static void
     buildVampResponse_Process(VampResponse::Builder &b,
-                                const Vamp::HostExt::ProcessResponse &pr) {
+                              const Vamp::HostExt::ProcessResponse &pr) {
         b.setSuccess(true);
         b.setErrorText("");
         auto u = b.getResponse().initProcess();
@@ -717,9 +717,12 @@ public:
     }
     
     static void
-    buildVampRequest_Finish(VampRequest::Builder &b) {
+    buildVampRequest_Finish(VampRequest::Builder &b,
+                            Vamp::Plugin *p,
+                            PluginHandleMapper &mapper) {
 
-        b.getRequest().setFinish();
+        auto u = b.getRequest().initFinish();
+        u.setPluginHandle(mapper.pluginToHandle(p));
     }
     
     static void
