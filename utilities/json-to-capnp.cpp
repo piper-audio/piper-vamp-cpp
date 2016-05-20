@@ -120,16 +120,16 @@ handle_input(::capnp::MallocMessageBuilder &message, string input)
 	auto sd = VampJson::toPluginStaticData(payload);
  	VampnProto::buildPluginStaticData(pc, sd);
 
-    } else if (type == "processblock") {
-	throw VampJson::Failure("not implemented yet"); ///!!!
+    } else if (type == "processrequest") {
+	auto p = message.initRoot<ProcessRequest>();
+	PreservingPluginHandleMapper mapper;
+	VampnProto::buildProcessRequest
+	    (p, VampJson::toProcessRequest(payload, mapper), mapper);
 
     } else if (type == "realtime") {
 	auto b = message.initRoot<RealTime>();
 	VampnProto::buildRealTime
 	    (b, VampJson::toRealTime(payload));
-	
-    } else if (type == "valueextents") {
-	throw VampJson::Failure("no ValueExtents struct in Cap'n Proto mapping");
 	
     } else {
 	throw VampJson::Failure("unknown or unsupported JSON schema type " +
