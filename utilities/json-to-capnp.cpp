@@ -2,6 +2,8 @@
 #include "VampJson.h"
 #include "VampnProto.h"
 
+#include "bits/ConstantPluginHandleMapper.h"
+
 #include <iostream>
 #include <sstream>
 #include <stdexcept>

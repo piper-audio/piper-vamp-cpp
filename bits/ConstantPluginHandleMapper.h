@@ -32,26 +32,45 @@
     authorization.
 */
 
-#ifndef VAMPIPE_PLUGIN_HANDLE_MAPPER_H
-#define VAMPIPE_PLUGIN_HANDLE_MAPPER_H
+#ifndef VAMPIPE_CONSTANT_PLUGIN_HANDLE_MAPPER_H
+#define VAMPIPE_CONSTANT_PLUGIN_HANDLE_MAPPER_H
 
-#include <vamp-hostsdk/Plugin.h>
+#include "PluginHandleMapper.h"
 
 namespace vampipe {
 
-class PluginHandleMapper
+/**
+ * A trivial PluginHandleMapper, to be used for tests and for
+ * translating between protocols that contain handles without actually
+ * loading any plugins.
+ *
+ * This mapper only knows about one handle, and if it is asked for
+ * that one, it returns a fixed plugin pointer (which might never be
+ * dereferenced, depending on the context in which this class is
+ * used). The idea would be to create one of these on the fly each
+ * time a new handle needs to be translated.
+ */
+class ConstantPluginHandleMapper : public PluginHandleMapper
 {
 public:
-    class NotFound : virtual public std::runtime_error {
-    public:
-        NotFound() : runtime_error("plugin or handle not found in mapper") { }
-    };
+    ConstantPluginHandleMapper(Vamp::Plugin *plugin, int32_t handle) :
+	m_plugin(plugin), m_handle(handle) { }
     
-    virtual int32_t pluginToHandle(Vamp::Plugin *) = 0; // may throw NotFound
-    virtual Vamp::Plugin *handleToPlugin(int32_t)  = 0; // may throw NotFound
+    virtual int32_t pluginToHandle(Vamp::Plugin *p) {
+	if (p == m_plugin) return m_handle;
+	else throw NotFound();
+    }
+	
+    virtual Vamp::Plugin *handleToPlugin(int32_t h) {
+	if (h == m_handle) return m_plugin;
+	else throw NotFound();
+    }
+
+private:
+    Vamp::Plugin *m_plugin;
+    int32_t m_handle;
 };
 
 }
 
 #endif
-
