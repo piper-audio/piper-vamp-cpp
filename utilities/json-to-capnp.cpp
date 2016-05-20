@@ -47,7 +47,7 @@ public:
 
     virtual Vamp::Plugin *handleToPlugin(int32_t h) {
 	m_handle = h;
-	m_plugin = reinterpret_cast<Vamp::Plugin *>(1);
+	m_plugin = reinterpret_cast<Vamp::Plugin *>(h);
 	return m_plugin;
     }
 
@@ -69,14 +69,15 @@ handle_input(::capnp::MallocMessageBuilder &message, string input)
 	throw VampJson::Failure("can't convert Basic block on its own");
 
     } else if (type == "configurationrequest") {
-
 	auto req = message.initRoot<ConfigurationRequest>();
 	PreservingPluginHandleMapper mapper;
 	VampnProto::buildConfigurationRequest
 	    (req, VampJson::toConfigurationRequest(payload, mapper), mapper);
 
     } else if (type == "configurationresponse") {
-	throw VampJson::Failure("not implemented yet"); ///!!!
+	auto resp = message.initRoot<ConfigurationResponse>();
+	VampnProto::buildConfigurationResponse
+	    (resp, VampJson::toConfigurationResponse(payload));
 
     } else if (type == "feature") {
 	auto f = message.initRoot<Feature>();
@@ -94,10 +95,10 @@ handle_input(::capnp::MallocMessageBuilder &message, string input)
 	    (req, VampJson::toLoadRequest(payload));
 	
     } else if (type == "loadresponse") {
-	//!!! response types & configure call for plugin handles, but
-	//!!! we don't have any context in which a plugin handle can
-	//!!! be persistent here
-	throw VampJson::Failure("not implemented yet"); ///!!!
+	auto resp = message.initRoot<LoadResponse>();
+	PreservingPluginHandleMapper mapper;
+	VampnProto::buildLoadResponse
+	    (resp, VampJson::toLoadResponse(payload, mapper), mapper);
 
     } else if (type == "outputdescriptor") {
 	auto od = message.initRoot<OutputDescriptor>();
