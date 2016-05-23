@@ -160,8 +160,8 @@ handle(string input)
 	throw VampJson::Failure("invalid request: " + err);
     }
 
-    if (!j["verb"].is_string()) {
-	throw VampJson::Failure("verb expected in request");
+    if (!j["type"].is_string()) {
+	throw VampJson::Failure("type expected in request");
     }
 
     if (!j["content"].is_null() &&
@@ -169,7 +169,7 @@ handle(string input)
 	throw VampJson::Failure("object expected for content");
     }
 
-    string verb = j["verb"].string_value();
+    string verb = j["type"].string_value();
     Json content = j["content"];
     Json result;
 

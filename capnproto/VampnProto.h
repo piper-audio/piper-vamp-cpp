@@ -658,10 +658,11 @@ public:
                            const std::vector<Vamp::HostExt::PluginStaticData> &d) {
         b.setSuccess(errorText == "");
         b.setErrorText(errorText);
-        auto r = b.getResponse().initList(d.size());
+        auto r = b.getResponse().initList();
+        auto p = r.initPlugins(d.size());
         for (size_t i = 0; i < d.size(); ++i) {
-            auto rd = r[i];
-            buildPluginStaticData(rd, d[i]);
+            auto pd = p[i];
+            buildPluginStaticData(pd, d[i]);
         }
     }
     
