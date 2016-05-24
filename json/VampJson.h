@@ -689,15 +689,16 @@ public:
 
         if (!j.has_shape({
                     { "pluginKey", json11::Json::STRING },
-                    { "inputSampleRate", json11::Json::NUMBER },
-                    { "adapterFlags", json11::Json::ARRAY } }, err)) {
+                    { "inputSampleRate", json11::Json::NUMBER } }, err)) {
             throw Failure("malformed load request: " + err);
         }
     
         Vamp::HostExt::LoadRequest req;
         req.pluginKey = j["pluginKey"].string_value();
         req.inputSampleRate = j["inputSampleRate"].number_value();
-        req.adapterFlags = toAdapterFlags(j["adapterFlags"]);
+        if (!j["adapterFlags"].is_null()) {
+            req.adapterFlags = toAdapterFlags(j["adapterFlags"]);
+        }
         return req;
     }
 

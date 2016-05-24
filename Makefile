@@ -1,7 +1,9 @@
 
-CXXFLAGS	:= -Wall -Werror -O3 -std=c++11
+CXXFLAGS	:= -Wall -Werror -g -std=c++11
 INCFLAGS	:= -Ivamp-plugin-sdk -Ijson -Icapnproto -I.
 LDFLAGS		:= -Lvamp-plugin-sdk -Wl,-Bstatic -lvamp-hostsdk -Wl,-Bdynamic -lcapnp -lkj -ldl
+
+#!!! todo: proper dependencies
 
 all:	bin/vamp-json-cli bin/vamp-json-to-capnp bin/vampipe-convert bin/vampipe-server
 

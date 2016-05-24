@@ -37,6 +37,8 @@
 
 #include "PluginHandleMapper.h"
 
+#include <iostream>
+
 namespace vampipe {
 
 class PreservingPluginHandleMapper : public PluginHandleMapper
@@ -46,7 +48,13 @@ public:
 
     virtual int32_t pluginToHandle(Vamp::Plugin *p) {
 	if (p == m_plugin) return m_handle;
-	else throw NotFound();
+	else {
+	    std::cerr << "PreservingPluginHandleMapper: p = " << p
+		      << " differs from saved m_plugin " << m_plugin
+		      << " (not returning saved handle " << m_handle << ")"
+		      << std::endl;
+	    throw NotFound();
+	}
     }
 
     virtual Vamp::Plugin *handleToPlugin(int32_t h) {

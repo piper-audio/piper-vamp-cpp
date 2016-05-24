@@ -41,6 +41,8 @@ namespace vampipe {
 
 class PluginHandleMapper
 {
+    // NB the handle type must fit in a JSON number
+    
 public:
     class NotFound : virtual public std::runtime_error {
     public:

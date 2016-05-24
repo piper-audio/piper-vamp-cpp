@@ -35,7 +35,6 @@
 #ifndef VAMPIPE_REQUEST_OR_RESPONSE_H
 #define VAMPIPE_REQUEST_OR_RESPONSE_H
 
-#include "PreservingPluginHandleMapper.h"
 #include "RequestResponseType.h"
 
 #include <vamp-hostsdk/PluginStaticData.h>
@@ -63,8 +62,6 @@ public:
     RRType type;
     bool success;
     std::string errorText;
-
-    PreservingPluginHandleMapper mapper;
 
     std::vector<Vamp::HostExt::PluginStaticData> listResponse;
     Vamp::HostExt::LoadRequest loadRequest;
