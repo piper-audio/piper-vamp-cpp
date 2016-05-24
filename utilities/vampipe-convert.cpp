@@ -305,6 +305,42 @@ readRequestCapnp()
     return rr;
 }
 
+void
+writeRequestCapnp(RequestOrResponse &rr)
+{
+    ::capnp::MallocMessageBuilder message;
+    VampRequest::Builder builder = message.initRoot<VampRequest>();
+
+    switch (rr.type) {
+
+    case RRType::List:
+	VampnProto::buildVampRequest_List(builder);
+	break;
+    case RRType::Load:
+	VampnProto::buildVampRequest_Load(builder, rr.loadRequest);
+	break;
+    case RRType::Configure:
+	VampnProto::buildVampRequest_Configure(builder,
+					       rr.configurationRequest,
+					       rr.mapper);
+	break;
+    case RRType::Process:
+	VampnProto::buildVampRequest_Process(builder,
+					     rr.processRequest,
+					     rr.mapper);
+	break;
+    case RRType::Finish:
+	VampnProto::buildVampRequest_Finish(builder,
+					    rr.finishPlugin,
+					    rr.mapper);
+	break;
+    case RRType::NotValid:
+	break;
+    }
+
+    writePackedMessageToFd(1, message);
+}
+
 RequestOrResponse
 readResponseCapnp()
 {
@@ -341,6 +377,36 @@ readResponseCapnp()
     return rr;
 }
 
+void
+writeResponseCapnp(RequestOrResponse &rr)
+{
+    ::capnp::MallocMessageBuilder message;
+    VampResponse::Builder builder = message.initRoot<VampResponse>();
+
+    switch (rr.type) {
+
+    case RRType::List:
+	VampnProto::buildVampResponse_List(builder, "", rr.listResponse);
+	break;
+    case RRType::Load:
+	VampnProto::buildVampResponse_Load(builder, rr.loadResponse, rr.mapper);
+	break;
+    case RRType::Configure:
+	VampnProto::buildVampResponse_Configure(builder, rr.configurationResponse);
+	break;
+    case RRType::Process:
+	VampnProto::buildVampResponse_Process(builder, rr.processResponse);
+	break;
+    case RRType::Finish:
+	VampnProto::buildVampResponse_Finish(builder, rr.finishResponse);
+	break;
+    case RRType::NotValid:
+	break;
+    }
+
+    writePackedMessageToFd(1, message);
+}
+
 RequestOrResponse
 readInput(string format, RequestOrResponse::Direction direction)
 {
@@ -369,6 +435,12 @@ writeOutput(string format, RequestOrResponse &rr)
 	    writeRequestJson(rr);
 	} else {
 	    writeResponseJson(rr);
+	}
+    } else if (format == "capnp") {
+	if (rr.direction == RequestOrResponse::Request) {
+	    writeRequestCapnp(rr);
+	} else {
+	    writeResponseCapnp(rr);
 	}
     } else {
 	throw runtime_error("unknown output format \"" + format + "\"");
@@ -420,7 +492,10 @@ int main(int argc, char **argv)
 	try {
 
 	    RequestOrResponse rr = readInput(informat, direction);
+
+	    // NotValid without an exception indicates EOF:
 	    if (rr.type == RRType::NotValid) break;
+
 	    writeOutput(outformat, rr);
 	    
 	} catch (std::exception &e) {
