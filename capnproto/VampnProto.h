@@ -653,6 +653,13 @@ public:
     }
 
     static void
+    readVampRequest_List(const VampRequest::Reader &r) {
+        if (r.getRequest().which() != VampRequest::Request::Which::LIST) {
+            throw std::runtime_error("not a list request");
+        }
+    }
+    
+    static void
     buildVampResponse_List(VampResponse::Builder &b,
                            std::string errorText,
                            const std::vector<Vamp::HostExt::PluginStaticData> &d) {

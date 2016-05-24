@@ -47,6 +47,7 @@
 #include <vamp-hostsdk/PluginLoader.h>
 
 #include "bits/PluginHandleMapper.h"
+#include "bits/RequestResponseType.h"
 
 namespace vampipe {
 
@@ -992,6 +993,26 @@ private: // go private briefly for a couple of helper functions
     }
 
 public:
+    static RRType
+    getRequestResponseType(json11::Json j) {
+
+        if (!j["type"].is_string()) {
+            throw Failure("string expected for type");
+        }
+        
+        std::string type = j["type"].string_value();
+
+	if (type == "list") return RRType::List;
+	else if (type == "load") return RRType::Load;
+	else if (type == "configure") return RRType::Configure;
+	else if (type == "process") return RRType::Process;
+	else if (type == "finish") return RRType::Finish;
+	else {
+	    throw Failure("unknown or unexpected request/response type \"" +
+                          type + "\"");
+	}
+    }
+    
     static void
     toVampRequest_List(json11::Json j) {
         

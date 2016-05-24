@@ -62,31 +62,15 @@ public:
     enum Direction {
 	Request, Response
     };
-    enum Type {
-	List, Load, Configure, Process, Finish, Eof
-    };
-
-    static Type typeForName(string name) {
-	if (name == "list") return List;
-	else if (name == "load") return Load;
-	else if (name == "configure") return Configure;
-	else if (name == "process") return Process;
-	else if (name == "finish") return Finish;
-	else if (name == "eof") return Eof;
-	else {
-	    throw runtime_error("unknown or unexpected request/response type \"" +
-				name + "\"");
-	}
-    }
     
     RequestOrResponse() : // nothing by default
 	direction(Request),
-	type(Eof),
+	type(RRType::NotValid),
 	success(false),
 	finishPlugin(0) { }
 
     Direction direction;
-    Type type;
+    RRType type;
     bool success;
     string errorText;
 
@@ -151,24 +135,23 @@ readRequestJson()
 
     string input;
     if (!getline(cin, input)) {
-	rr.type = RequestOrResponse::Eof;
+	rr.type = RRType::NotValid;
 	return rr;
     }
     
     Json j = convertRequestJson(input);
-    string type = j["type"].string_value();
-    rr.type = RequestOrResponse::typeForName(type);
+    rr.type = VampJson::getRequestResponseType(j);
 
-    if (rr.type == RequestOrResponse::Load) {
+    if (rr.type == RRType::Load) {
 	rr.loadRequest = VampJson::toVampRequest_Load(j);
 
-    } else if (rr.type == RequestOrResponse::Configure) {
+    } else if (rr.type == RRType::Configure) {
 	rr.configurationRequest = VampJson::toVampRequest_Configure(j, rr.mapper);
 
-    } else if (rr.type == RequestOrResponse::Process) {
+    } else if (rr.type == RRType::Process) {
 	rr.processRequest = VampJson::toVampRequest_Process(j, rr.mapper);
 
-    } else if (rr.type == RequestOrResponse::Finish) {
+    } else if (rr.type == RRType::Finish) {
 	rr.finishPlugin = VampJson::toVampRequest_Finish(j, rr.mapper);
     }
 
@@ -180,19 +163,19 @@ writeRequestJson(RequestOrResponse &rr)
 {
     Json j;
 
-    if (rr.type == RequestOrResponse::List) {
+    if (rr.type == RRType::List) {
 	j = VampJson::fromVampRequest_List();
 	
-    } else if (rr.type == RequestOrResponse::Load) {
+    } else if (rr.type == RRType::Load) {
 	j = VampJson::fromVampRequest_Load(rr.loadRequest);
 	
-    } else if (rr.type == RequestOrResponse::Configure) {
+    } else if (rr.type == RRType::Configure) {
 	j = VampJson::fromVampRequest_Configure(rr.configurationRequest, rr.mapper);
 	
-    } else if (rr.type == RequestOrResponse::Process) {
+    } else if (rr.type == RRType::Process) {
 	j = VampJson::fromVampRequest_Process(rr.processRequest, rr.mapper);
 	
-    } else if (rr.type == RequestOrResponse::Finish) {
+    } else if (rr.type == RRType::Finish) {
 	j = VampJson::fromVampRequest_Finish(rr.finishPlugin, rr.mapper);
     }
 
@@ -207,27 +190,26 @@ readResponseJson()
 
     string input;
     if (!getline(cin, input)) {
-	rr.type = RequestOrResponse::Eof;
+	rr.type = RRType::NotValid;
 	return rr;
     }
 
     Json j = convertResponseJson(input);
-    string type = j["type"].string_value();
-    rr.type = RequestOrResponse::typeForName(type);
+    rr.type = VampJson::getRequestResponseType(j);
 
-    if (rr.type == RequestOrResponse::List) {
+    if (rr.type == RRType::List) {
 	rr.listResponse = VampJson::toVampResponse_List(j);
 	
-    } else if (rr.type == RequestOrResponse::Load) {
+    } else if (rr.type == RRType::Load) {
 	rr.loadResponse = VampJson::toVampResponse_Load(j, rr.mapper);
 
-    } else if (rr.type == RequestOrResponse::Configure) {
+    } else if (rr.type == RRType::Configure) {
 	rr.configurationResponse = VampJson::toVampResponse_Configure(j);
 
-    } else if (rr.type == RequestOrResponse::Process) {
+    } else if (rr.type == RRType::Process) {
 	rr.processResponse = VampJson::toVampResponse_Process(j);
 
-    } else if (rr.type == RequestOrResponse::Finish) {
+    } else if (rr.type == RRType::Finish) {
 	rr.finishResponse = VampJson::toVampResponse_Finish(j);
     }
 
@@ -239,12 +221,14 @@ writeResponseJson(RequestOrResponse &rr)
 {
     Json j;
 
-    if (rr.type == RequestOrResponse::List) {
+    if (rr.type == RRType::List) {
 	j = VampJson::fromVampResponse_List("", rr.listResponse);
 	
-    } else if (rr.type == RequestOrResponse::Load) {
+    } else if (rr.type == RRType::Load) {
 	j = VampJson::fromVampResponse_Load(rr.loadResponse, rr.mapper);
     }
+
+    //!!!
 
     cout << j.dump() << endl;
 }
@@ -322,7 +306,7 @@ int main(int argc, char **argv)
 	try {
 
 	    RequestOrResponse rr = readInput(informat, direction);
-	    if (rr.type == RequestOrResponse::Eof) break;
+	    if (rr.type == RRType::NotValid) break;
 	    writeOutput(outformat, rr);
 	    
 	} catch (std::exception &e) {
