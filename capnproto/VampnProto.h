@@ -42,6 +42,7 @@
 #include <vamp-hostsdk/PluginStaticData.h>
 
 #include "bits/PluginHandleMapper.h"
+#include "bits/RequestResponseType.h"
 
 namespace vampipe
 {
@@ -653,13 +654,6 @@ public:
     }
 
     static void
-    readVampRequest_List(const VampRequest::Reader &r) {
-        if (r.getRequest().which() != VampRequest::Request::Which::LIST) {
-            throw std::runtime_error("not a list request");
-        }
-    }
-    
-    static void
     buildVampResponse_List(VampResponse::Builder &b,
                            std::string errorText,
                            const std::vector<Vamp::HostExt::PluginStaticData> &d) {
@@ -739,6 +733,62 @@ public:
 
         buildVampResponse_Process(b, pr);
     }
+
+    static RRType
+    getRequestResponseType(const VampRequest::Reader &r) {
+        switch (r.getRequest().which()) {
+        case VampRequest::Request::Which::LIST:
+            return RRType::List;
+        case VampRequest::Request::Which::LOAD:
+            return RRType::Load;
+        case VampRequest::Request::Which::CONFIGURE:
+            return RRType::Configure;
+        case VampRequest::Request::Which::PROCESS:
+            return RRType::Process;
+        case VampRequest::Request::Which::FINISH:
+            return RRType::Finish;
+        }
+    }
+
+    static RRType
+    getRequestResponseType(const VampResponse::Reader &r) {
+        switch (r.getResponse().which()) {
+        case VampResponse::Response::Which::LIST:
+            return RRType::List;
+        case VampResponse::Response::Which::LOAD:
+            return RRType::Load;
+        case VampResponse::Response::Which::CONFIGURE:
+            return RRType::Configure;
+        case VampResponse::Response::Which::PROCESS:
+            return RRType::Process;
+        case VampResponse::Response::Which::FINISH:
+            return RRType::Finish;
+        }
+    }
+    
+    static void
+    readVampRequest_List(const VampRequest::Reader &r) {
+        if (getRequestResponseType(r) != RRType::List) {
+            throw std::runtime_error("not a list request");
+        }
+    }
+
+    static void
+    readVampResponse_List(std::vector<Vamp::HostExt::PluginStaticData> &v,
+                          const VampResponse::Reader &r) {
+        if (getRequestResponseType(r) != RRType::List) {
+            throw std::runtime_error("not a list response");
+        }
+        v.clear();
+        if (r.getSuccess()) {
+            for (const auto &p: r.getResponse().getList().getPlugins()) {
+                Vamp::HostExt::PluginStaticData psd;
+                readPluginStaticData(psd, p);
+                v.push_back(psd);
+            }
+        }
+    }
+    
 };
 
 }
