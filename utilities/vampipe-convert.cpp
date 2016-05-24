@@ -127,6 +127,9 @@ convertResponseJson(string input)
     return j;
 }
 
+//!!! Lots of potential for refactoring the conversion classes based
+//!!! on the common matter in the following eight functions...
+
 RequestOrResponse
 readRequestJson()
 {
