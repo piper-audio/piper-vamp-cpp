@@ -176,7 +176,8 @@ public:
         if (od.hasFixedBinCount) {
             od.binCount = r.getBinCount();
             od.binNames.clear();
-            for (const auto &n: r.getBinNames()) {
+            auto nn = r.getBinNames();
+            for (const auto &n: nn) {
                 od.binNames.push_back(n);
             }
         }
@@ -236,7 +237,8 @@ public:
         }
 
         pd.valueNames.clear();
-        for (const auto &n: r.getValueNames()) {
+        auto nn = r.getValueNames();
+        for (const auto &n: nn) {
             pd.valueNames.push_back(n);
         }
     }
@@ -284,7 +286,8 @@ public:
         f.label = r.getLabel();
 
         f.values.clear();
-        for (auto v: r.getValues()) {
+        auto vv = r.getValues();
+        for (auto v: vv) {
             f.values.push_back(v);
         }
     }
@@ -312,9 +315,11 @@ public:
                    const FeatureSet::Reader &r) {
 
         fs.clear();
-        for (const auto &p: r.getFeaturePairs()) {
+        auto pp = r.getFeaturePairs();
+        for (const auto &p: pp) {
             Vamp::Plugin::FeatureList vfl;
-            for (const auto &f: p.getFeatures()) {
+            auto ff = p.getFeatures();
+            for (const auto &f: ff) {
                 Vamp::Plugin::Feature vf;
                 readFeature(vf, f);
                 vfl.push_back(vf);
@@ -404,7 +409,8 @@ public:
         d.pluginVersion = r.getPluginVersion();
 
         d.category.clear();
-        for (auto c: r.getCategory()) {
+        auto cc = r.getCategory();
+        for (auto c: cc) {
             d.category.push_back(c);
         }
 
@@ -412,21 +418,24 @@ public:
         d.maxChannelCount = r.getMaxChannelCount();
 
         d.parameters.clear();
-        for (auto p: r.getParameters()) {
+        auto pp = r.getParameters();
+        for (auto p: pp) {
             Vamp::Plugin::ParameterDescriptor pd;
             readParameterDescriptor(pd, p);
             d.parameters.push_back(pd);
         }
 
         d.programs.clear();
-        for (auto p: r.getPrograms()) {
+        auto prp = r.getPrograms();
+        for (auto p: prp) {
             d.programs.push_back(p);
         }
 
         d.inputDomain = toInputDomain(r.getInputDomain());
 
         d.basicOutputInfo.clear();
-        for (auto o: r.getBasicOutputInfo()) {
+        auto oo = r.getBasicOutputInfo();
+        for (auto o: oo) {
             Vamp::HostExt::PluginStaticData::Basic b;
             readBasicDescriptor(b, o);
             d.basicOutputInfo.push_back(b);
@@ -456,8 +465,9 @@ public:
     readPluginConfiguration(Vamp::HostExt::PluginConfiguration &c,
                             const PluginConfiguration::Reader &r) {
 
-        for (const auto &pp: r.getParameterValues()) {
-            c.parameterValues[pp.getParameter()] = pp.getValue();
+        auto pp = r.getParameterValues();
+        for (const auto &p: pp) {
+            c.parameterValues[p.getParameter()] = p.getValue();
         }
 
         c.currentProgram = r.getCurrentProgram();
@@ -498,7 +508,8 @@ public:
         req.inputSampleRate = r.getInputSampleRate();
 
         int flags = 0;
-        for (const auto &a: r.getAdapterFlags()) {
+        auto aa = r.getAdapterFlags();
+        for (auto a: aa) {
             if (a == AdapterFlag::ADAPT_INPUT_DOMAIN) {
                 flags |= Vamp::HostExt::PluginLoader::ADAPT_INPUT_DOMAIN;
             }
@@ -572,7 +583,8 @@ public:
                               const ConfigurationResponse::Reader &r) {
 
         cr.outputs.clear();
-        for (const auto &o: r.getOutputs()) {
+        auto oo = r.getOutputs();
+        for (const auto &o: oo) {
             Vamp::Plugin::OutputDescriptor desc;
             readOutputDescriptor(desc, o);
             cr.outputs.push_back(desc);
@@ -604,7 +616,8 @@ public:
 
         readRealTime(timestamp, b.getTimestamp());
         buffers.clear();
-        for (const auto &v: b.getInputBuffers()) {
+        auto vv = b.getInputBuffers();
+        for (const auto &v: vv) {
             std::vector<float> buf;
             for (auto x: v) {
                 buf.push_back(x);
@@ -783,7 +796,8 @@ public:
         }
         v.clear();
         if (r.getSuccess()) {
-            for (const auto &p: r.getResponse().getList().getPlugins()) {
+            auto pp = r.getResponse().getList().getPlugins();
+            for (const auto &p: pp) {
                 Vamp::HostExt::PluginStaticData psd;
                 readPluginStaticData(psd, p);
                 v.push_back(psd);
