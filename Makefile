@@ -3,9 +3,12 @@ CXXFLAGS	:= -Wall -Werror -O3 -std=c++11
 INCFLAGS	:= -Ivamp-plugin-sdk -Ijson -Icapnproto -I.
 LDFLAGS		:= -Lvamp-plugin-sdk -Wl,-Bstatic -lvamp-hostsdk -Wl,-Bdynamic -lcapnp -lkj -ldl
 
-all:	bin/vamp-json-cli bin/vamp-json-to-capnp bin/vampipe-convert
+all:	bin/vamp-json-cli bin/vamp-json-to-capnp bin/vampipe-convert bin/vampipe-server
 
 bin/vampipe-convert: o/vampipe-convert.o o/json11.o o/vamp.capnp.o
+	c++ $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+
+bin/vampipe-server: o/vampipe-server.o o/vamp.capnp.o
 	c++ $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 bin/vamp-json-to-capnp:	o/json-to-capnp.o o/json11.o
@@ -24,6 +27,9 @@ o/json11.o:	json/json11/json11.cpp
 	c++ $(CXXFLAGS) -c $< -o $@
 
 o/vampipe-convert.o:	utilities/vampipe-convert.cpp capnproto/vamp.capnp.h capnproto/VampnProto.h json/VampJson.h
+	c++ $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
+
+o/vampipe-server.o:	utilities/vampipe-server.cpp capnproto/vamp.capnp.h capnproto/VampnProto.h 
 	c++ $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
 o/json-to-capnp.o:	utilities/json-to-capnp.cpp capnproto/vamp.capnp.h capnproto/VampnProto.h json/VampJson.h

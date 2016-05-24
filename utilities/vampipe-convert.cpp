@@ -2,6 +2,8 @@
 #include "VampJson.h"
 #include "VampnProto.h"
 
+#include "bits/RequestOrResponse.h"
+
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -9,32 +11,6 @@
 using namespace std;
 using namespace json11;
 using namespace vampipe;
-
-// Accepting JSON objects with two fields, "type" and "content". The
-// "type" string corresponds to the JSON schema filename
-// (e.g. "outputdescriptor") and the "content" is the JSON object
-// encoded with that schema.
-
-class PreservingPluginHandleMapper : public PluginHandleMapper
-{
-public:
-    PreservingPluginHandleMapper() : m_handle(0), m_plugin(0) { }
-
-    virtual int32_t pluginToHandle(Vamp::Plugin *p) {
-	if (p == m_plugin) return m_handle;
-	else throw NotFound();
-    }
-
-    virtual Vamp::Plugin *handleToPlugin(int32_t h) {
-	m_handle = h;
-	m_plugin = reinterpret_cast<Vamp::Plugin *>(h);
-	return m_plugin;
-    }
-
-private:
-    int32_t m_handle;
-    Vamp::Plugin *m_plugin;
-};
 
 void usage()
 {
@@ -55,37 +31,6 @@ void usage()
 
     exit(2);
 }
-
-class RequestOrResponse
-{
-public:
-    enum Direction {
-	Request, Response
-    };
-    
-    RequestOrResponse() : // nothing by default
-	direction(Request),
-	type(RRType::NotValid),
-	success(false),
-	finishPlugin(0) { }
-
-    Direction direction;
-    RRType type;
-    bool success;
-    string errorText;
-
-    PreservingPluginHandleMapper mapper;
-
-    vector<Vamp::HostExt::PluginStaticData> listResponse;
-    Vamp::HostExt::LoadRequest loadRequest;
-    Vamp::HostExt::LoadResponse loadResponse;
-    Vamp::HostExt::ConfigurationRequest configurationRequest;
-    Vamp::HostExt::ConfigurationResponse configurationResponse;
-    Vamp::HostExt::ProcessRequest processRequest;
-    Vamp::HostExt::ProcessResponse processResponse;
-    Vamp::Plugin *finishPlugin;
-    Vamp::HostExt::ProcessResponse finishResponse;
-};
 
 Json
 convertRequestJson(string input)
