@@ -140,19 +140,29 @@ readRequestJson()
     }
     
     Json j = convertRequestJson(input);
+
     rr.type = VampJson::getRequestResponseType(j);
 
-    if (rr.type == RRType::Load) {
+    switch (rr.type) {
+
+    case RRType::List:
+	VampJson::toVampRequest_List(j); // type check only
+	break;
+    case RRType::Load:
 	rr.loadRequest = VampJson::toVampRequest_Load(j);
-
-    } else if (rr.type == RRType::Configure) {
-	rr.configurationRequest = VampJson::toVampRequest_Configure(j, rr.mapper);
-
-    } else if (rr.type == RRType::Process) {
+	break;
+    case RRType::Configure:
+	rr.configurationRequest =
+	    VampJson::toVampRequest_Configure(j, rr.mapper);
+	break;
+    case RRType::Process:
 	rr.processRequest = VampJson::toVampRequest_Process(j, rr.mapper);
-
-    } else if (rr.type == RRType::Finish) {
+	break;
+    case RRType::Finish:
 	rr.finishPlugin = VampJson::toVampRequest_Finish(j, rr.mapper);
+	break;
+    case RRType::NotValid:
+	break;
     }
 
     return rr;
@@ -163,20 +173,26 @@ writeRequestJson(RequestOrResponse &rr)
 {
     Json j;
 
-    if (rr.type == RRType::List) {
+    switch (rr.type) {
+
+    case RRType::List:
 	j = VampJson::fromVampRequest_List();
-	
-    } else if (rr.type == RRType::Load) {
+	break;
+    case RRType::Load:
 	j = VampJson::fromVampRequest_Load(rr.loadRequest);
-	
-    } else if (rr.type == RRType::Configure) {
-	j = VampJson::fromVampRequest_Configure(rr.configurationRequest, rr.mapper);
-	
-    } else if (rr.type == RRType::Process) {
+	break;
+    case RRType::Configure:
+	j = VampJson::fromVampRequest_Configure(rr.configurationRequest,
+						rr.mapper);
+	break;
+    case RRType::Process:
 	j = VampJson::fromVampRequest_Process(rr.processRequest, rr.mapper);
-	
-    } else if (rr.type == RRType::Finish) {
+	break;
+    case RRType::Finish:
 	j = VampJson::fromVampRequest_Finish(rr.finishPlugin, rr.mapper);
+	break;
+    case RRType::NotValid:
+	break;
     }
 
     cout << j.dump() << endl;
@@ -195,22 +211,28 @@ readResponseJson()
     }
 
     Json j = convertResponseJson(input);
+
     rr.type = VampJson::getRequestResponseType(j);
 
-    if (rr.type == RRType::List) {
+    switch (rr.type) {
+
+    case RRType::List:
 	rr.listResponse = VampJson::toVampResponse_List(j);
-	
-    } else if (rr.type == RRType::Load) {
+	break;
+    case RRType::Load:
 	rr.loadResponse = VampJson::toVampResponse_Load(j, rr.mapper);
-
-    } else if (rr.type == RRType::Configure) {
+	break;
+    case RRType::Configure:
 	rr.configurationResponse = VampJson::toVampResponse_Configure(j);
-
-    } else if (rr.type == RRType::Process) {
+	break;
+    case RRType::Process: 
 	rr.processResponse = VampJson::toVampResponse_Process(j);
-
-    } else if (rr.type == RRType::Finish) {
+	break;
+    case RRType::Finish:
 	rr.finishResponse = VampJson::toVampResponse_Finish(j);
+	break;
+    case RRType::NotValid:
+	break;
     }
 
     return rr;
@@ -221,16 +243,102 @@ writeResponseJson(RequestOrResponse &rr)
 {
     Json j;
 
-    if (rr.type == RRType::List) {
+    switch (rr.type) {
+
+    case RRType::List:
 	j = VampJson::fromVampResponse_List("", rr.listResponse);
-	
-    } else if (rr.type == RRType::Load) {
+	break;
+    case RRType::Load:
 	j = VampJson::fromVampResponse_Load(rr.loadResponse, rr.mapper);
+	break;
+    case RRType::Configure:
+	j = VampJson::fromVampResponse_Configure(rr.configurationResponse);
+	break;
+    case RRType::Process:
+	j = VampJson::fromVampResponse_Process(rr.processResponse);
+	break;
+    case RRType::Finish:
+	j = VampJson::fromVampResponse_Finish(rr.finishResponse);
+	break;
+    case RRType::NotValid:
+	break;
     }
 
-    //!!!
-
     cout << j.dump() << endl;
+}
+
+RequestOrResponse
+readRequestCapnp()
+{
+    RequestOrResponse rr;
+    rr.direction = RequestOrResponse::Request;
+
+    ::capnp::PackedFdMessageReader message(0); // stdin
+    VampRequest::Reader reader = message.getRoot<VampRequest>();
+    
+    rr.type = VampnProto::getRequestResponseType(reader);
+
+    switch (rr.type) {
+
+    case RRType::List:
+	VampnProto::readVampRequest_List(reader); // type check only
+	break;
+    case RRType::Load:
+	VampnProto::readVampRequest_Load(rr.loadRequest, reader);
+	break;
+    case RRType::Configure:
+	VampnProto::readVampRequest_Configure(rr.configurationRequest, reader,
+					      rr.mapper);
+	break;
+    case RRType::Process:
+	VampnProto::readVampRequest_Process(rr.processRequest, reader,
+					    rr.mapper);
+	break;
+    case RRType::Finish:
+	VampnProto::readVampRequest_Finish(rr.finishPlugin, reader,
+					   rr.mapper);
+	break;
+    case RRType::NotValid:
+	break;
+    }
+
+    return rr;
+}
+
+RequestOrResponse
+readResponseCapnp()
+{
+    RequestOrResponse rr;
+    rr.direction = RequestOrResponse::Response;
+
+    ::capnp::PackedFdMessageReader message(0); // stdin
+    VampResponse::Reader reader = message.getRoot<VampResponse>();
+    
+    rr.type = VampnProto::getRequestResponseType(reader);
+
+    switch (rr.type) {
+
+    case RRType::List:
+	VampnProto::readVampResponse_List(rr.listResponse, reader);
+	break;
+    case RRType::Load:
+	VampnProto::readVampResponse_Load(rr.loadResponse, reader, rr.mapper);
+	break;
+    case RRType::Configure:
+	VampnProto::readVampResponse_Configure(rr.configurationResponse,
+					       reader);
+	break;
+    case RRType::Process:
+	VampnProto::readVampResponse_Process(rr.processResponse, reader);
+	break;
+    case RRType::Finish:
+	VampnProto::readVampResponse_Finish(rr.finishResponse, reader);
+	break;
+    case RRType::NotValid:
+	break;
+    }
+
+    return rr;
 }
 
 RequestOrResponse
@@ -242,8 +350,14 @@ readInput(string format, RequestOrResponse::Direction direction)
 	} else {
 	    return readResponseJson();
 	}
+    } else if (format == "capnp") {
+	if (direction == RequestOrResponse::Request) {
+	    return readRequestCapnp();
+	} else {
+	    return readResponseCapnp();
+	}
     } else {
-	throw runtime_error("unknown or unimplemented format \"" + format + "\"");
+	throw runtime_error("unknown input format \"" + format + "\"");
     }
 }
 
@@ -257,7 +371,7 @@ writeOutput(string format, RequestOrResponse &rr)
 	    writeResponseJson(rr);
 	}
     } else {
-	throw runtime_error("unknown or unimplemented format \"" + format + "\"");
+	throw runtime_error("unknown output format \"" + format + "\"");
     }
 }
 
@@ -268,7 +382,7 @@ int main(int argc, char **argv)
     }
 
     string informat = "json", outformat = "json";
-    RequestOrResponse::Direction direction;
+    RequestOrResponse::Direction direction = RequestOrResponse::Request;
     bool haveDirection = false;
     
     for (int i = 1; i < argc; ++i) {
@@ -277,11 +391,11 @@ int main(int argc, char **argv)
 	bool final = (i + 1 == argc);
 	
 	if (arg == "-i") {
-	    if (informat != "" || final) usage();
+	    if (final) usage();
 	    else informat = argv[++i];
 
 	} else if (arg == "-o") {
-	    if (outformat != "" || final) usage();
+	    if (final) usage();
 	    else outformat = argv[++i];
 
 	} else if (arg == "request") {

@@ -748,6 +748,7 @@ public:
         case VampRequest::Request::Which::FINISH:
             return RRType::Finish;
         }
+        return RRType::NotValid;
     }
 
     static RRType
@@ -764,12 +765,13 @@ public:
         case VampResponse::Response::Which::FINISH:
             return RRType::Finish;
         }
+        return RRType::NotValid;
     }
     
     static void
     readVampRequest_List(const VampRequest::Reader &r) {
         if (getRequestResponseType(r) != RRType::List) {
-            throw std::runtime_error("not a list request");
+            throw std::logic_error("not a list request");
         }
     }
 
@@ -777,7 +779,7 @@ public:
     readVampResponse_List(std::vector<Vamp::HostExt::PluginStaticData> &v,
                           const VampResponse::Reader &r) {
         if (getRequestResponseType(r) != RRType::List) {
-            throw std::runtime_error("not a list response");
+            throw std::logic_error("not a list response");
         }
         v.clear();
         if (r.getSuccess()) {
@@ -789,6 +791,94 @@ public:
         }
     }
     
+    static void
+    readVampRequest_Load(Vamp::HostExt::LoadRequest &req,
+                         const VampRequest::Reader &r) {
+        if (getRequestResponseType(r) != RRType::Load) {
+            throw std::logic_error("not a load request");
+        }
+        readLoadRequest(req, r.getRequest().getLoad());
+    }
+
+    static void
+    readVampResponse_Load(Vamp::HostExt::LoadResponse &resp,
+                          const VampResponse::Reader &r,
+                          PluginHandleMapper &mapper) {
+        if (getRequestResponseType(r) != RRType::Load) {
+            throw std::logic_error("not a load response");
+        }
+        resp = {};
+        if (r.getSuccess()) {
+            readLoadResponse(resp, r.getResponse().getLoad(), mapper);
+        }
+    }
+    
+    static void
+    readVampRequest_Configure(Vamp::HostExt::ConfigurationRequest &req,
+                              const VampRequest::Reader &r,
+                              PluginHandleMapper &mapper) {
+        if (getRequestResponseType(r) != RRType::Configure) {
+            throw std::logic_error("not a configuration request");
+        }
+        readConfigurationRequest(req, r.getRequest().getConfigure(), mapper);
+    }
+
+    static void
+    readVampResponse_Configure(Vamp::HostExt::ConfigurationResponse &resp,
+                               const VampResponse::Reader &r) {
+        if (getRequestResponseType(r) != RRType::Configure) {
+            throw std::logic_error("not a configuration response");
+        }
+        resp = {};
+        if (r.getSuccess()) {
+            readConfigurationResponse(resp, r.getResponse().getConfigure());
+        }
+    }
+    
+    static void
+    readVampRequest_Process(Vamp::HostExt::ProcessRequest &req,
+                            const VampRequest::Reader &r,
+                            PluginHandleMapper &mapper) {
+        if (getRequestResponseType(r) != RRType::Process) {
+            throw std::logic_error("not a process request");
+        }
+        readProcessRequest(req, r.getRequest().getProcess(), mapper);
+    }
+
+    static void
+    readVampResponse_Process(Vamp::HostExt::ProcessResponse &resp,
+                             const VampResponse::Reader &r) {
+        if (getRequestResponseType(r) != RRType::Process) {
+            throw std::logic_error("not a process response");
+        }
+        resp = {};
+        if (r.getSuccess()) {
+            readProcessResponse(resp, r.getResponse().getProcess());
+        }
+    }
+    
+    static void
+    readVampRequest_Finish(Vamp::Plugin *&finishPlugin,
+                           const VampRequest::Reader &r,
+                           PluginHandleMapper &mapper) {
+        if (getRequestResponseType(r) != RRType::Finish) {
+            throw std::logic_error("not a finish request");
+        }
+        finishPlugin = mapper.handleToPlugin
+            (r.getRequest().getFinish().getPluginHandle());
+    }
+
+    static void
+    readVampResponse_Finish(Vamp::HostExt::ProcessResponse &resp,
+                            const VampResponse::Reader &r) {
+        if (getRequestResponseType(r) != RRType::Finish) {
+            throw std::logic_error("not a finish response");
+        }
+        resp = {};
+        if (r.getSuccess()) {
+            readProcessResponse(resp, r.getResponse().getFinish());
+        }
+    }
 };
 
 }
