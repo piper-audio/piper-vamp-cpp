@@ -308,11 +308,17 @@ public:
     }
 
     static json11::Json
-    fromFeature(const Vamp::Plugin::Feature &f) {
+    fromFeature(const Vamp::Plugin::Feature &f, bool asText) {
 
         json11::Json::object jo;
         if (f.values.size() > 0) {
-            jo["b64values"] = fromFloatBuffer(f.values.data(), f.values.size());
+            if (asText) {
+                jo["values"] = json11::Json::array(f.values.begin(),
+                                                   f.values.end());
+            } else {
+                jo["b64values"] = fromFloatBuffer(f.values.data(),
+                                                  f.values.size());
+            }
         }
         if (f.label != "") {
             jo["label"] = f.label;
@@ -353,13 +359,13 @@ public:
     }
 
     static json11::Json
-    fromFeatureSet(const Vamp::Plugin::FeatureSet &fs) {
+    fromFeatureSet(const Vamp::Plugin::FeatureSet &fs, bool asText) {
 
         json11::Json::object jo;
         for (const auto &fsi : fs) {
             std::vector<json11::Json> fj;
             for (const Vamp::Plugin::Feature &f: fsi.second) {
-                fj.push_back(fromFeature(f));
+                fj.push_back(fromFeature(f, asText));
             }
             std::stringstream sstr;
             sstr << fsi.first;
@@ -946,7 +952,7 @@ public:
         jo["type"] = "process";
         jo["success"] = true;
         jo["errorText"] = "";
-        jo["content"] = fromFeatureSet(resp.features);
+        jo["content"] = fromFeatureSet(resp.features, true);
         return json11::Json(jo);
     }
     
@@ -969,7 +975,7 @@ public:
         jo["type"] = "finish";
         jo["success"] = true;
         jo["errorText"] = "";
-        jo["content"] = fromFeatureSet(resp.features);
+        jo["content"] = fromFeatureSet(resp.features, true);
         return json11::Json(jo);
     }
 
