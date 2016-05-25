@@ -1,7 +1,8 @@
 
 CXXFLAGS	:= -Wall -Werror -g -std=c++11
-INCFLAGS	:= -Ivamp-plugin-sdk -Ijson -Icapnproto -I.
-LDFLAGS		:= -Lvamp-plugin-sdk -Wl,-Bstatic -lvamp-hostsdk -Wl,-Bdynamic -lcapnp -lkj -ldl
+INCFLAGS	:= -Ivamp-plugin-sdk -Ijson -I/usr/local/include -Icapnproto -I.
+
+LDFLAGS		:= vamp-plugin-sdk/libvamp-hostsdk.a -L/usr/local/lib -lcapnp -lkj -ldl
 
 #!!! todo: proper dependencies
 
@@ -23,7 +24,7 @@ capnproto/vamp.capnp.h:	capnproto/vamp.capnp
 	capnp compile $< -oc++
 
 o/vamp.capnp.o:	capnproto/vamp.capnp.c++ capnproto/vamp.capnp.h
-	c++ $(CXXFLAGS) -c $< -o $@
+	c++ $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
 o/json11.o:	json/json11/json11.cpp
 	c++ $(CXXFLAGS) -c $< -o $@
