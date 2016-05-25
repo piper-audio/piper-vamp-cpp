@@ -217,12 +217,12 @@ writeResponseJson(RequestOrResponse &rr)
 }
 
 RequestOrResponse
-readRequestCapnp()
+readRequestCapnp(kj::BufferedInputStreamWrapper &buffered)
 {
     RequestOrResponse rr;
     rr.direction = RequestOrResponse::Request;
 
-    ::capnp::PackedFdMessageReader message(0); // stdin
+    ::capnp::InputStreamMessageReader message(buffered);
     VampRequest::Reader reader = message.getRoot<VampRequest>();
     
     rr.type = VampnProto::getRequestResponseType(reader);
@@ -280,16 +280,16 @@ writeRequestCapnp(RequestOrResponse &rr)
 	break;
     }
 
-    writePackedMessageToFd(1, message);
+    writeMessageToFd(1, message);
 }
 
 RequestOrResponse
-readResponseCapnp()
+readResponseCapnp(kj::BufferedInputStreamWrapper &buffered)
 {
     RequestOrResponse rr;
     rr.direction = RequestOrResponse::Response;
 
-    ::capnp::PackedFdMessageReader message(0); // stdin
+    ::capnp::InputStreamMessageReader message(buffered);
     VampResponse::Reader reader = message.getRoot<VampResponse>();
     
     rr.type = VampnProto::getRequestResponseType(reader);
@@ -346,24 +346,43 @@ writeResponseCapnp(RequestOrResponse &rr)
 	break;
     }
 
-    writePackedMessageToFd(1, message);
+    writeMessageToFd(1, message);
+}
+
+RequestOrResponse
+readInputJson(RequestOrResponse::Direction direction)
+{
+    if (direction == RequestOrResponse::Request) {
+	return readRequestJson();
+    } else {
+	return readResponseJson();
+    }
+}
+
+RequestOrResponse
+readInputCapnp(RequestOrResponse::Direction direction)
+{
+    static kj::FdInputStream stream(0); // stdin
+    static kj::BufferedInputStreamWrapper buffered(stream);
+
+    if (buffered.tryGetReadBuffer() == nullptr) {
+	return {};
+    }
+    
+    if (direction == RequestOrResponse::Request) {
+	return readRequestCapnp(buffered);
+    } else {
+	return readResponseCapnp(buffered);
+    }
 }
 
 RequestOrResponse
 readInput(string format, RequestOrResponse::Direction direction)
 {
     if (format == "json") {
-	if (direction == RequestOrResponse::Request) {
-	    return readRequestJson();
-	} else {
-	    return readResponseJson();
-	}
+	return readInputJson(direction);
     } else if (format == "capnp") {
-	if (direction == RequestOrResponse::Request) {
-	    return readRequestCapnp();
-	} else {
-	    return readResponseCapnp();
-	}
+	return readInputCapnp(direction);
     } else {
 	throw runtime_error("unknown input format \"" + format + "\"");
     }

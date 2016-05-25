@@ -39,6 +39,15 @@ public:
 	    m_rplugins[p] = h;
 	}
     }
+
+    void removePlugin(int32_t h) {
+	if (m_plugins.find(h) == m_plugins.end()) {
+	    throw NotFound();
+	}
+	Plugin *p = m_plugins[h];
+	m_plugins.erase(h);
+	m_rplugins.erase(p);
+    }
     
     int32_t pluginToHandle(Plugin *p) {
 	if (m_rplugins.find(p) == m_rplugins.end()) {
@@ -54,19 +63,19 @@ public:
 	return m_plugins[h];
     }
 
-    bool isInitialised(int32_t h) {
-	return m_initialisedPlugins.find(h) != m_initialisedPlugins.end();
+    bool isConfigured(int32_t h) {
+	return m_configuredPlugins.find(h) != m_configuredPlugins.end();
     }
 
-    void markInitialised(int32_t h) {
-	m_initialisedPlugins.insert(h);
+    void markConfigured(int32_t h) {
+	m_configuredPlugins.insert(h);
     }
     
 private:
     int32_t m_nextHandle; // NB plugin handle type must fit in JSON number
     map<uint32_t, Plugin *> m_plugins;
     map<Plugin *, uint32_t> m_rplugins;
-    set<uint32_t> m_initialisedPlugins;
+    set<uint32_t> m_configuredPlugins;
 };
 
 static Mapper mapper;
@@ -77,7 +86,15 @@ readRequestCapnp()
     RequestOrResponse rr;
     rr.direction = RequestOrResponse::Request;
 
-    ::capnp::PackedFdMessageReader message(0); // stdin
+    static kj::FdInputStream stream(0); // stdin
+    static kj::BufferedInputStreamWrapper buffered(stream);
+
+    if (buffered.tryGetReadBuffer() == nullptr) {
+	rr.type = RRType::NotValid;
+	return rr;
+    }
+
+    ::capnp::InputStreamMessageReader message(buffered);
     VampRequest::Reader reader = message.getRoot<VampRequest>();
     
     rr.type = VampnProto::getRequestResponseType(reader);
@@ -134,7 +151,7 @@ writeResponseCapnp(RequestOrResponse &rr)
 	break;
     }
 
-    writePackedMessageToFd(1, message);
+    writeMessageToFd(1, message);
 }
 
 RequestOrResponse
@@ -161,9 +178,55 @@ processRequest(const RequestOrResponse &request)
 	}
 	break;
 	
-    default:
-	//!!!
-	;
+    case RRType::Configure:
+    {
+	auto h = mapper.pluginToHandle(request.configurationRequest.plugin);
+	if (mapper.isConfigured(h)) {
+	    throw runtime_error("plugin has already been configured");
+	}
+
+	response.configurationResponse =
+	    loader->configurePlugin(request.configurationRequest);
+	
+	if (!response.configurationResponse.outputs.empty()) {
+	    mapper.markConfigured(h);
+	    response.success = true;
+	}
+	break;
+    }
+
+    case RRType::Process:
+    {
+	auto &preq = request.processRequest;
+	int channels = int(preq.inputBuffers.size());
+	const float **fbuffers = new const float *[channels];
+	for (int i = 0; i < channels; ++i) {
+	    fbuffers[i] = preq.inputBuffers[i].data();
+	}
+
+	response.processResponse.features =
+	    preq.plugin->process(fbuffers, preq.timestamp);
+	response.success = true;
+
+	delete[] fbuffers;
+	break;
+    }
+
+    case RRType::Finish:
+    {
+	auto h = mapper.pluginToHandle(request.finishPlugin);
+
+	response.finishResponse.features =
+	    request.finishPlugin->getRemainingFeatures();
+	    
+	mapper.removePlugin(h);
+	delete request.finishPlugin;
+	response.success = true;
+	break;
+    }
+
+    case RRType::NotValid:
+	break;
     }
     
     return response;
@@ -181,18 +244,27 @@ int main(int argc, char **argv)
 
 	    RequestOrResponse request = readRequestCapnp();
 
+	    cerr << "vampipe-server: request received, of type "
+		 << int(request.type)
+		 << endl;
+	    
 	    // NotValid without an exception indicates EOF:
-
-	    //!!! not yet it doesn't -- have to figure out how to
-	    //!!! handle this with capnp
-	    if (request.type == RRType::NotValid) break;
+	    if (request.type == RRType::NotValid) {
+		cerr << "vampipe-server: eof reached" << endl;
+		break;
+	    }
 
 	    RequestOrResponse response = processRequest(request);
+
+	    cerr << "vampipe-server: request processed, writing response"
+		 << endl;
 	    
 	    writeResponseCapnp(response);
+
+	    cerr << "vampipe-server: response written" << endl;
 	    
 	} catch (std::exception &e) {
-	    cerr << "Error: " << e.what() << endl;
+	    cerr << "vampipe-server: error: " << e.what() << endl;
 	    exit(1);
 	}
     }
