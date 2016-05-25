@@ -46,6 +46,10 @@ public:
 	}
 	Plugin *p = m_plugins[h];
 	m_plugins.erase(h);
+	if (isConfigured(h)) {
+	    m_configuredPlugins.erase(h);
+	    m_channelCounts.erase(h);
+	}
 	m_rplugins.erase(p);
     }
     
@@ -67,8 +71,24 @@ public:
 	return m_configuredPlugins.find(h) != m_configuredPlugins.end();
     }
 
-    void markConfigured(int32_t h) {
+    void markConfigured(int32_t h, int channelCount, int blockSize) {
 	m_configuredPlugins.insert(h);
+	m_channelCounts[h] = channelCount;
+	m_blockSizes[h] = blockSize;
+    }
+
+    int getChannelCount(int32_t h) {
+	if (m_channelCounts.find(h) == m_channelCounts.end()) {
+	    throw NotFound();
+	}
+	return m_channelCounts[h];
+    }
+
+    int getBlockSize(int32_t h) {
+	if (m_blockSizes.find(h) == m_blockSizes.end()) {
+	    throw NotFound();
+	}
+	return m_blockSizes[h];
     }
     
 private:
@@ -76,6 +96,8 @@ private:
     map<uint32_t, Plugin *> m_plugins;
     map<Plugin *, uint32_t> m_rplugins;
     set<uint32_t> m_configuredPlugins;
+    map<uint32_t, int> m_channelCounts;
+    map<uint32_t, int> m_blockSizes;
 };
 
 static Mapper mapper;
@@ -155,7 +177,7 @@ writeResponseCapnp(RequestOrResponse &rr)
 }
 
 RequestOrResponse
-processRequest(const RequestOrResponse &request)
+handleRequest(const RequestOrResponse &request)
 {
     RequestOrResponse response;
     response.direction = RequestOrResponse::Response;
@@ -180,16 +202,17 @@ processRequest(const RequestOrResponse &request)
 	
     case RRType::Configure:
     {
-	auto h = mapper.pluginToHandle(request.configurationRequest.plugin);
+	auto &creq = request.configurationRequest;
+	auto h = mapper.pluginToHandle(creq.plugin);
 	if (mapper.isConfigured(h)) {
 	    throw runtime_error("plugin has already been configured");
 	}
 
-	response.configurationResponse =
-	    loader->configurePlugin(request.configurationRequest);
+	response.configurationResponse = loader->configurePlugin(creq);
 	
 	if (!response.configurationResponse.outputs.empty()) {
-	    mapper.markConfigured(h);
+	    mapper.markConfigured
+		(h, creq.configuration.channelCount, creq.configuration.blockSize);
 	    response.success = true;
 	}
 	break;
@@ -198,9 +221,22 @@ processRequest(const RequestOrResponse &request)
     case RRType::Process:
     {
 	auto &preq = request.processRequest;
+	auto h = mapper.pluginToHandle(preq.plugin);
+	if (!mapper.isConfigured(h)) {
+	    throw runtime_error("plugin has not been configured");
+	}
+
 	int channels = int(preq.inputBuffers.size());
+	if (channels != mapper.getChannelCount(h)) {
+	    throw runtime_error("wrong number of channels supplied to process");
+	}
+		
 	const float **fbuffers = new const float *[channels];
 	for (int i = 0; i < channels; ++i) {
+	    if (int(preq.inputBuffers[i].size()) != mapper.getBlockSize(h)) {
+		delete[] fbuffers;
+		throw runtime_error("wrong block size supplied to process");
+	    }
 	    fbuffers[i] = preq.inputBuffers[i].data();
 	}
 
@@ -254,9 +290,9 @@ int main(int argc, char **argv)
 		break;
 	    }
 
-	    RequestOrResponse response = processRequest(request);
+	    RequestOrResponse response = handleRequest(request);
 
-	    cerr << "vampipe-server: request processed, writing response"
+	    cerr << "vampipe-server: request handled, writing response"
 		 << endl;
 	    
 	    writeResponseCapnp(response);
