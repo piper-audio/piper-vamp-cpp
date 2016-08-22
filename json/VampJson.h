@@ -710,7 +710,7 @@ public:
 
     static json11::Json
     fromLoadResponse(const Vamp::HostExt::LoadResponse &resp,
-                     PluginHandleMapper &mapper) {
+                     const PluginHandleMapper &mapper) {
 
         json11::Json::object jo;
         jo["pluginHandle"] = double(mapper.pluginToHandle(resp.plugin));
@@ -722,7 +722,7 @@ public:
 
     static Vamp::HostExt::LoadResponse
     toLoadResponse(json11::Json j,
-                   PluginHandleMapper &mapper) {
+                   const PluginHandleMapper &mapper) {
 
         std::string err;
 
@@ -742,7 +742,7 @@ public:
 
     static json11::Json
     fromConfigurationRequest(const Vamp::HostExt::ConfigurationRequest &cr,
-                             PluginHandleMapper &mapper) {
+                             const PluginHandleMapper &mapper) {
 
         json11::Json::object jo;
 
@@ -754,7 +754,7 @@ public:
 
     static Vamp::HostExt::ConfigurationRequest
     toConfigurationRequest(json11::Json j,
-                           PluginHandleMapper &mapper) {
+                           const PluginHandleMapper &mapper) {
 
         std::string err;
 
@@ -802,7 +802,7 @@ public:
 
     static json11::Json
     fromProcessRequest(const Vamp::HostExt::ProcessRequest &r,
-                       PluginHandleMapper &mapper) {
+                       const PluginHandleMapper &mapper) {
 
         json11::Json::object jo;
         jo["pluginHandle"] = mapper.pluginToHandle(r.plugin);
@@ -824,7 +824,7 @@ public:
     }
 
     static Vamp::HostExt::ProcessRequest
-    toProcessRequest(json11::Json j, PluginHandleMapper &mapper) {
+    toProcessRequest(json11::Json j, const PluginHandleMapper &mapper) {
 
         std::string err;
 
@@ -904,7 +904,7 @@ public:
 
     static json11::Json
     fromVampResponse_Load(const Vamp::HostExt::LoadResponse &resp,
-                          PluginHandleMapper &mapper) {
+                          const PluginHandleMapper &mapper) {
 
         json11::Json::object jo;
         jo["type"] = "load";
@@ -916,7 +916,7 @@ public:
 
     static json11::Json
     fromVampRequest_Configure(const Vamp::HostExt::ConfigurationRequest &req,
-                              PluginHandleMapper &mapper) {
+                              const PluginHandleMapper &mapper) {
 
         json11::Json::object jo;
         jo["type"] = "configure";
@@ -937,7 +937,7 @@ public:
     
     static json11::Json
     fromVampRequest_Process(const Vamp::HostExt::ProcessRequest &req,
-                            PluginHandleMapper &mapper) {
+                            const PluginHandleMapper &mapper) {
 
         json11::Json::object jo;
         jo["type"] = "process";
@@ -958,7 +958,7 @@ public:
     
     static json11::Json
     fromVampRequest_Finish(Vamp::Plugin *p,
-                           PluginHandleMapper &mapper) {
+                           const PluginHandleMapper &mapper) {
 
         json11::Json::object jo;
         jo["type"] = "finish";
@@ -1046,7 +1046,7 @@ public:
     }
     
     static Vamp::HostExt::LoadResponse
-    toVampResponse_Load(json11::Json j, PluginHandleMapper &mapper) {
+    toVampResponse_Load(json11::Json j, const PluginHandleMapper &mapper) {
         
         Vamp::HostExt::LoadResponse resp;
         if (successful(j)) {
@@ -1056,7 +1056,7 @@ public:
     }
     
     static Vamp::HostExt::ConfigurationRequest
-    toVampRequest_Configure(json11::Json j, PluginHandleMapper &mapper) {
+    toVampRequest_Configure(json11::Json j, const PluginHandleMapper &mapper) {
         
         checkTypeField(j, "configure");
         return toConfigurationRequest(j["content"], mapper);
@@ -1073,7 +1073,7 @@ public:
     }
     
     static Vamp::HostExt::ProcessRequest
-    toVampRequest_Process(json11::Json j, PluginHandleMapper &mapper) {
+    toVampRequest_Process(json11::Json j, const PluginHandleMapper &mapper) {
         
         checkTypeField(j, "process");
         return toProcessRequest(j["content"], mapper);
@@ -1090,7 +1090,7 @@ public:
     }
     
     static Vamp::Plugin *
-    toVampRequest_Finish(json11::Json j, PluginHandleMapper &mapper) {
+    toVampRequest_Finish(json11::Json j, const PluginHandleMapper &mapper) {
         
         checkTypeField(j, "finish");
         return mapper.handleToPlugin(j["content"]["pluginHandle"].int_value());
