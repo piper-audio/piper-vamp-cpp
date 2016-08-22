@@ -49,8 +49,8 @@ public:
         NotFound() : runtime_error("plugin or handle not found in mapper") { }
     };
     
-    virtual int32_t pluginToHandle(Vamp::Plugin *) = 0; // may throw NotFound
-    virtual Vamp::Plugin *handleToPlugin(int32_t)  = 0; // may throw NotFound
+    virtual int32_t pluginToHandle(Vamp::Plugin *) const = 0; // may throw NotFound
+    virtual Vamp::Plugin *handleToPlugin(int32_t)  const = 0; // may throw NotFound
 };
 
 }

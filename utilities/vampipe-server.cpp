@@ -2,6 +2,7 @@
 #include "VampnProto.h"
 
 #include "bits/RequestOrResponse.h"
+#include "bits/CountingPluginHandleMapper.h"
 
 #include <iostream>
 #include <sstream>
@@ -27,80 +28,7 @@ void usage()
     exit(2);
 }
 
-class Mapper : public PluginHandleMapper
-{
-public:
-    Mapper() : m_nextHandle(1) { }
-
-    void addPlugin(Plugin *p) {
-	if (m_rplugins.find(p) == m_rplugins.end()) {
-	    int32_t h = m_nextHandle++;
-	    m_plugins[h] = p;
-	    m_rplugins[p] = h;
-	}
-    }
-
-    void removePlugin(int32_t h) {
-	if (m_plugins.find(h) == m_plugins.end()) {
-	    throw NotFound();
-	}
-	Plugin *p = m_plugins[h];
-	m_plugins.erase(h);
-	if (isConfigured(h)) {
-	    m_configuredPlugins.erase(h);
-	    m_channelCounts.erase(h);
-	}
-	m_rplugins.erase(p);
-    }
-    
-    int32_t pluginToHandle(Plugin *p) {
-	if (m_rplugins.find(p) == m_rplugins.end()) {
-	    throw NotFound();
-	}
-	return m_rplugins[p];
-    }
-    
-    Plugin *handleToPlugin(int32_t h) {
-	if (m_plugins.find(h) == m_plugins.end()) {
-	    throw NotFound();
-	}
-	return m_plugins[h];
-    }
-
-    bool isConfigured(int32_t h) {
-	return m_configuredPlugins.find(h) != m_configuredPlugins.end();
-    }
-
-    void markConfigured(int32_t h, int channelCount, int blockSize) {
-	m_configuredPlugins.insert(h);
-	m_channelCounts[h] = channelCount;
-	m_blockSizes[h] = blockSize;
-    }
-
-    int getChannelCount(int32_t h) {
-	if (m_channelCounts.find(h) == m_channelCounts.end()) {
-	    throw NotFound();
-	}
-	return m_channelCounts[h];
-    }
-
-    int getBlockSize(int32_t h) {
-	if (m_blockSizes.find(h) == m_blockSizes.end()) {
-	    throw NotFound();
-	}
-	return m_blockSizes[h];
-    }
-    
-private:
-    int32_t m_nextHandle; // NB plugin handle type must fit in JSON number
-    map<uint32_t, Plugin *> m_plugins;
-    map<Plugin *, uint32_t> m_rplugins;
-    set<uint32_t> m_configuredPlugins;
-    map<uint32_t, int> m_channelCounts;
-    map<uint32_t, int> m_blockSizes;
-};
-
-static Mapper mapper;
+static CountingPluginHandleMapper mapper;
 
 RequestOrResponse
 readRequestCapnp()

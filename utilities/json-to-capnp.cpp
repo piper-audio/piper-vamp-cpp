@@ -6,6 +6,8 @@
 #include <sstream>
 #include <stdexcept>
 
+#include "bits/PreservingPluginHandleMapper.h"
+
 using namespace std;
 using namespace json11;
 using namespace vampipe;
@@ -34,27 +36,6 @@ json_input(string input)
     }
     return j;
 }
-
-class PreservingPluginHandleMapper : public PluginHandleMapper
-{
-public:
-    PreservingPluginHandleMapper() : m_handle(0), m_plugin(0) { }
-
-    virtual int32_t pluginToHandle(Vamp::Plugin *p) {
-	if (p == m_plugin) return m_handle;
-	else throw NotFound();
-    }
-
-    virtual Vamp::Plugin *handleToPlugin(int32_t h) {
-	m_handle = h;
-	m_plugin = reinterpret_cast<Vamp::Plugin *>(h);
-	return m_plugin;
-    }
-
-private:
-    int32_t m_handle;
-    Vamp::Plugin *m_plugin;
-};
 
 void 
 handle_input(::capnp::MallocMessageBuilder &message, string input)

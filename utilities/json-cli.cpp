@@ -1,5 +1,6 @@
 
 #include "VampJson.h"
+#include "bits/CountingPluginHandleMapper.h"
 
 #include <iostream>
 #include <sstream>
@@ -14,50 +15,7 @@ using namespace Vamp::HostExt;
 using namespace json11;
 using namespace vampipe;
 
-class Mapper : public PluginHandleMapper
-{
-public:
-    Mapper() : m_nextHandle(1) { }
-
-    void addPlugin(Plugin *p) {
-	if (m_rplugins.find(p) == m_rplugins.end()) {
-	    int32_t h = m_nextHandle++;
-	    m_plugins[h] = p;
-	    m_rplugins[p] = h;
-	}
-    }
-    
-    int32_t pluginToHandle(Plugin *p) {
-	if (m_rplugins.find(p) == m_rplugins.end()) {
-	    throw NotFound();
-	}
-	return m_rplugins[p];
-    }
-    
-    Plugin *handleToPlugin(int32_t h) {
-	if (m_plugins.find(h) == m_plugins.end()) {
-	    throw NotFound();
-	}
-	return m_plugins[h];
-    }
-
-    bool isInitialised(int32_t h) {
-	return m_initialisedPlugins.find(h) != m_initialisedPlugins.end();
-    }
-
-    void markInitialised(int32_t h) {
-	m_initialisedPlugins.insert(h);
-    }
-    
-private:
-//!!! + mutex
-    int32_t m_nextHandle; // plugin handle type must fit in JSON number
-    map<uint32_t, Plugin *> m_plugins;
-    map<Plugin *, uint32_t> m_rplugins;
-    set<uint32_t> m_initialisedPlugins;
-};
-
-static Mapper mapper;
+static CountingPluginHandleMapper mapper;
 
 Vamp::HostExt::LoadResponse
 loadPlugin(json11::Json j) {
@@ -133,8 +91,8 @@ handle_configure(Json j)
 
     int32_t handle = j["pluginHandle"].int_value();
 
-    if (mapper.isInitialised(handle)) {
-	throw VampJson::Failure("plugin has already been initialised");
+    if (mapper.isConfigured(handle)) {
+	throw VampJson::Failure("plugin has already been configured");
     }
 
     Plugin *plugin = mapper.handleToPlugin(handle);
@@ -143,7 +101,7 @@ handle_configure(Json j)
 
     auto response = configurePlugin(plugin, config);
 
-    mapper.markInitialised(handle);
+    mapper.markConfigured(handle, 0, 0); //!!!
 
     cerr << "Configured and initialised plugin " << handle << endl;
 
