@@ -979,6 +979,23 @@ public:
         return json11::Json(jo);
     }
 
+    static json11::Json
+    fromException(const std::exception &e, RRType responseType) {
+
+        json11::Json::object jo;
+
+        if (responseType == RRType::List) jo["type"] = "list";
+        else if (responseType == RRType::Load) jo["type"] = "load";
+        else if (responseType == RRType::Configure) jo["type"] = "configure";
+        else if (responseType == RRType::Process) jo["type"] = "process";
+        else if (responseType == RRType::Finish) jo["type"] = "finish";
+        else jo["type"] = "invalid";
+
+        jo["success"] = false;
+        jo["errorText"] = std::string("exception caught: ") + e.what();
+        return json11::Json(jo);
+    }
+    
 private: // go private briefly for a couple of helper functions
     
     static void
