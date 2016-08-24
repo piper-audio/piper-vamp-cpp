@@ -983,16 +983,19 @@ public:
     fromException(const std::exception &e, RRType responseType) {
 
         json11::Json::object jo;
+        std::string type;
 
-        if (responseType == RRType::List) jo["type"] = "list";
-        else if (responseType == RRType::Load) jo["type"] = "load";
-        else if (responseType == RRType::Configure) jo["type"] = "configure";
-        else if (responseType == RRType::Process) jo["type"] = "process";
-        else if (responseType == RRType::Finish) jo["type"] = "finish";
-        else jo["type"] = "invalid";
+        if (responseType == RRType::List) type = "list";
+        else if (responseType == RRType::Load) type = "load";
+        else if (responseType == RRType::Configure) type = "configure";
+        else if (responseType == RRType::Process) type = "process";
+        else if (responseType == RRType::Finish) type = "finish";
+        else type = "invalid";
 
+        jo["type"] = type;
         jo["success"] = false;
-        jo["errorText"] = std::string("exception caught: ") + e.what();
+        jo["errorText"] = std::string("exception caught: ") +
+            type + " request: " + e.what();
         return json11::Json(jo);
     }
     
