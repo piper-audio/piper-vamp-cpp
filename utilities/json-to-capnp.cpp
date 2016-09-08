@@ -45,6 +45,7 @@ handle_input(::capnp::MallocMessageBuilder &message, string input)
     Json j = json_input(input);
     string type = j["type"].string_value();
     Json payload = j["payload"];
+    VampJson::BufferSerialisation serialisation;
 
     if (type == "configurationrequest") {
 	auto req = message.initRoot<ConfigurationRequest>();
@@ -60,12 +61,12 @@ handle_input(::capnp::MallocMessageBuilder &message, string input)
     } else if (type == "feature") {
 	auto f = message.initRoot<Feature>();
 	VampnProto::buildFeature
-	    (f, VampJson::toFeature(payload));
+	    (f, VampJson::toFeature(payload, serialisation));
 
     } else if (type == "featureset") {
 	auto fs = message.initRoot<FeatureSet>();
 	VampnProto::buildFeatureSet
-	    (fs, VampJson::toFeatureSet(payload));
+	    (fs, VampJson::toFeatureSet(payload, serialisation));
 
     } else if (type == "loadrequest") {
 	auto req = message.initRoot<LoadRequest>();
@@ -102,7 +103,7 @@ handle_input(::capnp::MallocMessageBuilder &message, string input)
 	auto p = message.initRoot<ProcessRequest>();
 	PreservingPluginHandleMapper mapper;
 	VampnProto::buildProcessRequest
-	    (p, VampJson::toProcessRequest(payload, mapper), mapper);
+	    (p, VampJson::toProcessRequest(payload, mapper, serialisation), mapper);
 
     } else if (type == "realtime") {
 	auto b = message.initRoot<RealTime>();

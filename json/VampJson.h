@@ -59,6 +59,12 @@ namespace vampipe {
 class VampJson
 {
 public:
+    /// Serialisation format for arrays of floats (process input and feature values)
+    enum class BufferSerialisation {
+        Text,  // default JSON serialisation of values in array form
+        Base64 // base64-encoded string of the raw data as packed ieee 32-bit floats
+    };
+    
     class Failure : virtual public std::runtime_error {
     public:
         Failure(std::string s) : runtime_error(s) { }
@@ -308,11 +314,12 @@ public:
     }
 
     static json11::Json
-    fromFeature(const Vamp::Plugin::Feature &f, bool asText) {
+    fromFeature(const Vamp::Plugin::Feature &f,
+                BufferSerialisation serialisation) {
 
         json11::Json::object jo;
         if (f.values.size() > 0) {
-            if (asText) {
+            if (serialisation == BufferSerialisation::Text) {
                 jo["values"] = json11::Json::array(f.values.begin(),
                                                    f.values.end());
             } else {
@@ -333,7 +340,8 @@ public:
     }
 
     static Vamp::Plugin::Feature
-    toFeature(json11::Json j) {
+    toFeature(json11::Json j,
+              BufferSerialisation &serialisation) {
 
         Vamp::Plugin::Feature f;
         if (!j.is_object()) {
@@ -349,23 +357,26 @@ public:
         }
         if (j["b64values"].is_string()) {
             f.values = toFloatBuffer(j["b64values"].string_value());
+            serialisation = BufferSerialisation::Base64;
         } else if (j["values"].is_array()) {
             for (auto v : j["values"].array_items()) {
                 f.values.push_back(v.number_value());
             }
+            serialisation = BufferSerialisation::Text;
         }
         f.label = j["label"].string_value();
         return f;
     }
 
     static json11::Json
-    fromFeatureSet(const Vamp::Plugin::FeatureSet &fs, bool asText) {
+    fromFeatureSet(const Vamp::Plugin::FeatureSet &fs,
+                   BufferSerialisation serialisation) {
 
         json11::Json::object jo;
         for (const auto &fsi : fs) {
             std::vector<json11::Json> fj;
             for (const Vamp::Plugin::Feature &f: fsi.second) {
-                fj.push_back(fromFeature(f, asText));
+                fj.push_back(fromFeature(f, serialisation));
             }
             std::stringstream sstr;
             sstr << fsi.first;
@@ -376,20 +387,21 @@ public:
     }
 
     static Vamp::Plugin::FeatureList
-    toFeatureList(json11::Json j) {
+    toFeatureList(json11::Json j,
+                  BufferSerialisation &serialisation) {
 
         Vamp::Plugin::FeatureList fl;
         if (!j.is_array()) {
             throw Failure("array expected for feature list");
         }
         for (const json11::Json &fj : j.array_items()) {
-            fl.push_back(toFeature(fj));
+            fl.push_back(toFeature(fj, serialisation));
         }
         return fl;
     }
 
     static Vamp::Plugin::FeatureSet
-    toFeatureSet(json11::Json j) {
+    toFeatureSet(json11::Json j, BufferSerialisation &serialisation) {
 
         Vamp::Plugin::FeatureSet fs;
         if (!j.is_object()) {
@@ -402,7 +414,7 @@ public:
             if (n < 0 || fs.find(n) != fs.end() || count < nstr.size()) {
                 throw Failure("invalid or duplicate numerical index for output");
             }
-            fs[n] = toFeatureList(entry.second);
+            fs[n] = toFeatureList(entry.second, serialisation);
         }
         return fs;
     }
@@ -802,7 +814,8 @@ public:
 
     static json11::Json
     fromProcessRequest(const Vamp::HostExt::ProcessRequest &r,
-                       const PluginHandleMapper &mapper) {
+                       const PluginHandleMapper &mapper,
+                       BufferSerialisation serialisation) {
 
         json11::Json::object jo;
         jo["pluginHandle"] = mapper.pluginToHandle(r.plugin);
@@ -813,8 +826,13 @@ public:
         json11::Json::array chans;
         for (size_t i = 0; i < r.inputBuffers.size(); ++i) {
             json11::Json::object c;
-            c["b64values"] = fromFloatBuffer(r.inputBuffers[i].data(),
-                                             r.inputBuffers[i].size());
+            if (serialisation == BufferSerialisation::Text) {
+                c["values"] = json11::Json::array(r.inputBuffers[i].begin(),
+                                                  r.inputBuffers[i].end());
+            } else {
+                c["b64values"] = fromFloatBuffer(r.inputBuffers[i].data(),
+                                                 r.inputBuffers[i].size());
+            }
             chans.push_back(c);
         }
         io["inputBuffers"] = chans;
@@ -824,7 +842,9 @@ public:
     }
 
     static Vamp::HostExt::ProcessRequest
-    toProcessRequest(json11::Json j, const PluginHandleMapper &mapper) {
+    toProcessRequest(json11::Json j,
+                     const PluginHandleMapper &mapper,
+                     BufferSerialisation &serialisation) {
 
         std::string err;
 
@@ -848,15 +868,20 @@ public:
         r.timestamp = toRealTime(input["timestamp"]);
 
         for (auto a: input["inputBuffers"].array_items()) {
+
             if (a["b64values"].is_string()) {
-                r.inputBuffers.push_back(toFloatBuffer
-                                         (a["b64values"].string_value()));
+                std::vector<float> buf = toFloatBuffer(a["b64values"].string_value());
+                r.inputBuffers.push_back(buf);
+                serialisation = BufferSerialisation::Base64;
+
             } else if (a["values"].is_array()) {
                 std::vector<float> buf;
                 for (auto v : a["values"].array_items()) {
                     buf.push_back(v.number_value());
                 }
                 r.inputBuffers.push_back(buf);
+                serialisation = BufferSerialisation::Text;
+
             } else {
                 throw Failure("expected values or b64values in inputBuffers object");
             }
@@ -937,22 +962,24 @@ public:
     
     static json11::Json
     fromVampRequest_Process(const Vamp::HostExt::ProcessRequest &req,
-                            const PluginHandleMapper &mapper) {
+                            const PluginHandleMapper &mapper,
+                            BufferSerialisation serialisation) {
 
         json11::Json::object jo;
         jo["type"] = "process";
-        jo["content"] = fromProcessRequest(req, mapper);
+        jo["content"] = fromProcessRequest(req, mapper, serialisation);
         return json11::Json(jo);
     }    
 
     static json11::Json
-    fromVampResponse_Process(const Vamp::HostExt::ProcessResponse &resp) {
+    fromVampResponse_Process(const Vamp::HostExt::ProcessResponse &resp,
+                             BufferSerialisation serialisation) {
         
         json11::Json::object jo;
         jo["type"] = "process";
         jo["success"] = true;
         jo["errorText"] = "";
-        jo["content"] = fromFeatureSet(resp.features, true);
+        jo["content"] = fromFeatureSet(resp.features, serialisation);
         return json11::Json(jo);
     }
     
@@ -969,13 +996,14 @@ public:
     }    
     
     static json11::Json
-    fromVampResponse_Finish(const Vamp::HostExt::ProcessResponse &resp) {
+    fromVampResponse_Finish(const Vamp::HostExt::ProcessResponse &resp,
+                            BufferSerialisation serialisation) {
 
         json11::Json::object jo;
         jo["type"] = "finish";
         jo["success"] = true;
         jo["errorText"] = "";
-        jo["content"] = fromFeatureSet(resp.features, true);
+        jo["content"] = fromFeatureSet(resp.features, serialisation);
         return json11::Json(jo);
     }
 
@@ -1039,7 +1067,7 @@ public:
                           type + "\"");
 	}
     }
-    
+
     static void
     toVampRequest_List(json11::Json j) {
         
@@ -1093,18 +1121,19 @@ public:
     }
     
     static Vamp::HostExt::ProcessRequest
-    toVampRequest_Process(json11::Json j, const PluginHandleMapper &mapper) {
+    toVampRequest_Process(json11::Json j, const PluginHandleMapper &mapper,
+                          BufferSerialisation &serialisation) {
         
         checkTypeField(j, "process");
-        return toProcessRequest(j["content"], mapper);
+        return toProcessRequest(j["content"], mapper, serialisation);
     }
     
     static Vamp::HostExt::ProcessResponse
-    toVampResponse_Process(json11::Json j) {
+    toVampResponse_Process(json11::Json j, BufferSerialisation &serialisation) {
         
         Vamp::HostExt::ProcessResponse resp;
         if (successful(j)) {
-            resp.features = toFeatureSet(j["content"]);
+            resp.features = toFeatureSet(j["content"], serialisation);
         }
         return resp;
     }
@@ -1117,11 +1146,11 @@ public:
     }
     
     static Vamp::HostExt::ProcessResponse
-    toVampResponse_Finish(json11::Json j) {
+    toVampResponse_Finish(json11::Json j, BufferSerialisation &serialisation) {
         
         Vamp::HostExt::ProcessResponse resp;
         if (successful(j)) {
-            resp.features = toFeatureSet(j["content"]);
+            resp.features = toFeatureSet(j["content"], serialisation);
         }
         return resp;
     }

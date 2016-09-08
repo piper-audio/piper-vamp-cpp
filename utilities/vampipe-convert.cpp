@@ -24,11 +24,14 @@ void usage()
 	"       <informat>: the format to read from stdin\n"
 	"           (\"json\" or \"capnp\", default is \"json\")\n"
 	"       <outformat>: the format to convert to and write to stdout\n"
-	"           (\"json\" or \"capnp\", default is \"json\")\n"
-	"       request|response: whether to expect Vamp request or response messages\n\n"
+	"           (\"json\", \"json-b64\" or \"capnp\", default is \"json\")\n"
+	"       request|response: whether messages are Vamp request or response type\n\n"
 	"If <informat> and <outformat> differ, convert from <informat> to <outformat>.\n"
 	"If <informat> and <outformat> are the same, just check validity of incoming\n"
-	"messages and pass them to output.\n\n";
+	"messages and pass them to output.\n\n"
+	"Specifying \"json-b64\" as output format forces base64 encoding for process and\n"
+	"feature blocks, unlike the \"json\" output format which uses text encoding.\n"
+	"The \"json\" input format accepts either.\n\n";
 
     exit(2);
 }
@@ -93,6 +96,7 @@ readRequestJson()
     Json j = convertRequestJson(input);
 
     rr.type = VampJson::getRequestResponseType(j);
+    VampJson::BufferSerialisation serialisation = VampJson::BufferSerialisation::Text;
 
     switch (rr.type) {
 
@@ -106,7 +110,7 @@ readRequestJson()
 	rr.configurationRequest = VampJson::toVampRequest_Configure(j, mapper);
 	break;
     case RRType::Process:
-	rr.processRequest = VampJson::toVampRequest_Process(j, mapper);
+	rr.processRequest = VampJson::toVampRequest_Process(j, mapper, serialisation);
 	break;
     case RRType::Finish:
 	rr.finishPlugin = VampJson::toVampRequest_Finish(j, mapper);
@@ -119,7 +123,7 @@ readRequestJson()
 }
 
 void
-writeRequestJson(RequestOrResponse &rr)
+writeRequestJson(RequestOrResponse &rr, bool useBase64)
 {
     Json j;
 
@@ -135,7 +139,11 @@ writeRequestJson(RequestOrResponse &rr)
 	j = VampJson::fromVampRequest_Configure(rr.configurationRequest, mapper);
 	break;
     case RRType::Process:
-	j = VampJson::fromVampRequest_Process(rr.processRequest, mapper);
+	j = VampJson::fromVampRequest_Process
+	    (rr.processRequest, mapper,
+	     useBase64 ?
+	     VampJson::BufferSerialisation::Base64 :
+	     VampJson::BufferSerialisation::Text);
 	break;
     case RRType::Finish:
 	j = VampJson::fromVampRequest_Finish(rr.finishPlugin, mapper);
@@ -162,6 +170,7 @@ readResponseJson()
     Json j = convertResponseJson(input);
 
     rr.type = VampJson::getRequestResponseType(j);
+    VampJson::BufferSerialisation serialisation = VampJson::BufferSerialisation::Text;
 
     switch (rr.type) {
 
@@ -175,10 +184,10 @@ readResponseJson()
 	rr.configurationResponse = VampJson::toVampResponse_Configure(j);
 	break;
     case RRType::Process: 
-	rr.processResponse = VampJson::toVampResponse_Process(j);
+	rr.processResponse = VampJson::toVampResponse_Process(j, serialisation);
 	break;
     case RRType::Finish:
-	rr.finishResponse = VampJson::toVampResponse_Finish(j);
+	rr.finishResponse = VampJson::toVampResponse_Finish(j, serialisation);
 	break;
     case RRType::NotValid:
 	break;
@@ -188,7 +197,7 @@ readResponseJson()
 }
 
 void
-writeResponseJson(RequestOrResponse &rr)
+writeResponseJson(RequestOrResponse &rr, bool useBase64)
 {
     Json j;
 
@@ -204,10 +213,18 @@ writeResponseJson(RequestOrResponse &rr)
 	j = VampJson::fromVampResponse_Configure(rr.configurationResponse);
 	break;
     case RRType::Process:
-	j = VampJson::fromVampResponse_Process(rr.processResponse);
+	j = VampJson::fromVampResponse_Process
+	    (rr.processResponse,
+	     useBase64 ?
+	     VampJson::BufferSerialisation::Base64 :
+	     VampJson::BufferSerialisation::Text);
 	break;
     case RRType::Finish:
-	j = VampJson::fromVampResponse_Finish(rr.finishResponse);
+	j = VampJson::fromVampResponse_Finish
+	    (rr.finishResponse,
+	     useBase64 ?
+	     VampJson::BufferSerialisation::Base64 :
+	     VampJson::BufferSerialisation::Text);
 	break;
     case RRType::NotValid:
 	break;
@@ -393,9 +410,15 @@ writeOutput(string format, RequestOrResponse &rr)
 {
     if (format == "json") {
 	if (rr.direction == RequestOrResponse::Request) {
-	    writeRequestJson(rr);
+	    writeRequestJson(rr, false);
 	} else {
-	    writeResponseJson(rr);
+	    writeResponseJson(rr, false);
+	}
+    } else if (format == "json-b64") {
+	if (rr.direction == RequestOrResponse::Request) {
+	    writeRequestJson(rr, true);
+	} else {
+	    writeResponseJson(rr, true);
 	}
     } else if (format == "capnp") {
 	if (rr.direction == RequestOrResponse::Request) {
