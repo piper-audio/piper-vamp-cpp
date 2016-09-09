@@ -59,10 +59,32 @@ namespace vampipe {
 class VampJson
 {
 public:
-    /// Serialisation format for arrays of floats (process input and feature values)
+    /** Serialisation format for arrays of floats (process input and
+     *  feature values). Structures that can be serialised in more
+     *  than one way will include either a "values" field (for Text
+     *  serialisation) or a "b64values" field (for Base64) but should
+     *  not include both. When parsing, if a "b64values" field is
+     *  found, it will always take priority over a "values" field.
+     */
     enum class BufferSerialisation {
-        Text,  // default JSON serialisation of values in array form
-        Base64 // base64-encoded string of the raw data as packed ieee 32-bit floats
+
+        /** Default JSON serialisation of values in array form. This
+         *  is relatively slow to parse and serialise, and can take a
+         *  lot of space.
+         */
+        Text,
+
+        /** Base64-encoded string of the raw data as packed IEEE
+         *  32-bit floats. Faster and more compact than the text
+         *  encoding but more complicated to provide, especially if
+         *  starting from an environment that does not use IEEE 32-bit
+         *  floats! Note that Base64 serialisations produced by this
+         *  library do not including padding characters and so are not
+         *  necessarily multiples of 4 characters long. You will need
+         *  to pad them yourself if concatenating them or supplying to
+         *  a consumer that expects padding.
+         */
+        Base64
     };
     
     class Failure : virtual public std::runtime_error {
