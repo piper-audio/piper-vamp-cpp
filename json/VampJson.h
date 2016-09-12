@@ -49,6 +49,8 @@
 #include "bits/PluginHandleMapper.h"
 #include "bits/RequestResponseType.h"
 
+#include <chrono>
+
 namespace vampipe {
 
 /**
@@ -317,22 +319,35 @@ public:
 
     static std::string
     fromFloatBuffer(const float *buffer, size_t nfloats) {
+        static std::chrono::nanoseconds total;
+        auto t0 = std::chrono::high_resolution_clock::now();
         // must use char pointers, otherwise the converter will only
         // encode every 4th byte (as it will count up in float* steps)
         const char *start = reinterpret_cast<const char *>(buffer);
         const char *end = reinterpret_cast<const char *>(buffer + nfloats);
         std::string encoded;
+        encoded.reserve(16 * nfloats / 3);
         bn::encode_b64(start, end, back_inserter(encoded));
+        auto t1 = std::chrono::high_resolution_clock::now();
+        total += std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0);
+//        std::cout << "encode: " << total.count()/1000000 << std::endl;
         return encoded;
     }
 
     static std::vector<float>
     toFloatBuffer(std::string encoded) {
+        static std::chrono::nanoseconds total;
+        auto t0 = std::chrono::high_resolution_clock::now();
         std::string decoded;
+        decoded.reserve(3 * encoded.size() / 4);
         bn::decode_b64(encoded.begin(), encoded.end(), back_inserter(decoded));
         const float *buffer = reinterpret_cast<const float *>(decoded.c_str());
         size_t n = decoded.size() / sizeof(float);
-        return std::vector<float>(buffer, buffer + n);
+        std::vector<float> result(buffer, buffer + n);
+        auto t1 = std::chrono::high_resolution_clock::now();
+        total += std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0);
+//        std::cout << "decode: " << total.count()/1000000 << std::endl;
+        return result;
     }
 
     static json11::Json
@@ -868,6 +883,9 @@ public:
                      const PluginHandleMapper &mapper,
                      BufferSerialisation &serialisation) {
 
+        static std::chrono::nanoseconds total;
+        auto t0 = std::chrono::high_resolution_clock::now();
+        
         std::string err;
 
         if (!j.has_shape({
@@ -909,6 +927,10 @@ public:
             }
         }
 
+        auto t1 = std::chrono::high_resolution_clock::now();
+        total += std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0);
+//        std::cout << "parse: " << total.count()/1000000 << std::endl;
+        
         return r;
     }
 
