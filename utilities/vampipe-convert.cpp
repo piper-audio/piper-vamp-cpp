@@ -172,6 +172,9 @@ readResponseJson()
     rr.type = VampJson::getRequestResponseType(j);
     VampJson::BufferSerialisation serialisation = VampJson::BufferSerialisation::Text;
 
+    rr.success = j["success"].bool_value();
+    rr.errorText = j["errorText"].string_value();
+
     switch (rr.type) {
 
     case RRType::List:
@@ -201,37 +204,44 @@ writeResponseJson(RequestOrResponse &rr, bool useBase64)
 {
     Json j;
 
-    switch (rr.type) {
+    if (!rr.success) {
 
-    case RRType::List:
-	j = VampJson::fromVampResponse_List("", rr.listResponse);
-	break;
-    case RRType::Load:
-	j = VampJson::fromVampResponse_Load(rr.loadResponse, mapper);
-	break;
-    case RRType::Configure:
-	j = VampJson::fromVampResponse_Configure(rr.configurationResponse);
-	break;
-    case RRType::Process:
-	j = VampJson::fromVampResponse_Process
-	    (rr.processResponse,
-	     mapper,
-	     useBase64 ?
-	     VampJson::BufferSerialisation::Base64 :
-	     VampJson::BufferSerialisation::Text);
-	break;
-    case RRType::Finish:
-	j = VampJson::fromVampResponse_Finish
-	    (rr.finishResponse,
-	     mapper,
-	     useBase64 ?
-	     VampJson::BufferSerialisation::Base64 :
-	     VampJson::BufferSerialisation::Text);
-	break;
-    case RRType::NotValid:
-	break;
+	j = VampJson::fromError(rr.errorText, rr.type);
+
+    } else {
+    
+	switch (rr.type) {
+
+	case RRType::List:
+	    j = VampJson::fromVampResponse_List("", rr.listResponse);
+	    break;
+	case RRType::Load:
+	    j = VampJson::fromVampResponse_Load(rr.loadResponse, mapper);
+	    break;
+	case RRType::Configure:
+	    j = VampJson::fromVampResponse_Configure(rr.configurationResponse);
+	    break;
+	case RRType::Process:
+	    j = VampJson::fromVampResponse_Process
+		(rr.processResponse,
+		 mapper,
+		 useBase64 ?
+		 VampJson::BufferSerialisation::Base64 :
+		 VampJson::BufferSerialisation::Text);
+	    break;
+	case RRType::Finish:
+	    j = VampJson::fromVampResponse_Finish
+		(rr.finishResponse,
+		 mapper,
+		 useBase64 ?
+		 VampJson::BufferSerialisation::Base64 :
+		 VampJson::BufferSerialisation::Text);
+	    break;
+	case RRType::NotValid:
+	    break;
+	}
     }
-
+    
     cout << j.dump() << endl;
 }
 
@@ -312,6 +322,8 @@ readResponseCapnp(kj::BufferedInputStreamWrapper &buffered)
     VampResponse::Reader reader = message.getRoot<VampResponse>();
     
     rr.type = VampnProto::getRequestResponseType(reader);
+    rr.success = reader.getSuccess();
+    rr.errorText = reader.getErrorText();
 
     switch (rr.type) {
 
@@ -344,27 +356,34 @@ writeResponseCapnp(RequestOrResponse &rr)
     ::capnp::MallocMessageBuilder message;
     VampResponse::Builder builder = message.initRoot<VampResponse>();
 
-    switch (rr.type) {
+    if (!rr.success) {
 
-    case RRType::List:
-	VampnProto::buildVampResponse_List(builder, "", rr.listResponse);
-	break;
-    case RRType::Load:
-	VampnProto::buildVampResponse_Load(builder, rr.loadResponse, mapper);
-	break;
-    case RRType::Configure:
-	VampnProto::buildVampResponse_Configure(builder, rr.configurationResponse);
-	break;
-    case RRType::Process:
-	VampnProto::buildVampResponse_Process(builder, rr.processResponse, mapper);
-	break;
-    case RRType::Finish:
-	VampnProto::buildVampResponse_Finish(builder, rr.finishResponse, mapper);
-	break;
-    case RRType::NotValid:
-	break;
+	VampnProto::buildVampResponse_Error(builder, rr.errorText, rr.type);
+
+    } else {
+	
+	switch (rr.type) {
+
+	case RRType::List:
+	    VampnProto::buildVampResponse_List(builder, "", rr.listResponse);
+	    break;
+	case RRType::Load:
+	    VampnProto::buildVampResponse_Load(builder, rr.loadResponse, mapper);
+	    break;
+	case RRType::Configure:
+	    VampnProto::buildVampResponse_Configure(builder, rr.configurationResponse);
+	    break;
+	case RRType::Process:
+	    VampnProto::buildVampResponse_Process(builder, rr.processResponse, mapper);
+	    break;
+	case RRType::Finish:
+	    VampnProto::buildVampResponse_Finish(builder, rr.finishResponse, mapper);
+	    break;
+	case RRType::NotValid:
+	    break;
+	}
     }
-
+    
     writeMessageToFd(1, message);
 }
 
@@ -485,6 +504,7 @@ int main(int argc, char **argv)
 	    writeOutput(outformat, rr);
 	    
 	} catch (std::exception &e) {
+
 	    cerr << "Error: " << e.what() << endl;
 	    exit(1);
 	}

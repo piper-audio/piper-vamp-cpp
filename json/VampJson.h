@@ -1001,9 +1001,12 @@ public:
         jo["type"] = "process";
         jo["success"] = true;
         jo["errorText"] = "";
-        jo["content"] = fromFeatureSet(resp.features,
-                                       pmapper.pluginToOutputIdMapper(resp.plugin),
-                                       serialisation);
+        json11::Json::object po;
+        po["pluginHandle"] = pmapper.pluginToHandle(resp.plugin);
+        po["features"] = fromFeatureSet(resp.features,
+                                        pmapper.pluginToOutputIdMapper(resp.plugin),
+                                        serialisation);
+        jo["content"] = po;
         return json11::Json(jo);
     }
     
@@ -1028,14 +1031,17 @@ public:
         jo["type"] = "finish";
         jo["success"] = true;
         jo["errorText"] = "";
-        jo["content"] = fromFeatureSet(resp.features,
-                                       pmapper.pluginToOutputIdMapper(resp.plugin),
-                                       serialisation);
+        json11::Json::object po;
+        po["pluginHandle"] = pmapper.pluginToHandle(resp.plugin);
+        po["features"] = fromFeatureSet(resp.features,
+                                        pmapper.pluginToOutputIdMapper(resp.plugin),
+                                        serialisation);
+        jo["content"] = po;
         return json11::Json(jo);
     }
 
     static json11::Json
-    fromException(const std::exception &e, RRType responseType) {
+    fromError(std::string errorText, RRType responseType) {
 
         json11::Json::object jo;
         std::string type;
@@ -1049,9 +1055,14 @@ public:
 
         jo["type"] = type;
         jo["success"] = false;
-        jo["errorText"] = std::string("exception caught: ") +
-            type + " request: " + e.what();
+        jo["errorText"] = std::string("error in ") + type + " request: " + errorText;
         return json11::Json(jo);
+    }
+
+    static json11::Json
+    fromException(const std::exception &e, RRType responseType) {
+
+        return fromError(e.what(), responseType);
     }
     
 private: // go private briefly for a couple of helper functions
@@ -1163,10 +1174,11 @@ public:
         Vamp::HostExt::ProcessResponse resp;
         if (successful(j)) {
             auto jc = j["content"];
-            resp.features = toFeatureSet
-                (jc["features"],
-                 pmapper.handleToOutputIdMapper(jc["pluginHandle"].int_value()),
-                 serialisation);
+            auto h = jc["pluginHandle"].int_value();
+            resp.plugin = pmapper.handleToPlugin(h);
+            resp.features = toFeatureSet(jc["features"],
+                                         pmapper.handleToOutputIdMapper(h),
+                                         serialisation);
         }
         return resp;
     }
@@ -1186,10 +1198,11 @@ public:
         Vamp::HostExt::ProcessResponse resp;
         if (successful(j)) {
             auto jc = j["content"];
-            resp.features = toFeatureSet
-                (jc["features"],
-                 pmapper.handleToOutputIdMapper(jc["pluginHandle"].int_value()),
-                 serialisation);
+            auto h = jc["pluginHandle"].int_value();
+            resp.plugin = pmapper.handleToPlugin(h);
+            resp.features = toFeatureSet(jc["features"],
+                                         pmapper.handleToOutputIdMapper(h),
+                                         serialisation);
         }
         return resp;
     }

@@ -67,6 +67,7 @@ public:
 
     void removePlugin(Handle h) {
 	if (m_plugins.find(h) == m_plugins.end()) {
+            std::cerr << "remove: no handle " << h << std::endl;
 	    throw NotFound();
 	}
 	Vamp::Plugin *p = m_plugins[h];
@@ -82,6 +83,7 @@ public:
     
     Handle pluginToHandle(Vamp::Plugin *p) const {
 	if (m_rplugins.find(p) == m_rplugins.end()) {
+            std::cerr << "pluginToHandle: no plugin " << p << std::endl;
 	    throw NotFound();
 	}
 	return m_rplugins.at(p);
@@ -89,6 +91,7 @@ public:
     
     Vamp::Plugin *handleToPlugin(Handle h) const {
 	if (m_plugins.find(h) == m_plugins.end()) {
+            std::cerr << "handleToPlugin: no handle " << h << std::endl;
 	    throw NotFound();
 	}
 	return m_plugins.at(h);
@@ -97,11 +100,13 @@ public:
     //!!! iffy: mapper will move when another plugin is added. return by value?
     const PluginOutputIdMapper &pluginToOutputIdMapper(Vamp::Plugin *p) const {
         // pluginToHandle checks the plugin has been registered with us
+        std::cerr << "output id mapper requested for plugin with handle " << pluginToHandle(p) << std::endl;
         return *m_outputMappers.at(pluginToHandle(p));
     }
 
     //!!! iffy: mapper will move when another plugin is added. return by value?
     const PluginOutputIdMapper &handleToOutputIdMapper(Handle h) const {
+        std::cerr << "output id mapper requested for handle " << h << std::endl;
 	if (m_plugins.find(h) == m_plugins.end()) {
 	    throw NotFound();
 	}

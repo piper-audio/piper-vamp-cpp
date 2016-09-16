@@ -654,6 +654,7 @@ public:
                          const Vamp::HostExt::ProcessResponse &pr,
                          const PluginHandleMapper &pmapper) {
 
+        b.setPluginHandle(pmapper.pluginToHandle(pr.plugin));
         auto f = b.initFeatures();
         buildFeatureSet(f, pr.features,
                         pmapper.pluginToOutputIdMapper(pr.plugin));
@@ -664,6 +665,8 @@ public:
                         const ProcessResponse::Reader &r,
                         const PluginHandleMapper &pmapper) {
 
+        auto h = r.getPluginHandle();
+        pr.plugin = pmapper.handleToPlugin(h);
         readFeatureSet(pr.features, r.getFeatures(),
                        pmapper.handleToOutputIdMapper(r.getPluginHandle()));
     }
@@ -756,6 +759,44 @@ public:
         buildVampResponse_Process(b, pr, pmapper);
     }
 
+    static void
+    buildVampResponse_Error(VampResponse::Builder &b,
+                            const std::string &errorText,
+                            RRType responseType)
+    {
+        std::string type;
+
+        if (responseType == RRType::List) {
+            type = "list";
+            b.getResponse().initList();
+        } else if (responseType == RRType::Load) {
+            type = "load";
+            b.getResponse().initLoad();
+        } else if (responseType == RRType::Configure) {
+            type = "configure";
+            b.getResponse().initConfigure();
+        } else if (responseType == RRType::Process) {
+            type = "process";
+            b.getResponse().initProcess();
+        } else if (responseType == RRType::Finish) {
+            type = "finish";
+            b.getResponse().initFinish();
+        } else {
+            type = "invalid";
+        }
+
+        b.setSuccess(false);
+        b.setErrorText(std::string("error in ") + type + " request: " + errorText);
+    }
+
+    static void
+    buildVampResponse_Exception(VampResponse::Builder &b,
+                                const std::exception &e,
+                                RRType responseType)
+    {
+        return buildVampResponse_Error(b, e.what(), responseType);
+    }
+    
     static RRType
     getRequestResponseType(const VampRequest::Reader &r) {
         switch (r.getRequest().which()) {

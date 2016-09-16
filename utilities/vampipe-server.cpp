@@ -80,27 +80,44 @@ writeResponseCapnp(RequestOrResponse &rr)
     ::capnp::MallocMessageBuilder message;
     VampResponse::Builder builder = message.initRoot<VampResponse>();
 
-    switch (rr.type) {
+    if (!rr.success) {
 
-    case RRType::List:
-	VampnProto::buildVampResponse_List(builder, "", rr.listResponse);
-	break;
-    case RRType::Load:
-	VampnProto::buildVampResponse_Load(builder, rr.loadResponse, mapper);
-	break;
-    case RRType::Configure:
-	VampnProto::buildVampResponse_Configure(builder, rr.configurationResponse);
-	break;
-    case RRType::Process:
-	VampnProto::buildVampResponse_Process(builder, rr.processResponse, mapper);
-	break;
-    case RRType::Finish:
-	VampnProto::buildVampResponse_Finish(builder, rr.finishResponse, mapper);
-	break;
-    case RRType::NotValid:
-	break;
+	VampnProto::buildVampResponse_Error(builder, rr.errorText, rr.type);
+
+    } else {
+	
+	switch (rr.type) {
+
+	case RRType::List:
+	    VampnProto::buildVampResponse_List(builder, "", rr.listResponse);
+	    break;
+	case RRType::Load:
+	    VampnProto::buildVampResponse_Load(builder, rr.loadResponse, mapper);
+	    break;
+	case RRType::Configure:
+	    VampnProto::buildVampResponse_Configure(builder, rr.configurationResponse);
+	    break;
+	case RRType::Process:
+	    VampnProto::buildVampResponse_Process(builder, rr.processResponse, mapper);
+	    break;
+	case RRType::Finish:
+	    VampnProto::buildVampResponse_Finish(builder, rr.finishResponse, mapper);
+	    break;
+	case RRType::NotValid:
+	    break;
+	}
     }
+    
+    writeMessageToFd(1, message);
+}
 
+void
+writeExceptionCapnp(const std::exception &e, RRType type)
+{
+    ::capnp::MallocMessageBuilder message;
+    VampResponse::Builder builder = message.initRoot<VampResponse>();
+    VampnProto::buildVampResponse_Exception(builder, e, type);
+    
     writeMessageToFd(1, message);
 }
 
@@ -168,6 +185,7 @@ handleRequest(const RequestOrResponse &request)
 	    fbuffers[i] = preq.inputBuffers[i].data();
 	}
 
+	response.processResponse.plugin = preq.plugin;
 	response.processResponse.features =
 	    preq.plugin->process(fbuffers, preq.timestamp);
 	response.success = true;
@@ -178,13 +196,14 @@ handleRequest(const RequestOrResponse &request)
 
     case RRType::Finish:
     {
-	auto h = mapper.pluginToHandle(request.finishPlugin);
-
+	response.finishResponse.plugin = request.finishPlugin;
 	response.finishResponse.features =
 	    request.finishPlugin->getRemainingFeatures();
-	    
-	mapper.removePlugin(h);
-	delete request.finishPlugin;
+
+	// We do not delete the plugin here -- we need it in the
+	// mapper when converting the features. It gets deleted by the
+	// caller.
+	
 	response.success = true;
 	break;
     }
@@ -204,9 +223,11 @@ int main(int argc, char **argv)
 
     while (true) {
 
+	RequestOrResponse request;
+	
 	try {
 
-	    RequestOrResponse request = readRequestCapnp();
+	    request = readRequestCapnp();
 
 	    cerr << "vampipe-server: request received, of type "
 		 << int(request.type)
@@ -226,9 +247,19 @@ int main(int argc, char **argv)
 	    writeResponseCapnp(response);
 
 	    cerr << "vampipe-server: response written" << endl;
+
+	    if (request.type == RRType::Finish) {
+		auto h = mapper.pluginToHandle(request.finishPlugin);
+		mapper.removePlugin(h);
+		delete request.finishPlugin;
+	    }
 	    
 	} catch (std::exception &e) {
+
 	    cerr << "vampipe-server: error: " << e.what() << endl;
+
+	    writeExceptionCapnp(e, request.type);
+	    
 	    exit(1);
 	}
     }

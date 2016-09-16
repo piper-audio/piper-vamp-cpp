@@ -51,7 +51,7 @@ class PreservingPluginHandleMapper : public PluginHandleMapper
 public:
     PreservingPluginHandleMapper() : m_handle(0), m_plugin(0) { }
 
-    virtual int32_t pluginToHandle(Vamp::Plugin *p) const {
+    virtual Handle pluginToHandle(Vamp::Plugin *p) const {
 	if (p == m_plugin) return m_handle;
 	else {
 	    std::cerr << "PreservingPluginHandleMapper: p = " << p
@@ -62,7 +62,7 @@ public:
 	}
     }
 
-    virtual Vamp::Plugin *handleToPlugin(int32_t h) const {
+    virtual Vamp::Plugin *handleToPlugin(Handle h) const {
 	m_handle = h;
 	m_plugin = reinterpret_cast<Vamp::Plugin *>(h);
 	return m_plugin;
@@ -72,12 +72,12 @@ public:
         return m_omapper;
     }
         
-    virtual const PluginOutputIdMapper &handleToOutputIdMapper(int32_t h) const {
+    virtual const PluginOutputIdMapper &handleToOutputIdMapper(Handle h) const {
         return m_omapper;
     }
     
 private:
-    mutable int32_t m_handle;
+    mutable Handle m_handle;
     mutable Vamp::Plugin *m_plugin;
     PreservingPluginOutputIdMapper m_omapper;
 };
