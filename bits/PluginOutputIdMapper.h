@@ -44,43 +44,29 @@ namespace vampipe {
 
 class PluginOutputIdMapper
 {
-// NB not threadsafe. Does this matter?
-
-//!!! simplify. A single vector is almost certainly faster.
-    
 public:
-    PluginOutputIdMapper(Vamp::Plugin *p) : m_plugin(p) { }
-
-    class NotFound : virtual public std::runtime_error {
-    public:
-        NotFound() : runtime_error("output id or index not found in mapper") { }
-    };
+    PluginOutputIdMapper(Vamp::Plugin *p) {
+	Vamp::Plugin::OutputList outputs = p->getOutputDescriptors();
+	for (const auto &d: outputs) {
+	    m_ids.push_back(d.identifier);
+	}
+    }
 
     int idToIndex(std::string outputId) const {
-	if (m_idIndexMap.empty()) populate();
-	auto i = m_idIndexMap.find(outputId);
-	if (i == m_idIndexMap.end()) throw NotFound();
-	return i->second;
+	int n = int(m_ids.size());
+	for (int i = 0; i < n; ++i) {
+	    if (outputId == m_ids[i]) {
+		return i;
+	    }
+	}
     }
 
     std::string indexToId(int index) const {
-	if (m_ids.empty()) populate();
-	if (index < 0 || size_t(index) >= m_ids.size()) throw NotFound();
 	return m_ids[index];
     }
 
 private:
-    Vamp::Plugin *m_plugin;
-    mutable std::vector<std::string> m_ids;
-    mutable std::map<std::string, int> m_idIndexMap;
-
-    void populate() const {
-	Vamp::Plugin::OutputList outputs = m_plugin->getOutputDescriptors();
-	for (const auto &d: outputs) {
-	    m_idIndexMap[d.identifier] = m_ids.size();
-	    m_ids.push_back(d.identifier);
-	}
-    }
+    std::vector<std::string> m_ids;
 };
 
 }
