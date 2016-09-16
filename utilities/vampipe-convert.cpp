@@ -127,6 +127,11 @@ writeRequestJson(RequestOrResponse &rr, bool useBase64)
 {
     Json j;
 
+    VampJson::BufferSerialisation serialisation =
+        (useBase64 ?
+         VampJson::BufferSerialisation::Base64 :
+         VampJson::BufferSerialisation::Text);
+
     switch (rr.type) {
 
     case RRType::List:
@@ -140,10 +145,7 @@ writeRequestJson(RequestOrResponse &rr, bool useBase64)
 	break;
     case RRType::Process:
 	j = VampJson::fromVampRequest_Process
-	    (rr.processRequest, mapper,
-	     useBase64 ?
-	     VampJson::BufferSerialisation::Base64 :
-	     VampJson::BufferSerialisation::Text);
+	    (rr.processRequest, mapper, serialisation);
 	break;
     case RRType::Finish:
 	j = VampJson::fromVampRequest_Finish(rr.finishPlugin, mapper);
@@ -205,7 +207,7 @@ writeResponseJson(RequestOrResponse &rr, bool useBase64)
     Json j;
 
     VampJson::BufferSerialisation serialisation =
-        (m_useBase64 ?
+        (useBase64 ?
          VampJson::BufferSerialisation::Base64 :
          VampJson::BufferSerialisation::Text);
 
