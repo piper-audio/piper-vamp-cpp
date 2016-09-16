@@ -42,6 +42,7 @@
 #include <vamp-hostsdk/PluginStaticData.h>
 
 #include "bits/PluginHandleMapper.h"
+#include "bits/PluginOutputIdMapper.h"
 #include "bits/RequestResponseType.h"
 
 namespace vampipe
@@ -294,13 +295,14 @@ public:
     
     static void
     buildFeatureSet(FeatureSet::Builder &b,
-                    const Vamp::Plugin::FeatureSet &fs) {
+                    const Vamp::Plugin::FeatureSet &fs,
+                    const PluginOutputIdMapper &omapper) {
 
         auto featureset = b.initFeaturePairs(fs.size());
         int ix = 0;
         for (const auto &fsi : fs) {
             auto fspair = featureset[ix];
-            fspair.setOutput(fsi.first);
+            fspair.setOutput(omapper.indexToId(fsi.first));
             auto featurelist = fspair.initFeatures(fsi.second.size());
             for (size_t j = 0; j < fsi.second.size(); ++j) {
                 auto feature = featurelist[j];
@@ -312,7 +314,8 @@ public:
 
     static void
     readFeatureSet(Vamp::Plugin::FeatureSet &fs,
-                   const FeatureSet::Reader &r) {
+                   const FeatureSet::Reader &r,
+                   const PluginOutputIdMapper &omapper) {
 
         fs.clear();
         auto pp = r.getFeaturePairs();
@@ -324,7 +327,7 @@ public:
                 readFeature(vf, f);
                 vfl.push_back(vf);
             }
-            fs[p.getOutput()] = vfl;
+            fs[omapper.idToIndex(p.getOutput())] = vfl;
         }
     }
     
@@ -526,9 +529,9 @@ public:
     static void
     buildLoadResponse(LoadResponse::Builder &b,
                       const Vamp::HostExt::LoadResponse &resp,
-                      PluginHandleMapper &mapper) {
+                      PluginHandleMapper &pmapper) {
 
-        b.setPluginHandle(mapper.pluginToHandle(resp.plugin));
+        b.setPluginHandle(pmapper.pluginToHandle(resp.plugin));
         auto sd = b.initStaticData();
         buildPluginStaticData(sd, resp.staticData);
         auto conf = b.initDefaultConfiguration();
@@ -538,9 +541,9 @@ public:
     static void
     readLoadResponse(Vamp::HostExt::LoadResponse &resp,
                      const LoadResponse::Reader &r,
-                     PluginHandleMapper &mapper) {
+                     PluginHandleMapper &pmapper) {
 
-        resp.plugin = mapper.handleToPlugin(r.getPluginHandle());
+        resp.plugin = pmapper.handleToPlugin(r.getPluginHandle());
         readPluginStaticData(resp.staticData, r.getStaticData());
         readPluginConfiguration(resp.defaultConfiguration,
                                 r.getDefaultConfiguration());
@@ -549,9 +552,9 @@ public:
     static void
     buildConfigurationRequest(ConfigurationRequest::Builder &b,
                               const Vamp::HostExt::ConfigurationRequest &cr,
-                              PluginHandleMapper &mapper) {
+                              PluginHandleMapper &pmapper) {
 
-        b.setPluginHandle(mapper.pluginToHandle(cr.plugin));
+        b.setPluginHandle(pmapper.pluginToHandle(cr.plugin));
         auto c = b.initConfiguration();
         buildPluginConfiguration(c, cr.configuration);
     }
@@ -559,10 +562,10 @@ public:
     static void
     readConfigurationRequest(Vamp::HostExt::ConfigurationRequest &cr,
                              const ConfigurationRequest::Reader &r,
-                             PluginHandleMapper &mapper) {
+                             PluginHandleMapper &pmapper) {
 
         auto h = r.getPluginHandle();
-        cr.plugin = mapper.handleToPlugin(h);
+        cr.plugin = pmapper.handleToPlugin(h);
         auto c = r.getConfiguration();
         readPluginConfiguration(cr.configuration, c);
     }
@@ -629,9 +632,9 @@ public:
     static void
     buildProcessRequest(ProcessRequest::Builder &b,
                         const Vamp::HostExt::ProcessRequest &pr,
-                        PluginHandleMapper &mapper) {
+                        PluginHandleMapper &pmapper) {
 
-        b.setPluginHandle(mapper.pluginToHandle(pr.plugin));
+        b.setPluginHandle(pmapper.pluginToHandle(pr.plugin));
         auto input = b.initInput();
         buildProcessInput(input, pr.timestamp, pr.inputBuffers);
     }
@@ -639,26 +642,28 @@ public:
     static void
     readProcessRequest(Vamp::HostExt::ProcessRequest &pr,
                        const ProcessRequest::Reader &r,
-                       PluginHandleMapper &mapper) {
+                       PluginHandleMapper &pmapper) {
 
         auto h = r.getPluginHandle();
-        pr.plugin = mapper.handleToPlugin(h);
+        pr.plugin = pmapper.handleToPlugin(h);
         readProcessInput(pr.timestamp, pr.inputBuffers, r.getInput());
     }
 
     static void
     buildProcessResponse(ProcessResponse::Builder &b,
-                         const Vamp::HostExt::ProcessResponse &pr) {
+                         const Vamp::HostExt::ProcessResponse &pr,
+                         const PluginOutputIdMapper &omapper) {
 
         auto f = b.initFeatures();
-        buildFeatureSet(f, pr.features);
+        buildFeatureSet(f, pr.features, omapper);
     }
     
     static void
     readProcessResponse(Vamp::HostExt::ProcessResponse &pr,
-                        const ProcessResponse::Reader &r) {
+                        const ProcessResponse::Reader &r,
+                        const PluginOutputIdMapper &omapper) {
 
-        readFeatureSet(pr.features, r.getFeatures());
+        readFeatureSet(pr.features, r.getFeatures(), omapper);
     }
 
     static void
@@ -690,19 +695,19 @@ public:
     static void
     buildVampResponse_Load(VampResponse::Builder &b,
                            const Vamp::HostExt::LoadResponse &resp,
-                           PluginHandleMapper &mapper) {
+                           PluginHandleMapper &pmapper) {
         b.setSuccess(resp.plugin != 0);
         b.setErrorText("");
         auto u = b.getResponse().initLoad();
-        buildLoadResponse(u, resp, mapper);
+        buildLoadResponse(u, resp, pmapper);
     }
 
     static void
     buildVampRequest_Configure(VampRequest::Builder &b,
                                const Vamp::HostExt::ConfigurationRequest &cr,
-                               PluginHandleMapper &mapper) {
+                               PluginHandleMapper &pmapper) {
         auto u = b.getRequest().initConfigure();
-        buildConfigurationRequest(u, cr, mapper);
+        buildConfigurationRequest(u, cr, pmapper);
     }
 
     static void
@@ -717,34 +722,36 @@ public:
     static void
     buildVampRequest_Process(VampRequest::Builder &b,
                              const Vamp::HostExt::ProcessRequest &pr,
-                             PluginHandleMapper &mapper) {
+                             PluginHandleMapper &pmapper) {
         auto u = b.getRequest().initProcess();
-        buildProcessRequest(u, pr, mapper);
+        buildProcessRequest(u, pr, pmapper);
     }
     
     static void
     buildVampResponse_Process(VampResponse::Builder &b,
-                              const Vamp::HostExt::ProcessResponse &pr) {
+                              const Vamp::HostExt::ProcessResponse &pr,
+                              const PluginOutputIdMapper &omapper) {
         b.setSuccess(true);
         b.setErrorText("");
         auto u = b.getResponse().initProcess();
-        buildProcessResponse(u, pr);
+        buildProcessResponse(u, pr, omapper);
     }
     
     static void
     buildVampRequest_Finish(VampRequest::Builder &b,
                             Vamp::Plugin *p,
-                            PluginHandleMapper &mapper) {
+                            PluginHandleMapper &pmapper) {
 
         auto u = b.getRequest().initFinish();
-        u.setPluginHandle(mapper.pluginToHandle(p));
+        u.setPluginHandle(pmapper.pluginToHandle(p));
     }
     
     static void
     buildVampResponse_Finish(VampResponse::Builder &b,
-                             const Vamp::HostExt::ProcessResponse &pr) {
+                             const Vamp::HostExt::ProcessResponse &pr,
+                             const PluginOutputIdMapper &omapper) {
 
-        buildVampResponse_Process(b, pr);
+        buildVampResponse_Process(b, pr, omapper);
     }
 
     static RRType
@@ -817,24 +824,24 @@ public:
     static void
     readVampResponse_Load(Vamp::HostExt::LoadResponse &resp,
                           const VampResponse::Reader &r,
-                          PluginHandleMapper &mapper) {
+                          PluginHandleMapper &pmapper) {
         if (getRequestResponseType(r) != RRType::Load) {
             throw std::logic_error("not a load response");
         }
         resp = {};
         if (r.getSuccess()) {
-            readLoadResponse(resp, r.getResponse().getLoad(), mapper);
+            readLoadResponse(resp, r.getResponse().getLoad(), pmapper);
         }
     }
     
     static void
     readVampRequest_Configure(Vamp::HostExt::ConfigurationRequest &req,
                               const VampRequest::Reader &r,
-                              PluginHandleMapper &mapper) {
+                              PluginHandleMapper &pmapper) {
         if (getRequestResponseType(r) != RRType::Configure) {
             throw std::logic_error("not a configuration request");
         }
-        readConfigurationRequest(req, r.getRequest().getConfigure(), mapper);
+        readConfigurationRequest(req, r.getRequest().getConfigure(), pmapper);
     }
 
     static void
@@ -852,45 +859,47 @@ public:
     static void
     readVampRequest_Process(Vamp::HostExt::ProcessRequest &req,
                             const VampRequest::Reader &r,
-                            PluginHandleMapper &mapper) {
+                            PluginHandleMapper &pmapper) {
         if (getRequestResponseType(r) != RRType::Process) {
             throw std::logic_error("not a process request");
         }
-        readProcessRequest(req, r.getRequest().getProcess(), mapper);
+        readProcessRequest(req, r.getRequest().getProcess(), pmapper);
     }
 
     static void
     readVampResponse_Process(Vamp::HostExt::ProcessResponse &resp,
-                             const VampResponse::Reader &r) {
+                             const VampResponse::Reader &r,
+                             const PluginOutputIdMapper &omapper) {
         if (getRequestResponseType(r) != RRType::Process) {
             throw std::logic_error("not a process response");
         }
         resp = {};
         if (r.getSuccess()) {
-            readProcessResponse(resp, r.getResponse().getProcess());
+            readProcessResponse(resp, r.getResponse().getProcess(), omapper);
         }
     }
     
     static void
     readVampRequest_Finish(Vamp::Plugin *&finishPlugin,
                            const VampRequest::Reader &r,
-                           PluginHandleMapper &mapper) {
+                           PluginHandleMapper &pmapper) {
         if (getRequestResponseType(r) != RRType::Finish) {
             throw std::logic_error("not a finish request");
         }
-        finishPlugin = mapper.handleToPlugin
+        finishPlugin = pmapper.handleToPlugin
             (r.getRequest().getFinish().getPluginHandle());
     }
 
     static void
     readVampResponse_Finish(Vamp::HostExt::ProcessResponse &resp,
-                            const VampResponse::Reader &r) {
+                            const VampResponse::Reader &r,
+                            const PluginOutputIdMapper &omapper) {
         if (getRequestResponseType(r) != RRType::Finish) {
             throw std::logic_error("not a finish response");
         }
         resp = {};
         if (r.getSuccess()) {
-            readProcessResponse(resp, r.getResponse().getFinish());
+            readProcessResponse(resp, r.getResponse().getFinish(), omapper);
         }
     }
 };
