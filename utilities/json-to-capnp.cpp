@@ -65,8 +65,9 @@ handle_input(::capnp::MallocMessageBuilder &message, string input)
 
     } else if (type == "featureset") {
 	auto fs = message.initRoot<FeatureSet>();
+	PreservingPluginOutputIdMapper omapper;
 	VampnProto::buildFeatureSet
-	    (fs, VampJson::toFeatureSet(payload, serialisation));
+	    (fs, VampJson::toFeatureSet(payload, omapper, serialisation), omapper);
 
     } else if (type == "loadrequest") {
 	auto req = message.initRoot<LoadRequest>();

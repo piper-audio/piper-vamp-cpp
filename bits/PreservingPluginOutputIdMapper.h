@@ -32,54 +32,43 @@
     authorization.
 */
 
-#ifndef VAMPIPE_PRESERVING_PLUGIN_HANDLE_MAPPER_H
-#define VAMPIPE_PRESERVING_PLUGIN_HANDLE_MAPPER_H
+#ifndef VAMPIPE_PRESERVING_PLUGIN_OUTPUT_ID_MAPPER_H
+#define VAMPIPE_PRESERVING_PLUGIN_OUTPUT_ID_MAPPER_H
 
-#include "PluginHandleMapper.h"
-#include "PreservingPluginOutputIdMapper.h"
+#include "PluginOutputIdMapper.h"
 
 #include <iostream>
 
 namespace vampipe {
 
-//!!! document -- this is a passthrough thing for a single plugin
-//!!! handle only, it does not use actually valid Plugin pointers at
-//!!! all
+//!!! document -- this is a passthrough thing that invents its
+//!!! numerical ids, they have no correspondence with any real plugin
 
-class PreservingPluginHandleMapper : public PluginHandleMapper
+class PreservingPluginOutputIdMapper : public PluginOutputIdMapper
 {
 public:
-    PreservingPluginHandleMapper() : m_handle(0), m_plugin(0) { }
+    PreservingPluginOutputIdMapper() { }
 
-    virtual int32_t pluginToHandle(Vamp::Plugin *p) const {
-	if (p == m_plugin) return m_handle;
-	else {
-	    std::cerr << "PreservingPluginHandleMapper: p = " << p
-		      << " differs from saved m_plugin " << m_plugin
-		      << " (not returning saved handle " << m_handle << ")"
-		      << std::endl;
-	    throw NotFound();
+    virtual int idToIndex(std::string outputId) const {
+	int n = int(m_ids.size());
+	int i = 0;
+	while (i < n) {
+	    if (outputId == m_ids[i]) {
+		return i;
+	    }
+	    ++i;
 	}
+	m_ids.push_back(outputId);
+	return i;
     }
 
-    virtual Vamp::Plugin *handleToPlugin(int32_t h) const {
-	m_handle = h;
-	m_plugin = reinterpret_cast<Vamp::Plugin *>(h);
-	return m_plugin;
+    virtual std::string indexToId(int index) const {
+	//!!! todo: this should in fact throw, or otherwise return an error
+	return m_ids[index];
     }
 
-    virtual const PluginOutputIdMapper &pluginToOutputIdMapper(Vamp::Plugin *) const {
-        return m_omapper;
-    }
-        
-    virtual const PluginOutputIdMapper &handleToOutputIdMapper(int32_t h) const {
-        return m_omapper;
-    }
-    
 private:
-    mutable int32_t m_handle;
-    mutable Vamp::Plugin *m_plugin;
-    PreservingPluginOutputIdMapper m_omapper;
+    mutable std::vector<std::string> m_ids;
 };
 
 }

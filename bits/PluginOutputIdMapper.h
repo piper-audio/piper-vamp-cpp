@@ -42,31 +42,14 @@
 
 namespace vampipe {
 
+//!!! doc interface
 class PluginOutputIdMapper
 {
 public:
-    PluginOutputIdMapper(Vamp::Plugin *p) {
-	Vamp::Plugin::OutputList outputs = p->getOutputDescriptors();
-	for (const auto &d: outputs) {
-	    m_ids.push_back(d.identifier);
-	}
-    }
-
-    int idToIndex(std::string outputId) const {
-	int n = int(m_ids.size());
-	for (int i = 0; i < n; ++i) {
-	    if (outputId == m_ids[i]) {
-		return i;
-	    }
-	}
-    }
-
-    std::string indexToId(int index) const {
-	return m_ids[index];
-    }
-
-private:
-    std::vector<std::string> m_ids;
+    virtual ~PluginOutputIdMapper() { }
+    
+    virtual int idToIndex(std::string outputId) const = 0;
+    virtual std::string indexToId(int index) const = 0;
 };
 
 }

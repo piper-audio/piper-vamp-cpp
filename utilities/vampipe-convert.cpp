@@ -184,10 +184,10 @@ readResponseJson()
 	rr.configurationResponse = VampJson::toVampResponse_Configure(j);
 	break;
     case RRType::Process: 
-	rr.processResponse = VampJson::toVampResponse_Process(j, serialisation);
+	rr.processResponse = VampJson::toVampResponse_Process(j, mapper, serialisation);
 	break;
     case RRType::Finish:
-	rr.finishResponse = VampJson::toVampResponse_Finish(j, serialisation);
+	rr.finishResponse = VampJson::toVampResponse_Finish(j, mapper, serialisation);
 	break;
     case RRType::NotValid:
 	break;
@@ -215,6 +215,7 @@ writeResponseJson(RequestOrResponse &rr, bool useBase64)
     case RRType::Process:
 	j = VampJson::fromVampResponse_Process
 	    (rr.processResponse,
+	     mapper,
 	     useBase64 ?
 	     VampJson::BufferSerialisation::Base64 :
 	     VampJson::BufferSerialisation::Text);
@@ -222,6 +223,7 @@ writeResponseJson(RequestOrResponse &rr, bool useBase64)
     case RRType::Finish:
 	j = VampJson::fromVampResponse_Finish
 	    (rr.finishResponse,
+	     mapper,
 	     useBase64 ?
 	     VampJson::BufferSerialisation::Base64 :
 	     VampJson::BufferSerialisation::Text);
@@ -324,10 +326,10 @@ readResponseCapnp(kj::BufferedInputStreamWrapper &buffered)
 					       reader);
 	break;
     case RRType::Process:
-	VampnProto::readVampResponse_Process(rr.processResponse, reader);
+	VampnProto::readVampResponse_Process(rr.processResponse, reader, mapper);
 	break;
     case RRType::Finish:
-	VampnProto::readVampResponse_Finish(rr.finishResponse, reader);
+	VampnProto::readVampResponse_Finish(rr.finishResponse, reader, mapper);
 	break;
     case RRType::NotValid:
 	break;
@@ -354,10 +356,10 @@ writeResponseCapnp(RequestOrResponse &rr)
 	VampnProto::buildVampResponse_Configure(builder, rr.configurationResponse);
 	break;
     case RRType::Process:
-	VampnProto::buildVampResponse_Process(builder, rr.processResponse);
+	VampnProto::buildVampResponse_Process(builder, rr.processResponse, mapper);
 	break;
     case RRType::Finish:
-	VampnProto::buildVampResponse_Finish(builder, rr.finishResponse);
+	VampnProto::buildVampResponse_Finish(builder, rr.finishResponse, mapper);
 	break;
     case RRType::NotValid:
 	break;

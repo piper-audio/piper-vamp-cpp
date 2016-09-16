@@ -92,10 +92,10 @@ writeResponseCapnp(RequestOrResponse &rr)
 	VampnProto::buildVampResponse_Configure(builder, rr.configurationResponse);
 	break;
     case RRType::Process:
-	VampnProto::buildVampResponse_Process(builder, rr.processResponse);
+	VampnProto::buildVampResponse_Process(builder, rr.processResponse, mapper);
 	break;
     case RRType::Finish:
-	VampnProto::buildVampResponse_Finish(builder, rr.finishResponse);
+	VampnProto::buildVampResponse_Finish(builder, rr.finishResponse, mapper);
 	break;
     case RRType::NotValid:
 	break;

@@ -994,14 +994,16 @@ public:
 
     static json11::Json
     fromVampResponse_Process(const Vamp::HostExt::ProcessResponse &resp,
-                             const PluginOutputIdMapper &omapper,
+                             const PluginHandleMapper &pmapper,
                              BufferSerialisation serialisation) {
         
         json11::Json::object jo;
         jo["type"] = "process";
         jo["success"] = true;
         jo["errorText"] = "";
-        jo["content"] = fromFeatureSet(resp.features, omapper, serialisation);
+        jo["content"] = fromFeatureSet(resp.features,
+                                       pmapper.pluginToOutputIdMapper(resp.plugin),
+                                       serialisation);
         return json11::Json(jo);
     }
     
@@ -1019,14 +1021,16 @@ public:
     
     static json11::Json
     fromVampResponse_Finish(const Vamp::HostExt::ProcessResponse &resp,
-                            const PluginOutputIdMapper &omapper,
+                            const PluginHandleMapper &pmapper,
                             BufferSerialisation serialisation) {
 
         json11::Json::object jo;
         jo["type"] = "finish";
         jo["success"] = true;
         jo["errorText"] = "";
-        jo["content"] = fromFeatureSet(resp.features, omapper, serialisation);
+        jo["content"] = fromFeatureSet(resp.features,
+                                       pmapper.pluginToOutputIdMapper(resp.plugin),
+                                       serialisation);
         return json11::Json(jo);
     }
 
@@ -1153,12 +1157,16 @@ public:
     
     static Vamp::HostExt::ProcessResponse
     toVampResponse_Process(json11::Json j,
-                           const PluginOutputIdMapper &omapper,
+                           const PluginHandleMapper &pmapper,
                            BufferSerialisation &serialisation) {
         
         Vamp::HostExt::ProcessResponse resp;
         if (successful(j)) {
-            resp.features = toFeatureSet(j["content"], omapper, serialisation);
+            auto jc = j["content"];
+            resp.features = toFeatureSet
+                (jc["features"],
+                 pmapper.handleToOutputIdMapper(jc["pluginHandle"].int_value()),
+                 serialisation);
         }
         return resp;
     }
@@ -1172,12 +1180,16 @@ public:
     
     static Vamp::HostExt::ProcessResponse
     toVampResponse_Finish(json11::Json j,
-                          const PluginOutputIdMapper &omapper,
+                          const PluginHandleMapper &pmapper,
                           BufferSerialisation &serialisation) {
         
         Vamp::HostExt::ProcessResponse resp;
         if (successful(j)) {
-            resp.features = toFeatureSet(j["content"], omapper, serialisation);
+            auto jc = j["content"];
+            resp.features = toFeatureSet
+                (jc["features"],
+                 pmapper.handleToOutputIdMapper(jc["pluginHandle"].int_value()),
+                 serialisation);
         }
         return resp;
     }

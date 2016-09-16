@@ -37,6 +37,8 @@
 
 #include <vamp-hostsdk/Plugin.h>
 
+#include "PluginOutputIdMapper.h"
+
 namespace vampipe {
 
 class PluginHandleMapper
@@ -44,13 +46,20 @@ class PluginHandleMapper
     // NB the handle type must fit in a JSON number
     
 public:
+    typedef int32_t Handle;
+
+    virtual ~PluginHandleMapper() { }
+    
     class NotFound : virtual public std::runtime_error {
     public:
         NotFound() : runtime_error("plugin or handle not found in mapper") { }
     };
     
-    virtual int32_t pluginToHandle(Vamp::Plugin *) const = 0; // may throw NotFound
-    virtual Vamp::Plugin *handleToPlugin(int32_t)  const = 0; // may throw NotFound
+    virtual Handle pluginToHandle(Vamp::Plugin *) const = 0; // may throw NotFound
+    virtual Vamp::Plugin *handleToPlugin(Handle)  const = 0; // may throw NotFound
+
+    virtual const PluginOutputIdMapper &pluginToOutputIdMapper(Vamp::Plugin *p) const = 0; // may throw NotFound
+    virtual const PluginOutputIdMapper &handleToOutputIdMapper(Handle h) const = 0; // may throw NotFound
 };
 
 }
