@@ -1011,7 +1011,7 @@ public:
         json11::Json::object po;
         po["pluginHandle"] = pmapper.pluginToHandle(resp.plugin);
         po["features"] = fromFeatureSet(resp.features,
-                                        pmapper.pluginToOutputIdMapper(resp.plugin),
+                                        *pmapper.pluginToOutputIdMapper(resp.plugin),
                                         serialisation);
         jo["content"] = po;
         return json11::Json(jo);
@@ -1041,7 +1041,7 @@ public:
         json11::Json::object po;
         po["pluginHandle"] = pmapper.pluginToHandle(resp.plugin);
         po["features"] = fromFeatureSet(resp.features,
-                                        pmapper.pluginToOutputIdMapper(resp.plugin),
+                                        *pmapper.pluginToOutputIdMapper(resp.plugin),
                                         serialisation);
         jo["content"] = po;
         return json11::Json(jo);
@@ -1184,7 +1184,7 @@ public:
             auto h = jc["pluginHandle"].int_value();
             resp.plugin = pmapper.handleToPlugin(h);
             resp.features = toFeatureSet(jc["features"],
-                                         pmapper.handleToOutputIdMapper(h),
+                                         *pmapper.handleToOutputIdMapper(h),
                                          serialisation);
         }
         return resp;
@@ -1211,7 +1211,7 @@ public:
             auto h = jc["pluginHandle"].int_value();
             resp.plugin = pmapper.handleToPlugin(h);
             resp.features = toFeatureSet(jc["features"],
-                                         pmapper.handleToOutputIdMapper(h),
+                                         *pmapper.handleToOutputIdMapper(h),
                                          serialisation);
         }
         return resp;

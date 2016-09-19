@@ -661,7 +661,7 @@ public:
         b.setPluginHandle(pmapper.pluginToHandle(pr.plugin));
         auto f = b.initFeatures();
         buildFeatureSet(f, pr.features,
-                        pmapper.pluginToOutputIdMapper(pr.plugin));
+                        *pmapper.pluginToOutputIdMapper(pr.plugin));
     }
     
     static void
@@ -672,7 +672,7 @@ public:
         auto h = r.getPluginHandle();
         pr.plugin = pmapper.handleToPlugin(h);
         readFeatureSet(pr.features, r.getFeatures(),
-                       pmapper.handleToOutputIdMapper(r.getPluginHandle()));
+                       *pmapper.handleToOutputIdMapper(r.getPluginHandle()));
     }
 
     static void

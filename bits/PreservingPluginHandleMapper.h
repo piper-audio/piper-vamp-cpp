@@ -49,7 +49,10 @@ namespace vampipe {
 class PreservingPluginHandleMapper : public PluginHandleMapper
 {
 public:
-    PreservingPluginHandleMapper() : m_handle(0), m_plugin(0) { }
+    PreservingPluginHandleMapper() :
+        m_handle(0),
+        m_plugin(0),
+        m_omapper(std::make_shared<PreservingPluginOutputIdMapper>()) { }
 
     virtual Handle pluginToHandle(Vamp::Plugin *p) const {
 	if (p == m_plugin) return m_handle;
@@ -68,18 +71,20 @@ public:
 	return m_plugin;
     }
 
-    virtual const PluginOutputIdMapper &pluginToOutputIdMapper(Vamp::Plugin *) const {
+    virtual const std::shared_ptr<PluginOutputIdMapper> pluginToOutputIdMapper
+    (Vamp::Plugin *) const {
         return m_omapper;
     }
         
-    virtual const PluginOutputIdMapper &handleToOutputIdMapper(Handle h) const {
+    virtual const std::shared_ptr<PluginOutputIdMapper> handleToOutputIdMapper
+    (Handle h) const {
         return m_omapper;
     }
     
 private:
     mutable Handle m_handle;
     mutable Vamp::Plugin *m_plugin;
-    PreservingPluginOutputIdMapper m_omapper;
+    std::shared_ptr<PreservingPluginOutputIdMapper> m_omapper;
 };
 
 }

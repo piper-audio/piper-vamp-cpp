@@ -50,28 +50,21 @@ class CountingPluginHandleMapper : public PluginHandleMapper
 public:
     CountingPluginHandleMapper() : m_nextHandle(1) { }
 
-    ~CountingPluginHandleMapper() {
-        for (auto &o: m_outputMappers) {
-            delete o.second;
-        }
-    }
-
     void addPlugin(Vamp::Plugin *p) {
 	if (m_rplugins.find(p) == m_rplugins.end()) {
 	    Handle h = m_nextHandle++;
 	    m_plugins[h] = p;
 	    m_rplugins[p] = h;
-            m_outputMappers[h] = new DefaultPluginOutputIdMapper(p);
+            m_outputMappers[h] =
+                std::make_shared<DefaultPluginOutputIdMapper>(p);
 	}
     }
 
     void removePlugin(Handle h) {
 	if (m_plugins.find(h) == m_plugins.end()) {
-            std::cerr << "remove: no handle " << h << std::endl;
 	    throw NotFound();
 	}
 	Vamp::Plugin *p = m_plugins[h];
-        delete m_outputMappers.at(h);
         m_outputMappers.erase(h);
 	m_plugins.erase(h);
 	if (isConfigured(h)) {
@@ -83,7 +76,6 @@ public:
     
     Handle pluginToHandle(Vamp::Plugin *p) const {
 	if (m_rplugins.find(p) == m_rplugins.end()) {
-            std::cerr << "pluginToHandle: no plugin " << p << std::endl;
 	    throw NotFound();
 	}
 	return m_rplugins.at(p);
@@ -91,26 +83,23 @@ public:
     
     Vamp::Plugin *handleToPlugin(Handle h) const {
 	if (m_plugins.find(h) == m_plugins.end()) {
-            std::cerr << "handleToPlugin: no handle " << h << std::endl;
 	    throw NotFound();
 	}
 	return m_plugins.at(h);
     }
 
-    //!!! iffy: mapper will move when another plugin is added. return by value?
-    const PluginOutputIdMapper &pluginToOutputIdMapper(Vamp::Plugin *p) const {
+    const std::shared_ptr<PluginOutputIdMapper> pluginToOutputIdMapper
+    (Vamp::Plugin *p) const {
         // pluginToHandle checks the plugin has been registered with us
-        std::cerr << "output id mapper requested for plugin with handle " << pluginToHandle(p) << std::endl;
-        return *m_outputMappers.at(pluginToHandle(p));
+        return m_outputMappers.at(pluginToHandle(p));
     }
 
-    //!!! iffy: mapper will move when another plugin is added. return by value?
-    const PluginOutputIdMapper &handleToOutputIdMapper(Handle h) const {
-        std::cerr << "output id mapper requested for handle " << h << std::endl;
+    const std::shared_ptr<PluginOutputIdMapper> handleToOutputIdMapper
+    (Handle h) const {
 	if (m_plugins.find(h) == m_plugins.end()) {
 	    throw NotFound();
 	}
-        return *m_outputMappers.at(h);
+        return m_outputMappers.at(h);
     }
 
     bool isConfigured(Handle h) const {
@@ -144,7 +133,7 @@ private:
     std::set<Handle> m_configuredPlugins;
     std::map<Handle, int> m_channelCounts;
     std::map<Handle, int> m_blockSizes;
-    std::map<Handle, DefaultPluginOutputIdMapper *> m_outputMappers;
+    std::map<Handle, std::shared_ptr<PluginOutputIdMapper>> m_outputMappers;
 };
 
 }
