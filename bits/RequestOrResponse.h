@@ -62,7 +62,7 @@ public:
     bool success;
     std::string errorText;
 
-    std::vector<Vamp::HostExt::PluginStaticData> listResponse;
+    Vamp::HostExt::ListResponse listResponse;
     Vamp::HostExt::LoadRequest loadRequest;
     Vamp::HostExt::LoadResponse loadResponse;
     Vamp::HostExt::ConfigurationRequest configurationRequest;

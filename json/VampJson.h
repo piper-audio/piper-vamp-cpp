@@ -927,7 +927,7 @@ public:
 
     static json11::Json
     fromVampResponse_List(std::string errorText,
-                          const std::vector<Vamp::HostExt::PluginStaticData> &d) {
+                          const Vamp::HostExt::ListResponse &resp) {
 
         json11::Json::object jo;
         jo["type"] = "list";
@@ -935,7 +935,7 @@ public:
         jo["errorText"] = errorText;
 
         json11::Json::array arr;
-        for (const auto &a: d) {
+        for (const auto &a: resp.pluginData) {
             arr.push_back(fromPluginStaticData(a));
         }
         json11::Json::object po;
@@ -1119,16 +1119,16 @@ public:
         checkTypeField(j, "list");
     }
 
-    static std::vector<Vamp::HostExt::PluginStaticData>
+    static Vamp::HostExt::ListResponse
     toVampResponse_List(json11::Json j) {
 
-        std::vector<Vamp::HostExt::PluginStaticData> arr;
+        Vamp::HostExt::ListResponse resp;
         if (successful(j)) {
             for (const auto &a: j["content"]["plugins"].array_items()) {
-                arr.push_back(toPluginStaticData(a));
+                resp.pluginData.push_back(toPluginStaticData(a));
             }
         }
-        return arr;
+        return resp;
     }
 
     static Vamp::HostExt::LoadRequest

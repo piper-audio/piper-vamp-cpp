@@ -365,7 +365,7 @@ writeResponseCapnp(RequestOrResponse &rr)
 	switch (rr.type) {
 
 	case RRType::List:
-	    VampnProto::buildVampResponse_List(builder, "", rr.listResponse);
+	    VampnProto::buildVampResponse_List(builder, rr.listResponse);
 	    break;
 	case RRType::Load:
 	    VampnProto::buildVampResponse_Load(builder, rr.loadResponse, mapper);

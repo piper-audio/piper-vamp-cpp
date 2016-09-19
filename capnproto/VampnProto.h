@@ -682,15 +682,13 @@ public:
 
     static void
     buildVampResponse_List(VampResponse::Builder &b,
-                           std::string errorText,
-                           const std::vector<Vamp::HostExt::PluginStaticData> &d) {
-        b.setSuccess(errorText == "");
-        b.setErrorText(errorText);
+                           const Vamp::HostExt::ListResponse &resp) {
+        b.setSuccess(true);
         auto r = b.getResponse().initList();
-        auto p = r.initPlugins(d.size());
-        for (size_t i = 0; i < d.size(); ++i) {
+        auto p = r.initPlugins(resp.pluginData.size());
+        for (size_t i = 0; i < resp.pluginData.size(); ++i) {
             auto pd = p[i];
-            buildPluginStaticData(pd, d[i]);
+            buildPluginStaticData(pd, resp.pluginData[i]);
         }
     }
     
@@ -706,7 +704,6 @@ public:
                            const Vamp::HostExt::LoadResponse &resp,
                            const PluginHandleMapper &pmapper) {
         b.setSuccess(resp.plugin != 0);
-        b.setErrorText("");
         auto u = b.getResponse().initLoad();
         buildLoadResponse(u, resp, pmapper);
     }
@@ -724,7 +721,6 @@ public:
                                 const Vamp::HostExt::ConfigurationResponse &cr,
                                 const PluginHandleMapper &pmapper) {
         b.setSuccess(!cr.outputs.empty());
-        b.setErrorText("");
         auto u = b.getResponse().initConfigure();
         buildConfigurationResponse(u, cr, pmapper);
     }
@@ -742,7 +738,6 @@ public:
                               const Vamp::HostExt::ProcessResponse &pr,
                               const PluginHandleMapper &pmapper) {
         b.setSuccess(true);
-        b.setErrorText("");
         auto u = b.getResponse().initProcess();
         buildProcessResponse(u, pr, pmapper);
     }
@@ -844,18 +839,18 @@ public:
     }
 
     static void
-    readVampResponse_List(std::vector<Vamp::HostExt::PluginStaticData> &v,
+    readVampResponse_List(Vamp::HostExt::ListResponse &resp,
                           const VampResponse::Reader &r) {
         if (getRequestResponseType(r) != RRType::List) {
             throw std::logic_error("not a list response");
         }
-        v.clear();
+        resp.pluginData.clear();
         if (r.getSuccess()) {
             auto pp = r.getResponse().getList().getPlugins();
             for (const auto &p: pp) {
                 Vamp::HostExt::PluginStaticData psd;
                 readPluginStaticData(psd, p);
-                v.push_back(psd);
+                resp.pluginData.push_back(psd);
             }
         }
     }
