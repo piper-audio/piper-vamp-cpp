@@ -926,13 +926,11 @@ public:
     }
 
     static json11::Json
-    fromVampResponse_List(std::string errorText,
-                          const Vamp::HostExt::ListResponse &resp) {
+    fromVampResponse_List(const Vamp::HostExt::ListResponse &resp) {
 
         json11::Json::object jo;
         jo["type"] = "list";
-        jo["success"] = (errorText == "");
-        jo["errorText"] = errorText;
+        jo["success"] = true;
 
         json11::Json::array arr;
         for (const auto &a: resp.pluginData) {

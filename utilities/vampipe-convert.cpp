@@ -220,7 +220,7 @@ writeResponseJson(RequestOrResponse &rr, bool useBase64)
 	switch (rr.type) {
 
 	case RRType::List:
-	    j = VampJson::fromVampResponse_List("", rr.listResponse);
+	    j = VampJson::fromVampResponse_List(rr.listResponse);
 	    break;
 	case RRType::Load:
 	    j = VampJson::fromVampResponse_Load(rr.loadResponse, mapper);
