@@ -1,4 +1,7 @@
 
+//!!! This program was an early test -- it should still compile but
+//!!! it's incomplete. Remove it and use the server program instead.
+
 #include "VampJson.h"
 #include "bits/CountingPluginHandleMapper.h"
 
@@ -55,10 +58,10 @@ handle_list(Json content)
     }
     
     auto loader = PluginLoader::getInstance();
-    auto pluginData = loader->listPluginData();
+    auto resp = loader->listPluginData();
 
     Json::array j;
-    for (const auto &pd: pluginData) {
+    for (const auto &pd: resp.pluginData) {
 	j.push_back(VampJson::fromPluginStaticData(pd));
     }
     return Json(j);
@@ -105,7 +108,7 @@ handle_configure(Json j)
 
     cerr << "Configured and initialised plugin " << handle << endl;
 
-    return VampJson::fromConfigurationResponse(response);
+    return VampJson::fromConfigurationResponse(response, mapper);
 }
 
 Json

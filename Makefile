@@ -1,5 +1,5 @@
 
-CXXFLAGS	:= -Wall -Werror -g -std=c++11
+CXXFLAGS	:= -Wall -Werror -g3 -std=c++11
 INCFLAGS	:= -Ivamp-plugin-sdk -Ijson -I/usr/local/include -Icapnproto -I.
 
 LDFLAGS		:= vamp-plugin-sdk/libvamp-hostsdk.a -L/usr/local/lib -lcapnp -lkj -ldl

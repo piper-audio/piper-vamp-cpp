@@ -55,8 +55,9 @@ handle_input(::capnp::MallocMessageBuilder &message, string input)
 
     } else if (type == "configurationresponse") {
 	auto resp = message.initRoot<ConfigurationResponse>();
+	PreservingPluginHandleMapper mapper;
 	VampnProto::buildConfigurationResponse
-	    (resp, VampJson::toConfigurationResponse(payload));
+	    (resp, VampJson::toConfigurationResponse(payload, mapper), mapper);
 
     } else if (type == "feature") {
 	auto f = message.initRoot<Feature>();
@@ -65,8 +66,9 @@ handle_input(::capnp::MallocMessageBuilder &message, string input)
 
     } else if (type == "featureset") {
 	auto fs = message.initRoot<FeatureSet>();
+	PreservingPluginOutputIdMapper omapper;
 	VampnProto::buildFeatureSet
-	    (fs, VampJson::toFeatureSet(payload, serialisation));
+	    (fs, VampJson::toFeatureSet(payload, omapper, serialisation), omapper);
 
     } else if (type == "loadrequest") {
 	auto req = message.initRoot<LoadRequest>();

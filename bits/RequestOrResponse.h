@@ -55,22 +55,21 @@ public:
     RequestOrResponse() : // nothing by default
 	direction(Request),
 	type(RRType::NotValid),
-	success(false),
-	finishPlugin(0) { }
+	success(false) { }
 
     Direction direction;
     RRType type;
     bool success;
     std::string errorText;
 
-    std::vector<Vamp::HostExt::PluginStaticData> listResponse;
+    Vamp::HostExt::ListResponse listResponse;
     Vamp::HostExt::LoadRequest loadRequest;
     Vamp::HostExt::LoadResponse loadResponse;
     Vamp::HostExt::ConfigurationRequest configurationRequest;
     Vamp::HostExt::ConfigurationResponse configurationResponse;
     Vamp::HostExt::ProcessRequest processRequest;
     Vamp::HostExt::ProcessResponse processResponse;
-    Vamp::Plugin *finishPlugin;
+    Vamp::HostExt::FinishRequest finishRequest;
     Vamp::HostExt::ProcessResponse finishResponse;
 };
 

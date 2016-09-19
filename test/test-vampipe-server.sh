@@ -2,7 +2,11 @@
 
 ( bin/vampipe-convert request -i json -o capnp |
 	VAMP_PATH=./vamp-plugin-sdk/examples bin/vampipe-server |
-	bin/vampipe-convert response -i capnp -o json ) <<EOF
+
+#	capnp decode capnproto/vamp.capnp VampResponse
+
+	bin/vampipe-convert response -i capnp -o json
+) <<EOF
 {"type":"list"}
 {"type":"load","content": {"pluginKey":"vamp-example-plugins:percussiononsets","inputSampleRate":44100,"adapterFlags":["AdaptInputDomain","AdaptBufferSize"]}}
 {"type":"configure","content":{"pluginHandle":1,"configuration":{"blockSize": 8, "channelCount": 1, "parameterValues": {"sensitivity": 40, "threshold": 3}, "stepSize": 8}}}

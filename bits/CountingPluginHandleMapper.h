@@ -36,6 +36,8 @@
 #define VAMPIPE_COUNTING_PLUGIN_HANDLE_MAPPER_H
 
 #include "PluginHandleMapper.h"
+#include "PluginOutputIdMapper.h"
+#include "DefaultPluginOutputIdMapper.h"
 
 #include <set>
 #include <map>
@@ -50,17 +52,20 @@ public:
 
     void addPlugin(Vamp::Plugin *p) {
 	if (m_rplugins.find(p) == m_rplugins.end()) {
-	    int32_t h = m_nextHandle++;
+	    Handle h = m_nextHandle++;
 	    m_plugins[h] = p;
 	    m_rplugins[p] = h;
+            m_outputMappers[h] =
+                std::make_shared<DefaultPluginOutputIdMapper>(p);
 	}
     }
 
-    void removePlugin(int32_t h) {
+    void removePlugin(Handle h) {
 	if (m_plugins.find(h) == m_plugins.end()) {
 	    throw NotFound();
 	}
 	Vamp::Plugin *p = m_plugins[h];
+        m_outputMappers.erase(h);
 	m_plugins.erase(h);
 	if (isConfigured(h)) {
 	    m_configuredPlugins.erase(h);
@@ -69,38 +74,52 @@ public:
 	m_rplugins.erase(p);
     }
     
-    int32_t pluginToHandle(Vamp::Plugin *p) const {
+    Handle pluginToHandle(Vamp::Plugin *p) const {
 	if (m_rplugins.find(p) == m_rplugins.end()) {
 	    throw NotFound();
 	}
 	return m_rplugins.at(p);
     }
     
-    Vamp::Plugin *handleToPlugin(int32_t h) const {
+    Vamp::Plugin *handleToPlugin(Handle h) const {
 	if (m_plugins.find(h) == m_plugins.end()) {
 	    throw NotFound();
 	}
 	return m_plugins.at(h);
     }
 
-    bool isConfigured(int32_t h) const {
+    const std::shared_ptr<PluginOutputIdMapper> pluginToOutputIdMapper
+    (Vamp::Plugin *p) const {
+        // pluginToHandle checks the plugin has been registered with us
+        return m_outputMappers.at(pluginToHandle(p));
+    }
+
+    const std::shared_ptr<PluginOutputIdMapper> handleToOutputIdMapper
+    (Handle h) const {
+	if (m_plugins.find(h) == m_plugins.end()) {
+	    throw NotFound();
+	}
+        return m_outputMappers.at(h);
+    }
+
+    bool isConfigured(Handle h) const {
 	return m_configuredPlugins.find(h) != m_configuredPlugins.end();
     }
 
-    void markConfigured(int32_t h, int channelCount, int blockSize) {
+    void markConfigured(Handle h, int channelCount, int blockSize) {
 	m_configuredPlugins.insert(h);
 	m_channelCounts[h] = channelCount;
 	m_blockSizes[h] = blockSize;
     }
 
-    int getChannelCount(int32_t h) const {
+    int getChannelCount(Handle h) const {
 	if (m_channelCounts.find(h) == m_channelCounts.end()) {
 	    throw NotFound();
 	}
 	return m_channelCounts.at(h);
     }
 
-    int getBlockSize(int32_t h) const {
+    int getBlockSize(Handle h) const {
 	if (m_blockSizes.find(h) == m_blockSizes.end()) {
 	    throw NotFound();
 	}
@@ -108,12 +127,13 @@ public:
     }
     
 private:
-    int32_t m_nextHandle; // NB plugin handle type must fit in JSON number
-    std::map<uint32_t, Vamp::Plugin *> m_plugins;
-    std::map<Vamp::Plugin *, uint32_t> m_rplugins;
-    std::set<uint32_t> m_configuredPlugins;
-    std::map<uint32_t, int> m_channelCounts;
-    std::map<uint32_t, int> m_blockSizes;
+    Handle m_nextHandle; // NB plugin handle type must fit in JSON number
+    std::map<Handle, Vamp::Plugin *> m_plugins;
+    std::map<Vamp::Plugin *, Handle> m_rplugins;
+    std::set<Handle> m_configuredPlugins;
+    std::map<Handle, int> m_channelCounts;
+    std::map<Handle, int> m_blockSizes;
+    std::map<Handle, std::shared_ptr<PluginOutputIdMapper>> m_outputMappers;
 };
 
 }

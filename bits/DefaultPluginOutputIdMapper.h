@@ -32,59 +32,41 @@
     authorization.
 */
 
-#ifndef VAMPIPE_PRESERVING_PLUGIN_HANDLE_MAPPER_H
-#define VAMPIPE_PRESERVING_PLUGIN_HANDLE_MAPPER_H
+#ifndef VAMPIPE_DEFAULT_PLUGIN_ID_MAPPER_H
+#define VAMPIPE_DEFAULT_PLUGIN_ID_MAPPER_H
 
-#include "PluginHandleMapper.h"
-#include "PreservingPluginOutputIdMapper.h"
-
-#include <iostream>
+#include <vamp-hostsdk/Plugin.h>
 
 namespace vampipe {
 
-//!!! document -- this is a passthrough thing for a single plugin
-//!!! handle only, it does not use actually valid Plugin pointers at
-//!!! all
-
-class PreservingPluginHandleMapper : public PluginHandleMapper
+class DefaultPluginOutputIdMapper : public PluginOutputIdMapper
 {
 public:
-    PreservingPluginHandleMapper() :
-        m_handle(0),
-        m_plugin(0),
-        m_omapper(std::make_shared<PreservingPluginOutputIdMapper>()) { }
-
-    virtual Handle pluginToHandle(Vamp::Plugin *p) const {
-	if (p == m_plugin) return m_handle;
-	else {
-	    std::cerr << "PreservingPluginHandleMapper: p = " << p
-		      << " differs from saved m_plugin " << m_plugin
-		      << " (not returning saved handle " << m_handle << ")"
-		      << std::endl;
-	    throw NotFound();
+    DefaultPluginOutputIdMapper(Vamp::Plugin *p) {
+	Vamp::Plugin::OutputList outputs = p->getOutputDescriptors();
+	for (const auto &d: outputs) {
+	    m_ids.push_back(d.identifier);
 	}
     }
 
-    virtual Vamp::Plugin *handleToPlugin(Handle h) const {
-	m_handle = h;
-	m_plugin = reinterpret_cast<Vamp::Plugin *>(h);
-	return m_plugin;
+    virtual int idToIndex(std::string outputId) const {
+	int n = int(m_ids.size());
+	for (int i = 0; i < n; ++i) {
+	    if (outputId == m_ids[i]) {
+		return i;
+	    }
+	}
+	//!!! todo: this should in fact throw, or otherwise return an error
+	return 0;
     }
 
-    virtual const std::shared_ptr<PluginOutputIdMapper> pluginToOutputIdMapper
-    (Vamp::Plugin *) const {
-        return m_omapper;
+    virtual std::string indexToId(int index) const {
+	//!!! todo: this should in fact throw, or otherwise return an error
+	return m_ids[index];
     }
-        
-    virtual const std::shared_ptr<PluginOutputIdMapper> handleToOutputIdMapper
-    (Handle h) const {
-        return m_omapper;
-    }
-    
+
 private:
-    mutable Handle m_handle;
-    mutable Vamp::Plugin *m_plugin;
-    std::shared_ptr<PreservingPluginOutputIdMapper> m_omapper;
+    std::vector<std::string> m_ids;
 };
 
 }
