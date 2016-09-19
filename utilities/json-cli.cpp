@@ -1,4 +1,7 @@
 
+//!!! This program was an early test -- it should still compile but
+//!!! it's incomplete. Remove it and use the server program instead.
+
 #include "VampJson.h"
 #include "bits/CountingPluginHandleMapper.h"
 
@@ -105,7 +108,7 @@ handle_configure(Json j)
 
     cerr << "Configured and initialised plugin " << handle << endl;
 
-    return VampJson::fromConfigurationResponse(response);
+    return VampJson::fromConfigurationResponse(response, mapper);
 }
 
 Json

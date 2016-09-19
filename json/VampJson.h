@@ -804,9 +804,12 @@ public:
     }
 
     static json11::Json
-    fromConfigurationResponse(const Vamp::HostExt::ConfigurationResponse &cr) {
+    fromConfigurationResponse(const Vamp::HostExt::ConfigurationResponse &cr,
+                              const PluginHandleMapper &pmapper) {
 
         json11::Json::object jo;
+
+        jo["pluginHandle"] = pmapper.pluginToHandle(cr.plugin);
         
         json11::Json::array outs;
         for (auto &d: cr.outputs) {
@@ -818,10 +821,13 @@ public:
     }
 
     static Vamp::HostExt::ConfigurationResponse
-    toConfigurationResponse(json11::Json j) {
+    toConfigurationResponse(json11::Json j,
+                            const PluginHandleMapper &pmapper) {
         
         Vamp::HostExt::ConfigurationResponse cr;
 
+        cr.plugin = pmapper.handleToPlugin(j["pluginHandle"].int_value());
+        
         if (!j["outputList"].is_array()) {
             throw Failure("array expected for output list");
         }
@@ -971,13 +977,14 @@ public:
     }    
 
     static json11::Json
-    fromVampResponse_Configure(const Vamp::HostExt::ConfigurationResponse &resp) {
+    fromVampResponse_Configure(const Vamp::HostExt::ConfigurationResponse &resp,
+                               const PluginHandleMapper &pmapper) {
         
         json11::Json::object jo;
         jo["type"] = "configure";
         jo["success"] = (!resp.outputs.empty());
         jo["errorText"] = "";
-        jo["content"] = fromConfigurationResponse(resp);
+        jo["content"] = fromConfigurationResponse(resp, pmapper);
         return json11::Json(jo);
     }
     
@@ -1011,13 +1018,13 @@ public:
     }
     
     static json11::Json
-    fromVampRequest_Finish(Vamp::Plugin *p,
+    fromVampRequest_Finish(const Vamp::HostExt::FinishRequest &req,
                            const PluginHandleMapper &pmapper) {
 
         json11::Json::object jo;
         jo["type"] = "finish";
         json11::Json::object fo;
-        fo["pluginHandle"] = pmapper.pluginToHandle(p);
+        fo["pluginHandle"] = pmapper.pluginToHandle(req.plugin);
         jo["content"] = fo;
         return json11::Json(jo);
     }    
@@ -1149,11 +1156,11 @@ public:
     }
     
     static Vamp::HostExt::ConfigurationResponse
-    toVampResponse_Configure(json11::Json j) {
+    toVampResponse_Configure(json11::Json j, const PluginHandleMapper &pmapper) {
         
         Vamp::HostExt::ConfigurationResponse resp;
         if (successful(j)) {
-            resp = toConfigurationResponse(j["content"]);
+            resp = toConfigurationResponse(j["content"], pmapper);
         }
         return resp;
     }
@@ -1183,11 +1190,14 @@ public:
         return resp;
     }
     
-    static Vamp::Plugin *
+    static Vamp::HostExt::FinishRequest
     toVampRequest_Finish(json11::Json j, const PluginHandleMapper &pmapper) {
         
         checkTypeField(j, "finish");
-        return pmapper.handleToPlugin(j["content"]["pluginHandle"].int_value());
+        Vamp::HostExt::FinishRequest req;
+        req.plugin = pmapper.handleToPlugin
+            (j["content"]["pluginHandle"].int_value());
+        return req;
     }
     
     static Vamp::HostExt::ProcessResponse

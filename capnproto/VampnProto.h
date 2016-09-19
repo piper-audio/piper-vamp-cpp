@@ -572,8 +572,10 @@ public:
 
     static void
     buildConfigurationResponse(ConfigurationResponse::Builder &b,
-                               const Vamp::HostExt::ConfigurationResponse &cr) {
+                               const Vamp::HostExt::ConfigurationResponse &cr,
+                               const PluginHandleMapper &pmapper) {
 
+        b.setPluginHandle(pmapper.pluginToHandle(cr.plugin));
         auto olist = b.initOutputs(cr.outputs.size());
         for (size_t i = 0; i < cr.outputs.size(); ++i) {
             auto od = olist[i];
@@ -583,8 +585,10 @@ public:
 
     static void
     readConfigurationResponse(Vamp::HostExt::ConfigurationResponse &cr,
-                              const ConfigurationResponse::Reader &r) {
+                              const ConfigurationResponse::Reader &r,
+                              const PluginHandleMapper &pmapper) {
 
+        cr.plugin = pmapper.handleToPlugin(r.getPluginHandle());
         cr.outputs.clear();
         auto oo = r.getOutputs();
         for (const auto &o: oo) {
@@ -717,11 +721,12 @@ public:
 
     static void
     buildVampResponse_Configure(VampResponse::Builder &b,
-                                const Vamp::HostExt::ConfigurationResponse &cr) {
+                                const Vamp::HostExt::ConfigurationResponse &cr,
+                                const PluginHandleMapper &pmapper) {
         b.setSuccess(!cr.outputs.empty());
         b.setErrorText("");
         auto u = b.getResponse().initConfigure();
-        buildConfigurationResponse(u, cr);
+        buildConfigurationResponse(u, cr, pmapper);
     }
     
     static void
@@ -744,11 +749,11 @@ public:
     
     static void
     buildVampRequest_Finish(VampRequest::Builder &b,
-                            Vamp::Plugin *p,
+                            const Vamp::HostExt::FinishRequest &req,
                             const PluginHandleMapper &pmapper) {
 
         auto u = b.getRequest().initFinish();
-        u.setPluginHandle(pmapper.pluginToHandle(p));
+        u.setPluginHandle(pmapper.pluginToHandle(req.plugin));
     }
     
     static void
@@ -889,13 +894,16 @@ public:
 
     static void
     readVampResponse_Configure(Vamp::HostExt::ConfigurationResponse &resp,
-                               const VampResponse::Reader &r) {
+                               const VampResponse::Reader &r,
+                               const PluginHandleMapper &pmapper) {
         if (getRequestResponseType(r) != RRType::Configure) {
             throw std::logic_error("not a configuration response");
         }
         resp = {};
         if (r.getSuccess()) {
-            readConfigurationResponse(resp, r.getResponse().getConfigure());
+            readConfigurationResponse(resp,
+                                      r.getResponse().getConfigure(),
+                                      pmapper);
         }
     }
     
@@ -923,13 +931,13 @@ public:
     }
     
     static void
-    readVampRequest_Finish(Vamp::Plugin *&finishPlugin,
+    readVampRequest_Finish(Vamp::HostExt::FinishRequest &req,
                            const VampRequest::Reader &r,
                            const PluginHandleMapper &pmapper) {
         if (getRequestResponseType(r) != RRType::Finish) {
             throw std::logic_error("not a finish request");
         }
-        finishPlugin = pmapper.handleToPlugin
+        req.plugin = pmapper.handleToPlugin
             (r.getRequest().getFinish().getPluginHandle());
     }
 

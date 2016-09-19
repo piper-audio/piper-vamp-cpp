@@ -65,7 +65,7 @@ readRequestCapnp()
 	VampnProto::readVampRequest_Process(rr.processRequest, reader, mapper);
 	break;
     case RRType::Finish:
-	VampnProto::readVampRequest_Finish(rr.finishPlugin, reader, mapper);
+	VampnProto::readVampRequest_Finish(rr.finishRequest, reader, mapper);
 	break;
     case RRType::NotValid:
 	break;
@@ -95,7 +95,7 @@ writeResponseCapnp(RequestOrResponse &rr)
 	    VampnProto::buildVampResponse_Load(builder, rr.loadResponse, mapper);
 	    break;
 	case RRType::Configure:
-	    VampnProto::buildVampResponse_Configure(builder, rr.configurationResponse);
+	    VampnProto::buildVampResponse_Configure(builder, rr.configurationResponse, mapper);
 	    break;
 	case RRType::Process:
 	    VampnProto::buildVampResponse_Process(builder, rr.processResponse, mapper);
@@ -196,9 +196,9 @@ handleRequest(const RequestOrResponse &request)
 
     case RRType::Finish:
     {
-	response.finishResponse.plugin = request.finishPlugin;
+	response.finishResponse.plugin = request.finishRequest.plugin;
 	response.finishResponse.features =
-	    request.finishPlugin->getRemainingFeatures();
+	    request.finishRequest.plugin->getRemainingFeatures();
 
 	// We do not delete the plugin here -- we need it in the
 	// mapper when converting the features. It gets deleted by the
@@ -249,9 +249,9 @@ int main(int argc, char **argv)
 	    cerr << "vampipe-server: response written" << endl;
 
 	    if (request.type == RRType::Finish) {
-		auto h = mapper.pluginToHandle(request.finishPlugin);
+		auto h = mapper.pluginToHandle(request.finishRequest.plugin);
 		mapper.removePlugin(h);
-		delete request.finishPlugin;
+		delete request.finishRequest.plugin;
 	    }
 	    
 	} catch (std::exception &e) {
