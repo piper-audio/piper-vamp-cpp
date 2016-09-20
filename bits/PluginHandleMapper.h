@@ -42,28 +42,56 @@
 
 namespace vampipe {
 
+/**
+ * Convert plugin pointers to handles within some scope defined by the
+ * individual PluginHandleMapper implementation.
+ *
+ * The special handle 0 and the NULL plugin pointer are both used to
+ * represent "not found" and will be returned in any case where an
+ * unknown handle or plugin is requested.
+ *
+ * Note that the handle type must be representable as a JSON number,
+ * hence the use of a 32-bit rather than 64-bit int.
+ *
+ * This interface also includes methods for obtaining a
+ * PluginOutputIdMapper, \see PluginOutputIdMapper.
+ */
+
 class PluginHandleMapper
 {
-    // NB the handle type must fit in a JSON number
-    
 public:
     typedef int32_t Handle;
+    const Handle INVALID_HANDLE = 0;
 
-    virtual ~PluginHandleMapper() { }
-    
-    class NotFound : virtual public std::runtime_error {
-    public:
-        NotFound() : runtime_error("plugin or handle not found in mapper") { }
-    };
-    
-    virtual Handle pluginToHandle(Vamp::Plugin *) const = 0; // may throw NotFound
-    virtual Vamp::Plugin *handleToPlugin(Handle)  const = 0; // may throw NotFound
+    virtual ~PluginHandleMapper() noexcept { }
 
+    /**
+     * Look up and return the handle for a given plugin pointer.
+     * If the given pointer is null or not known, return INVALID_HANDLE.
+     */
+    virtual Handle pluginToHandle(Vamp::Plugin *) const noexcept = 0;
+
+    /**
+     * Look up and return the plugin for a given handle.
+     * If the given handle is INVALID_HANDLE or not known, return nullptr.
+     */
+    virtual Vamp::Plugin *handleToPlugin(Handle)  const noexcept = 0;
+
+    /**
+     * Return a shared pointer to a PluginOutputIdMapper
+     * implementation for the given plugin pointer.  If the given
+     * pointer is null or not known, return the null shared_ptr.
+     */
     virtual const std::shared_ptr<PluginOutputIdMapper> pluginToOutputIdMapper
-    (Vamp::Plugin *p) const = 0; // may throw NotFound
+    (Vamp::Plugin *p) const noexcept = 0;
 
+    /**
+     * Return a shared pointer to a PluginOutputIdMapper
+     * implementation for the given plugin handle.  If the given
+     * handle is INVALID_HANDLE or not known, return the null shared_ptr.
+     */
     virtual const std::shared_ptr<PluginOutputIdMapper> handleToOutputIdMapper
-    (Handle h) const = 0; // may throw NotFound
+    (Handle h) const noexcept = 0;
 };
 
 }

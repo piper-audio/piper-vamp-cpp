@@ -42,14 +42,23 @@
 
 namespace vampipe {
 
-//!!! doc interface
 class PluginOutputIdMapper
 {
 public:
     virtual ~PluginOutputIdMapper() { }
-    
-    virtual int idToIndex(std::string outputId) const = 0;
-    virtual std::string indexToId(int index) const = 0;
+
+    /**
+     * Return the index of the given output id in the plugin. The
+     * first output has index 0. If the given output id is unknown,
+     * return -1.
+     */
+    virtual int idToIndex(std::string outputId) const noexcept = 0;
+
+    /**
+     * Return the id of the output with the given index in the
+     * plugin. If the index is out of range, return the empty string.
+     */
+    virtual std::string indexToId(int index) const noexcept = 0;
 };
 
 }

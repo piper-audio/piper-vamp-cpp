@@ -44,13 +44,13 @@
 
 namespace vampipe {
 
-//!!! NB not thread-safe at present, should it be?
 class CountingPluginHandleMapper : public PluginHandleMapper
 {
 public:
     CountingPluginHandleMapper() : m_nextHandle(1) { }
 
     void addPlugin(Vamp::Plugin *p) {
+        if (!p) return;
 	if (m_rplugins.find(p) == m_rplugins.end()) {
 	    Handle h = m_nextHandle++;
 	    m_plugins[h] = p;
@@ -61,9 +61,7 @@ public:
     }
 
     void removePlugin(Handle h) {
-	if (m_plugins.find(h) == m_plugins.end()) {
-	    throw NotFound();
-	}
+	if (m_plugins.find(h) == m_plugins.end()) return;
 	Vamp::Plugin *p = m_plugins[h];
         m_outputMappers.erase(h);
 	m_plugins.erase(h);
@@ -74,54 +72,57 @@ public:
 	m_rplugins.erase(p);
     }
     
-    Handle pluginToHandle(Vamp::Plugin *p) const {
+    Handle pluginToHandle(Vamp::Plugin *p) const noexcept {
 	if (m_rplugins.find(p) == m_rplugins.end()) {
-	    throw NotFound();
+            return INVALID_HANDLE;
 	}
 	return m_rplugins.at(p);
     }
     
-    Vamp::Plugin *handleToPlugin(Handle h) const {
+    Vamp::Plugin *handleToPlugin(Handle h) const noexcept {
 	if (m_plugins.find(h) == m_plugins.end()) {
-	    throw NotFound();
+            return nullptr;
 	}
 	return m_plugins.at(h);
     }
 
     const std::shared_ptr<PluginOutputIdMapper> pluginToOutputIdMapper
-    (Vamp::Plugin *p) const {
-        // pluginToHandle checks the plugin has been registered with us
-        return m_outputMappers.at(pluginToHandle(p));
+    (Vamp::Plugin *p) const noexcept {
+        return handleToOutputIdMapper(pluginToHandle(p));
     }
 
     const std::shared_ptr<PluginOutputIdMapper> handleToOutputIdMapper
-    (Handle h) const {
-	if (m_plugins.find(h) == m_plugins.end()) {
-	    throw NotFound();
+    (Handle h) const noexcept {
+	if (h != INVALID_HANDLE &&
+            m_outputMappers.find(h) != m_outputMappers.end()) {
+            return m_outputMappers.at(h);
+        } else {
+	    return {};
 	}
-        return m_outputMappers.at(h);
     }
 
-    bool isConfigured(Handle h) const {
+    bool isConfigured(Handle h) const noexcept {
+        if (h == INVALID_HANDLE) return false;
 	return m_configuredPlugins.find(h) != m_configuredPlugins.end();
     }
 
     void markConfigured(Handle h, int channelCount, int blockSize) {
+        if (h == INVALID_HANDLE) return;
 	m_configuredPlugins.insert(h);
 	m_channelCounts[h] = channelCount;
 	m_blockSizes[h] = blockSize;
     }
 
-    int getChannelCount(Handle h) const {
+    int getChannelCount(Handle h) const noexcept {
 	if (m_channelCounts.find(h) == m_channelCounts.end()) {
-	    throw NotFound();
+	    return 0;
 	}
 	return m_channelCounts.at(h);
     }
 
-    int getBlockSize(Handle h) const {
+    int getBlockSize(Handle h) const noexcept {
 	if (m_blockSizes.find(h) == m_blockSizes.end()) {
-	    throw NotFound();
+            return 0;
 	}
 	return m_blockSizes.at(h);
     }
