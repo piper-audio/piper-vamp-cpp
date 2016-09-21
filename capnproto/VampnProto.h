@@ -639,7 +639,7 @@ public:
                         const PluginHandleMapper &pmapper) {
 
         b.setPluginHandle(pmapper.pluginToHandle(pr.plugin));
-        auto input = b.initInput();
+        auto input = b.initProcessInput();
         buildProcessInput(input, pr.timestamp, pr.inputBuffers);
     }
 
@@ -650,7 +650,7 @@ public:
 
         auto h = r.getPluginHandle();
         pr.plugin = pmapper.handleToPlugin(h);
-        readProcessInput(pr.timestamp, pr.inputBuffers, r.getInput());
+        readProcessInput(pr.timestamp, pr.inputBuffers, r.getProcessInput());
     }
 
     static void
