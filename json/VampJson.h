@@ -190,9 +190,8 @@ public:
     }
 
     static json11::Json
-    fromOutputDescriptor(const Vamp::Plugin::OutputDescriptor &desc) {
+    fromConfiguredOutputDescriptor(const Vamp::Plugin::OutputDescriptor &desc) {
         json11::Json::object jo {
-            { "basic", fromBasicDescriptor(desc) },
             { "unit", desc.unit },
             { "sampleType", fromSampleType(desc.sampleType) },
             { "sampleRate", desc.sampleRate },
@@ -212,16 +211,23 @@ public:
         return json11::Json(jo);
     }
     
+    static json11::Json
+    fromOutputDescriptor(const Vamp::Plugin::OutputDescriptor &desc) {
+        json11::Json::object jo {
+            { "basic", fromBasicDescriptor(desc) },
+            { "configured", fromConfiguredOutputDescriptor(desc) }
+        };
+        return json11::Json(jo);
+    }
+    
     static Vamp::Plugin::OutputDescriptor
-    toOutputDescriptor(json11::Json j) {
+    toConfiguredOutputDescriptor(json11::Json j) {
 
         Vamp::Plugin::OutputDescriptor od;
         if (!j.is_object()) {
             throw Failure("object expected for output descriptor");
         }
     
-        toBasicDescriptor(j["basic"], od);
-
         od.unit = j["unit"].string_value();
 
         od.sampleType = toSampleType(j["sampleType"].string_value());
@@ -254,6 +260,21 @@ public:
         } else {
             od.isQuantized = false;
         }
+
+        return od;
+    }
+    
+    static Vamp::Plugin::OutputDescriptor
+    toOutputDescriptor(json11::Json j) {
+
+        Vamp::Plugin::OutputDescriptor od;
+        if (!j.is_object()) {
+            throw Failure("object expected for output descriptor");
+        }
+
+        od = toConfiguredOutputDescriptor(j);
+    
+        toBasicDescriptor(j["basic"], od);
 
         return od;
     }
@@ -933,7 +954,7 @@ public:
         jo["success"] = true;
 
         json11::Json::array arr;
-        for (const auto &a: resp.pluginData) {
+        for (const auto &a: resp.plugins) {
             arr.push_back(fromPluginStaticData(a));
         }
         json11::Json::object po;
@@ -1123,7 +1144,7 @@ public:
         Vamp::HostExt::ListResponse resp;
         if (successful(j)) {
             for (const auto &a: j["content"]["plugins"].array_items()) {
-                resp.pluginData.push_back(toPluginStaticData(a));
+                resp.plugins.push_back(toPluginStaticData(a));
             }
         }
         return resp;

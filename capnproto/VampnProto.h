@@ -127,11 +127,8 @@ public:
     }
 
     static void
-    buildOutputDescriptor(OutputDescriptor::Builder &b,
-                          const Vamp::Plugin::OutputDescriptor &od) {
-
-        auto basic = b.initBasic();
-        buildBasicDescriptor(basic, od);
+    buildConfiguredOutputDescriptor(ConfiguredOutputDescriptor::Builder &b,
+                                    const Vamp::Plugin::OutputDescriptor &od) {
 
         b.setUnit(od.unit);
 
@@ -162,10 +159,19 @@ public:
     }
 
     static void
-    readOutputDescriptor(Vamp::Plugin::OutputDescriptor &od,
-                         const OutputDescriptor::Reader &r) {
+    buildOutputDescriptor(OutputDescriptor::Builder &b,
+                          const Vamp::Plugin::OutputDescriptor &od) {
 
-        readBasicDescriptor(od, r.getBasic());
+        auto basic = b.initBasic();
+        buildBasicDescriptor(basic, od);
+
+        auto configured = b.initConfigured();
+        buildConfiguredOutputDescriptor(configured, od);
+    }
+    
+    static void
+    readConfiguredOutputDescriptor(Vamp::Plugin::OutputDescriptor &od,
+                                   const ConfiguredOutputDescriptor::Reader &r) {
 
         od.unit = r.getUnit();
 
@@ -192,6 +198,14 @@ public:
         if (od.isQuantized) {
             od.quantizeStep = r.getQuantizeStep();
         }
+    }
+
+    static void
+    readOutputDescriptor(Vamp::Plugin::OutputDescriptor &od,
+                         const OutputDescriptor::Reader &r) {
+
+        readBasicDescriptor(od, r.getBasic());
+        readConfiguredOutputDescriptor(od, r.getConfigured());
     }
 
     static void
@@ -685,10 +699,10 @@ public:
                            const Vamp::HostExt::ListResponse &resp) {
         b.setSuccess(true);
         auto r = b.getResponse().initList();
-        auto p = r.initPlugins(resp.pluginData.size());
-        for (size_t i = 0; i < resp.pluginData.size(); ++i) {
+        auto p = r.initPlugins(resp.plugins.size());
+        for (size_t i = 0; i < resp.plugins.size(); ++i) {
             auto pd = p[i];
-            buildPluginStaticData(pd, resp.pluginData[i]);
+            buildPluginStaticData(pd, resp.plugins[i]);
         }
     }
     
@@ -844,13 +858,13 @@ public:
         if (getRequestResponseType(r) != RRType::List) {
             throw std::logic_error("not a list response");
         }
-        resp.pluginData.clear();
+        resp.plugins.clear();
         if (r.getSuccess()) {
             auto pp = r.getResponse().getList().getPlugins();
             for (const auto &p: pp) {
                 Vamp::HostExt::PluginStaticData psd;
                 readPluginStaticData(psd, p);
-                resp.pluginData.push_back(psd);
+                resp.plugins.push_back(psd);
             }
         }
     }

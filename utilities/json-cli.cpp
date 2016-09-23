@@ -61,7 +61,7 @@ handle_list(Json content)
     auto resp = loader->listPluginData();
 
     Json::array j;
-    for (const auto &pd: resp.pluginData) {
+    for (const auto &pd: resp.plugins) {
 	j.push_back(VampJson::fromPluginStaticData(pd));
     }
     return Json(j);
