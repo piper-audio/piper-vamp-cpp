@@ -54,30 +54,34 @@ public:
         m_plugin(0),
         m_omapper(std::make_shared<PreservingPluginOutputIdMapper>()) { }
 
-    virtual Handle pluginToHandle(Vamp::Plugin *p) const {
+    virtual Handle pluginToHandle(Vamp::Plugin *p) const noexcept {
+        if (!p) return INVALID_HANDLE;
 	if (p == m_plugin) return m_handle;
 	else {
 	    std::cerr << "PreservingPluginHandleMapper: p = " << p
 		      << " differs from saved m_plugin " << m_plugin
 		      << " (not returning saved handle " << m_handle << ")"
 		      << std::endl;
-	    throw NotFound();
+            return INVALID_HANDLE;
 	}
     }
 
-    virtual Vamp::Plugin *handleToPlugin(Handle h) const {
+    virtual Vamp::Plugin *handleToPlugin(Handle h) const noexcept {
+        if (h == INVALID_HANDLE) return nullptr;
 	m_handle = h;
 	m_plugin = reinterpret_cast<Vamp::Plugin *>(h);
 	return m_plugin;
     }
 
     virtual const std::shared_ptr<PluginOutputIdMapper> pluginToOutputIdMapper
-    (Vamp::Plugin *) const {
+    (Vamp::Plugin *p) const noexcept {
+        if (!p) return {};
         return m_omapper;
     }
         
     virtual const std::shared_ptr<PluginOutputIdMapper> handleToOutputIdMapper
-    (Handle h) const {
+    (Handle h) const noexcept {
+        if (h == INVALID_HANDLE) return {};
         return m_omapper;
     }
     

@@ -37,41 +37,37 @@ void usage()
 }
 
 Json
-convertRequestJson(string input)
+convertRequestJson(string input, string &err)
 {
-    string err;
     Json j = Json::parse(input, err);
     if (err != "") {
-	throw VampJson::Failure("invalid json: " + err);
+	err = "invalid json: " + err;
+	return {};
     }
     if (!j.is_object()) {
-	throw VampJson::Failure("object expected at top level");
-    }
-    if (!j["type"].is_string()) {
-	throw VampJson::Failure("string expected for type field");
-    }
-    if (!j["content"].is_null() && !j["content"].is_object()) {
-	throw VampJson::Failure("object expected for content field");
+	err = "object expected at top level";
+    } else if (!j["type"].is_string()) {
+	err = "string expected for type field";
+    } else if (!j["content"].is_null() && !j["content"].is_object()) {
+	err = "object expected for content field";
     }
     return j;
 }
 
 Json
-convertResponseJson(string input)
+convertResponseJson(string input, string &err)
 {
-    string err;
     Json j = Json::parse(input, err);
     if (err != "") {
-	throw VampJson::Failure("invalid json: " + err);
+	err = "invalid json: " + err;
+	return {};
     }
     if (!j.is_object()) {
-	throw VampJson::Failure("object expected at top level");
-    }
-    if (!j["success"].is_bool()) {
-	throw VampJson::Failure("bool expected for success field");
-    }
-    if (!j["content"].is_object()) {
-	throw VampJson::Failure("object expected for content field");
+	err = "object expected at top level";
+    } else if (!j["success"].is_bool()) {
+	err = "bool expected for success field";
+    } else if (!j["content"].is_object()) {
+	err = "object expected for content field";
     }
     return j;
 }
@@ -82,38 +78,42 @@ convertResponseJson(string input)
 PreservingPluginHandleMapper mapper;
 
 RequestOrResponse
-readRequestJson()
+readRequestJson(string &err)
 {
     RequestOrResponse rr;
     rr.direction = RequestOrResponse::Request;
 
     string input;
     if (!getline(cin, input)) {
+	// the EOF case, not actually an error
 	rr.type = RRType::NotValid;
 	return rr;
     }
     
-    Json j = convertRequestJson(input);
+    Json j = convertRequestJson(input, err);
+    if (err != "") return {};
 
-    rr.type = VampJson::getRequestResponseType(j);
+    rr.type = VampJson::getRequestResponseType(j, err);
+    if (err != "") return {};
+    
     VampJson::BufferSerialisation serialisation = VampJson::BufferSerialisation::Text;
 
     switch (rr.type) {
 
     case RRType::List:
-	VampJson::toVampRequest_List(j); // type check only
+	VampJson::toVampRequest_List(j, err); // type check only
 	break;
     case RRType::Load:
-	rr.loadRequest = VampJson::toVampRequest_Load(j);
+	rr.loadRequest = VampJson::toVampRequest_Load(j, err);
 	break;
     case RRType::Configure:
-	rr.configurationRequest = VampJson::toVampRequest_Configure(j, mapper);
+	rr.configurationRequest = VampJson::toVampRequest_Configure(j, mapper, err);
 	break;
     case RRType::Process:
-	rr.processRequest = VampJson::toVampRequest_Process(j, mapper, serialisation);
+	rr.processRequest = VampJson::toVampRequest_Process(j, mapper, serialisation, err);
 	break;
     case RRType::Finish:
-	rr.finishRequest = VampJson::toVampRequest_Finish(j, mapper);
+	rr.finishRequest = VampJson::toVampRequest_Finish(j, mapper, err);
 	break;
     case RRType::NotValid:
 	break;
@@ -158,20 +158,24 @@ writeRequestJson(RequestOrResponse &rr, bool useBase64)
 }
 
 RequestOrResponse
-readResponseJson()
+readResponseJson(string &err)
 {
     RequestOrResponse rr;
     rr.direction = RequestOrResponse::Response;
 
     string input;
     if (!getline(cin, input)) {
+	// the EOF case, not actually an error
 	rr.type = RRType::NotValid;
 	return rr;
     }
 
-    Json j = convertResponseJson(input);
+    Json j = convertResponseJson(input, err);
+    if (err != "") return {};
 
-    rr.type = VampJson::getRequestResponseType(j);
+    rr.type = VampJson::getRequestResponseType(j, err);
+    if (err != "") return {};
+    
     VampJson::BufferSerialisation serialisation = VampJson::BufferSerialisation::Text;
 
     rr.success = j["success"].bool_value();
@@ -180,19 +184,19 @@ readResponseJson()
     switch (rr.type) {
 
     case RRType::List:
-	rr.listResponse = VampJson::toVampResponse_List(j);
+	rr.listResponse = VampJson::toVampResponse_List(j, err);
 	break;
     case RRType::Load:
-	rr.loadResponse = VampJson::toVampResponse_Load(j, mapper);
+	rr.loadResponse = VampJson::toVampResponse_Load(j, mapper, err);
 	break;
     case RRType::Configure:
-	rr.configurationResponse = VampJson::toVampResponse_Configure(j, mapper);
+	rr.configurationResponse = VampJson::toVampResponse_Configure(j, mapper, err);
 	break;
     case RRType::Process: 
-	rr.processResponse = VampJson::toVampResponse_Process(j, mapper, serialisation);
+	rr.processResponse = VampJson::toVampResponse_Process(j, mapper, serialisation, err);
 	break;
     case RRType::Finish:
-	rr.finishResponse = VampJson::toVampResponse_Finish(j, mapper, serialisation);
+	rr.finishResponse = VampJson::toVampResponse_Finish(j, mapper, serialisation, err);
 	break;
     case RRType::NotValid:
 	break;
@@ -388,12 +392,12 @@ writeResponseCapnp(RequestOrResponse &rr)
 }
 
 RequestOrResponse
-readInputJson(RequestOrResponse::Direction direction)
+readInputJson(RequestOrResponse::Direction direction, string &err)
 {
     if (direction == RequestOrResponse::Request) {
-	return readRequestJson();
+	return readRequestJson(err);
     } else {
-	return readResponseJson();
+	return readResponseJson(err);
     }
 }
 
@@ -418,7 +422,10 @@ RequestOrResponse
 readInput(string format, RequestOrResponse::Direction direction)
 {
     if (format == "json") {
-	return readInputJson(direction);
+	string err;
+	auto result = readInputJson(direction, err);
+	if (err != "") throw runtime_error(err);
+	else return result;
     } else if (format == "capnp") {
 	return readInputCapnp(direction);
     } else {

@@ -49,19 +49,18 @@ public:
 	}
     }
 
-    virtual int idToIndex(std::string outputId) const {
+    virtual int idToIndex(std::string outputId) const noexcept {
 	int n = int(m_ids.size());
 	for (int i = 0; i < n; ++i) {
 	    if (outputId == m_ids[i]) {
 		return i;
 	    }
 	}
-	//!!! todo: this should in fact throw, or otherwise return an error
-	return 0;
+	return -1;
     }
 
-    virtual std::string indexToId(int index) const {
-	//!!! todo: this should in fact throw, or otherwise return an error
+    virtual std::string indexToId(int index) const noexcept {
+        if (index < 0 || size_t(index) >= m_ids.size()) return "";
 	return m_ids[index];
     }
 

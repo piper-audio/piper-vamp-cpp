@@ -38,7 +38,6 @@
 #include <vector>
 #include <string>
 #include <sstream>
-#include <stdexcept>
 
 #include <json11/json11.hpp>
 #include <base-n/include/basen.hpp>
@@ -56,7 +55,25 @@ namespace vampipe {
  * Convert the structures laid out in the Vamp SDK classes into JSON
  * (and back again) following the schema in the vamp-json-schema
  * project repo.
+ *
+ * Functions with names starting "from" convert from a Vamp SDK object
+ * to JSON output. Most of them return a json11::Json object, with a
+ * few exceptions for low-level utilities that return a string. These
+ * functions succeed all of the time.
+ *
+ * Functions with names starting "to" convert to a Vamp SDK object
+ * from JSON input. These functions all accept a json11::Json object
+ * as first argument, with a few exceptions for low-level utilities
+ * that accept a string. These functions all accept a string reference
+ * as a final argument and return an error string through it if the
+ * conversion fails. If conversion fails the return value is
+ * undefined, and any returned object may be incomplete or
+ * invalid. Callers should check for an empty error string (indicating
+ * success) before using the returned value.
  */
+
+//!!! todo: convert pmapper to err style
+
 class VampJson
 {
 public:
@@ -88,10 +105,9 @@ public:
         Base64
     };
     
-    class Failure : virtual public std::runtime_error {
-    public:
-        Failure(std::string s) : runtime_error(s) { }
-    };
+    static bool failed(const std::string &err) {
+        return err != "";
+    }
     
     template <typename T>
     static json11::Json
@@ -105,12 +121,14 @@ public:
 
     template <typename T>
     static void
-    toBasicDescriptor(json11::Json j, T &t) {
+    toBasicDescriptor(json11::Json j, T &t, std::string &err) {
         if (!j.is_object()) {
-            throw Failure("object expected for basic descriptor content");
+            err = "object expected for basic descriptor content";
+            return;
         }
         if (!j["identifier"].is_string()) {
-            throw Failure("string expected for identifier");
+            err = "string expected for identifier";
+            return;
         }
         t.identifier = j["identifier"].string_value();
         t.name = j["name"].string_value();
@@ -128,7 +146,7 @@ public:
 
     template <typename T>
     static bool
-    toValueExtents(json11::Json j, T &t) {
+    toValueExtents(json11::Json j, T &t, std::string &err) {
         if (j["extents"].is_null()) {
             return false;
         } else if (j["extents"].is_object()) {
@@ -138,10 +156,12 @@ public:
                 t.maxValue = j["extents"]["max"].number_value();
                 return true;
             } else {
-                throw Failure("numbers expected for min and max");
+                err = "numbers expected for min and max";
+                return false;
             }
         } else {
-            throw Failure("object expected for extents (if present)");
+            err = "object expected for extents (if present)";
+            return false;
         }
     }
 
@@ -154,11 +174,12 @@ public:
     }
 
     static Vamp::RealTime
-    toRealTime(json11::Json j) {
+    toRealTime(json11::Json j, std::string &err) {
         json11::Json sec = j["s"];
         json11::Json nsec = j["n"];
         if (!sec.is_number() || !nsec.is_number()) {
-            throw Failure("invalid Vamp::RealTime object " + j.dump());
+            err = "invalid Vamp::RealTime object " + j.dump();
+            return {};
         }
         return Vamp::RealTime(sec.int_value(), nsec.int_value());
     }
@@ -177,7 +198,7 @@ public:
     }
 
     static Vamp::Plugin::OutputDescriptor::SampleType
-    toSampleType(std::string text) {
+    toSampleType(std::string text, std::string &err) {
         if (text == "OneSamplePerStep") {
             return Vamp::Plugin::OutputDescriptor::OneSamplePerStep;
         } else if (text == "FixedSampleRate") {
@@ -185,7 +206,8 @@ public:
         } else if (text == "VariableSampleRate") {
             return Vamp::Plugin::OutputDescriptor::VariableSampleRate;
         } else {
-            throw Failure("invalid sample type string: " + text);
+            err = "invalid sample type string: " + text;
+            return Vamp::Plugin::OutputDescriptor::OneSamplePerStep;
         }
     }
 
@@ -221,19 +243,22 @@ public:
     }
     
     static Vamp::Plugin::OutputDescriptor
-    toConfiguredOutputDescriptor(json11::Json j) {
+    toConfiguredOutputDescriptor(json11::Json j, std::string &err) {
 
         Vamp::Plugin::OutputDescriptor od;
         if (!j.is_object()) {
-            throw Failure("object expected for output descriptor");
+            err = "object expected for output descriptor";
+            return {};
         }
     
         od.unit = j["unit"].string_value();
 
-        od.sampleType = toSampleType(j["sampleType"].string_value());
+        od.sampleType = toSampleType(j["sampleType"].string_value(), err);
+        if (failed(err)) return {};
 
         if (!j["sampleRate"].is_number()) {
-            throw Failure("number expected for sample rate");
+            err = "number expected for sample rate";
+            return {};
         }
         od.sampleRate = j["sampleRate"].number_value();
         od.hasDuration = j["hasDuration"].bool_value();
@@ -243,7 +268,8 @@ public:
             od.binCount = j["binCount"].int_value();
             for (auto &n: j["binNames"].array_items()) {
                 if (!n.is_string()) {
-                    throw Failure("string expected for bin name");
+                    err = "string expected for bin name";
+                    return {};
                 }
                 od.binNames.push_back(n.string_value());
             }
@@ -251,7 +277,9 @@ public:
             od.hasFixedBinCount = false;
         }
 
-        bool extentsPresent = toValueExtents(j, od);
+        bool extentsPresent = toValueExtents(j, od, err);
+        if (failed(err)) return {};
+        
         od.hasKnownExtents = extentsPresent;
 
         if (j["quantizeStep"].is_number()) {
@@ -265,16 +293,19 @@ public:
     }
     
     static Vamp::Plugin::OutputDescriptor
-    toOutputDescriptor(json11::Json j) {
+    toOutputDescriptor(json11::Json j, std::string &err) {
 
         Vamp::Plugin::OutputDescriptor od;
         if (!j.is_object()) {
-            throw Failure("object expected for output descriptor");
+            err = "object expected for output descriptor";
+            return {};
         }
 
-        od = toConfiguredOutputDescriptor(j);
+        od = toConfiguredOutputDescriptor(j, err);
+        if (failed(err)) return {};
     
-        toBasicDescriptor(j["basic"], od);
+        toBasicDescriptor(j["basic"], od, err);
+        if (failed(err)) return {};
 
         return od;
     }
@@ -297,24 +328,29 @@ public:
     }
 
     static Vamp::PluginBase::ParameterDescriptor
-    toParameterDescriptor(json11::Json j) {
+    toParameterDescriptor(json11::Json j, std::string &err) {
 
         Vamp::PluginBase::ParameterDescriptor pd;
         if (!j.is_object()) {
-            throw Failure("object expected for parameter descriptor");
+            err = "object expected for parameter descriptor";
+            return {};
         }
     
-        toBasicDescriptor(j["basic"], pd);
+        toBasicDescriptor(j["basic"], pd, err);
+        if (failed(err)) return {};
 
         pd.unit = j["unit"].string_value();
 
-        bool extentsPresent = toValueExtents(j, pd);
+        bool extentsPresent = toValueExtents(j, pd, err);
+        if (failed(err)) return {};
         if (!extentsPresent) {
-            throw Failure("extents must be present in parameter descriptor");
+            err = "extents must be present in parameter descriptor";
+            return {};
         }
     
         if (!j["defaultValue"].is_number()) {
-            throw Failure("number expected for default value");
+            err = "number expected for default value";
+            return {};
         }
     
         pd.defaultValue = j["defaultValue"].number_value();
@@ -322,7 +358,8 @@ public:
         pd.valueNames.clear();
         for (auto &n: j["valueNames"].array_items()) {
             if (!n.is_string()) {
-                throw Failure("string expected for value name");
+                err = "string expected for value name";
+                return {};
             }
             pd.valueNames.push_back(n.string_value());
         }
@@ -349,7 +386,7 @@ public:
     }
 
     static std::vector<float>
-    toFloatBuffer(std::string encoded) {
+    toFloatBuffer(std::string encoded, std::string & /* err */) {
         std::string decoded;
         bn::decode_b64(encoded.begin(), encoded.end(), back_inserter(decoded));
         const float *buffer = reinterpret_cast<const float *>(decoded.c_str());
@@ -384,23 +421,26 @@ public:
     }
 
     static Vamp::Plugin::Feature
-    toFeature(json11::Json j,
-              BufferSerialisation &serialisation) {
+    toFeature(json11::Json j, BufferSerialisation &serialisation, std::string &err) {
 
         Vamp::Plugin::Feature f;
         if (!j.is_object()) {
-            throw Failure("object expected for feature");
+            err = "object expected for feature";
+            return {};
         }
         if (j["timestamp"].is_object()) {
-            f.timestamp = toRealTime(j["timestamp"]);
+            f.timestamp = toRealTime(j["timestamp"], err);
+            if (failed(err)) return {};
             f.hasTimestamp = true;
         }
         if (j["duration"].is_object()) {
-            f.duration = toRealTime(j["duration"]);
+            f.duration = toRealTime(j["duration"], err);
+            if (failed(err)) return {};
             f.hasDuration = true;
         }
         if (j["b64values"].is_string()) {
-            f.values = toFloatBuffer(j["b64values"].string_value());
+            f.values = toFloatBuffer(j["b64values"].string_value(), err);
+            if (failed(err)) return {};
             serialisation = BufferSerialisation::Base64;
         } else if (j["values"].is_array()) {
             for (auto v : j["values"].array_items()) {
@@ -430,14 +470,16 @@ public:
 
     static Vamp::Plugin::FeatureList
     toFeatureList(json11::Json j,
-                  BufferSerialisation &serialisation) {
+                  BufferSerialisation &serialisation, std::string &err) {
 
         Vamp::Plugin::FeatureList fl;
         if (!j.is_array()) {
-            throw Failure("array expected for feature list");
+            err = "array expected for feature list";
+            return {};
         }
         for (const json11::Json &fj : j.array_items()) {
-            fl.push_back(toFeature(fj, serialisation));
+            fl.push_back(toFeature(fj, serialisation, err));
+            if (failed(err)) return {};
         }
         return fl;
     }
@@ -445,18 +487,22 @@ public:
     static Vamp::Plugin::FeatureSet
     toFeatureSet(json11::Json j,
                  const PluginOutputIdMapper &omapper,
-                 BufferSerialisation &serialisation) {
+                 BufferSerialisation &serialisation,
+                 std::string &err) {
 
         Vamp::Plugin::FeatureSet fs;
         if (!j.is_object()) {
-            throw Failure("object expected for feature set");
+            err = "object expected for feature set";
+            return {};
         }
         for (auto &entry : j.object_items()) {
             int n = omapper.idToIndex(entry.first);
             if (fs.find(n) != fs.end()) {
-                throw Failure("duplicate numerical index for output");
+                err = "duplicate numerical index for output";
+                return {};
             }
-            fs[n] = toFeatureList(entry.second, serialisation);
+            fs[n] = toFeatureList(entry.second, serialisation, err);
+            if (failed(err)) return {};
         }
         return fs;
     }
@@ -474,14 +520,15 @@ public:
     }
 
     static Vamp::Plugin::InputDomain
-    toInputDomain(std::string text) {
+    toInputDomain(std::string text, std::string &err) {
 
         if (text == "TimeDomain") {
             return Vamp::Plugin::TimeDomain;
         } else if (text == "FrequencyDomain") {
             return Vamp::Plugin::FrequencyDomain;
         } else {
-            throw Failure("invalid input domain string: " + text);
+            err = "invalid input domain string: " + text;
+            return {};
         }
     }
 
@@ -523,98 +570,108 @@ public:
     }
 
     static Vamp::HostExt::PluginStaticData
-    toPluginStaticData(json11::Json j) {
+    toPluginStaticData(json11::Json j, std::string &err) {
 
-        std::string err;
         if (!j.has_shape({
                     { "pluginKey", json11::Json::STRING },
                     { "pluginVersion", json11::Json::NUMBER },
                     { "minChannelCount", json11::Json::NUMBER },
                     { "maxChannelCount", json11::Json::NUMBER },
                     { "inputDomain", json11::Json::STRING }}, err)) {
-            throw Failure("malformed plugin static data: " + err);
-        }
 
-        if (!j["basicOutputInfo"].is_array()) {
-            throw Failure("array expected for basic output info");
-        }
+            err = "malformed plugin static data: " + err;
 
-        if (!j["maker"].is_null() &&
-            !j["maker"].is_string()) {
-            throw Failure("string expected for maker");
-        }
-        
-        if (!j["copyright"].is_null() &&
-            !j["copyright"].is_string()) {
-            throw Failure("string expected for copyright");
-        }
+        } else if (!j["basicOutputInfo"].is_array()) {
 
-        if (!j["category"].is_null() &&
-            !j["category"].is_array()) {
-            throw Failure("array expected for category");
-        }
+            err = "array expected for basic output info";
 
-        if (!j["parameters"].is_null() &&
-            !j["parameters"].is_array()) {
-            throw Failure("array expected for parameters");
-        }
+        } else if (!j["maker"].is_null() &&
+                   !j["maker"].is_string()) {
 
-        if (!j["programs"].is_null() &&
-            !j["programs"].is_array()) {
-            throw Failure("array expected for programs");
-        }
+            err = "string expected for maker";
 
-        if (!j["inputDomain"].is_null() &&
-            !j["inputDomain"].is_string()) {
-            throw Failure("string expected for inputDomain");
-        }
+        } else if (!j["copyright"].is_null() &&
+                   !j["copyright"].is_string()) {
+            err = "string expected for copyright";
 
-        if (!j["basicOutputInfo"].is_null() &&
-            !j["basicOutputInfo"].is_array()) {
-            throw Failure("array expected for basicOutputInfo");
-        }
+        } else if (!j["category"].is_null() &&
+                   !j["category"].is_array()) {
 
-        Vamp::HostExt::PluginStaticData psd;
+            err = "array expected for category";
 
-        psd.pluginKey = j["pluginKey"].string_value();
+        } else if (!j["parameters"].is_null() &&
+                   !j["parameters"].is_array()) {
 
-        toBasicDescriptor(j["basic"], psd.basic);
+            err = "array expected for parameters";
 
-        psd.maker = j["maker"].string_value();
-        psd.copyright = j["copyright"].string_value();
-        psd.pluginVersion = j["pluginVersion"].int_value();
+        } else if (!j["programs"].is_null() &&
+                   !j["programs"].is_array()) {
 
-        for (const auto &c : j["category"].array_items()) {
-            if (!c.is_string()) {
-                throw Failure("strings expected in category array");
+            err = "array expected for programs";
+
+        } else if (!j["inputDomain"].is_null() &&
+                   !j["inputDomain"].is_string()) {
+
+            err = "string expected for inputDomain";
+
+        } else if (!j["basicOutputInfo"].is_null() &&
+                   !j["basicOutputInfo"].is_array()) {
+            
+            err = "array expected for basicOutputInfo";
+
+        } else {
+
+            Vamp::HostExt::PluginStaticData psd;
+
+            psd.pluginKey = j["pluginKey"].string_value();
+
+            toBasicDescriptor(j["basic"], psd.basic, err);
+            if (failed(err)) return {};
+
+            psd.maker = j["maker"].string_value();
+            psd.copyright = j["copyright"].string_value();
+            psd.pluginVersion = j["pluginVersion"].int_value();
+
+            for (const auto &c : j["category"].array_items()) {
+                if (!c.is_string()) {
+                    err = "strings expected in category array";
+                    return {};
+                }
+                psd.category.push_back(c.string_value());
             }
-            psd.category.push_back(c.string_value());
-        }
 
-        psd.minChannelCount = j["minChannelCount"].int_value();
-        psd.maxChannelCount = j["maxChannelCount"].int_value();
+            psd.minChannelCount = j["minChannelCount"].int_value();
+            psd.maxChannelCount = j["maxChannelCount"].int_value();
 
-        for (const auto &p : j["parameters"].array_items()) {
-            auto pd = toParameterDescriptor(p);
-            psd.parameters.push_back(pd);
-        }
-
-        for (const auto &p : j["programs"].array_items()) {
-            if (!p.is_string()) {
-                throw Failure("strings expected in programs array");
+            for (const auto &p : j["parameters"].array_items()) {
+                auto pd = toParameterDescriptor(p, err);
+                if (failed(err)) return {};
+                psd.parameters.push_back(pd);
             }
-            psd.programs.push_back(p.string_value());
+
+            for (const auto &p : j["programs"].array_items()) {
+                if (!p.is_string()) {
+                    err = "strings expected in programs array";
+                    return {};
+                }
+                psd.programs.push_back(p.string_value());
+            }
+
+            psd.inputDomain = toInputDomain(j["inputDomain"].string_value(), err);
+            if (failed(err)) return {};
+
+            for (const auto &bo : j["basicOutputInfo"].array_items()) {
+                Vamp::HostExt::PluginStaticData::Basic b;
+                toBasicDescriptor(bo, b, err);
+                if (failed(err)) return {};
+                psd.basicOutputInfo.push_back(b);
+            }
+            
+            return psd;
         }
 
-        psd.inputDomain = toInputDomain(j["inputDomain"].string_value());
-
-        for (const auto &bo : j["basicOutputInfo"].array_items()) {
-            Vamp::HostExt::PluginStaticData::Basic b;
-            toBasicDescriptor(bo, b);
-            psd.basicOutputInfo.push_back(b);
-        }
-
-        return psd;
+        // fallthrough error case
+        return {};
     }
 
     static json11::Json
@@ -640,30 +697,33 @@ public:
     }
 
     static Vamp::HostExt::PluginConfiguration
-    toPluginConfiguration(json11::Json j) {
+    toPluginConfiguration(json11::Json j, std::string &err) {
         
-        std::string err;
         if (!j.has_shape({
                     { "channelCount", json11::Json::NUMBER },
                     { "stepSize", json11::Json::NUMBER },
                     { "blockSize", json11::Json::NUMBER } }, err)) {
-            throw Failure("malformed plugin configuration: " + err);
+            err = "malformed plugin configuration: " + err;
+            return {};
         }
 
         if (!j["parameterValues"].is_null() &&
             !j["parameterValues"].is_object()) {
-            throw Failure("object expected for parameter values");
+            err = "object expected for parameter values";
+            return {};
         }
 
         for (auto &pv : j["parameterValues"].object_items()) {
             if (!pv.second.is_number()) {
-                throw Failure("number expected for parameter value");
+                err = "number expected for parameter value";
+                return {};
             }
         }
     
         if (!j["currentProgram"].is_null() &&
             !j["currentProgram"].is_string()) {
-            throw Failure("string expected for program name");
+            err = "string expected for program name";
+            return {};
         }
 
         Vamp::HostExt::PluginConfiguration config;
@@ -702,30 +762,36 @@ public:
     }
 
     static Vamp::HostExt::PluginLoader::AdapterFlags
-    toAdapterFlags(json11::Json j) {
+    toAdapterFlags(json11::Json j, std::string &err) {
 
-        if (!j.is_array()) {
-            throw Failure("array expected for adapter flags");
-        }
         int flags = 0x0;
 
-        for (auto &jj: j.array_items()) {
-            if (!jj.is_string()) {
-                throw Failure("string expected for adapter flag");
-            }
-            std::string text = jj.string_value();
-            if (text == "AdaptInputDomain") {
-                flags |= Vamp::HostExt::PluginLoader::ADAPT_INPUT_DOMAIN;
-            } else if (text == "AdaptChannelCount") {
-                flags |= Vamp::HostExt::PluginLoader::ADAPT_CHANNEL_COUNT;
-            } else if (text == "AdaptBufferSize") {
-                flags |= Vamp::HostExt::PluginLoader::ADAPT_BUFFER_SIZE;
-            } else if (text == "AdaptAllSafe") {
-                flags |= Vamp::HostExt::PluginLoader::ADAPT_ALL_SAFE;
-            } else if (text == "AdaptAll") {
-                flags |= Vamp::HostExt::PluginLoader::ADAPT_ALL;
-            } else {
-                throw Failure("invalid adapter flag string: " + text);
+        if (!j.is_array()) {
+
+            err = "array expected for adapter flags";
+
+        } else {
+
+            for (auto &jj: j.array_items()) {
+                if (!jj.is_string()) {
+                    err = "string expected for adapter flag";
+                    break;
+                }
+                std::string text = jj.string_value();
+                if (text == "AdaptInputDomain") {
+                    flags |= Vamp::HostExt::PluginLoader::ADAPT_INPUT_DOMAIN;
+                } else if (text == "AdaptChannelCount") {
+                    flags |= Vamp::HostExt::PluginLoader::ADAPT_CHANNEL_COUNT;
+                } else if (text == "AdaptBufferSize") {
+                    flags |= Vamp::HostExt::PluginLoader::ADAPT_BUFFER_SIZE;
+                } else if (text == "AdaptAllSafe") {
+                    flags |= Vamp::HostExt::PluginLoader::ADAPT_ALL_SAFE;
+                } else if (text == "AdaptAll") {
+                    flags |= Vamp::HostExt::PluginLoader::ADAPT_ALL;
+                } else {
+                    err = "invalid adapter flag string: " + text;
+                    break;
+                }
             }
         }
 
@@ -743,21 +809,21 @@ public:
     }
 
     static Vamp::HostExt::LoadRequest
-    toLoadRequest(json11::Json j) {
+    toLoadRequest(json11::Json j, std::string &err) {
         
-        std::string err;
-
         if (!j.has_shape({
                     { "pluginKey", json11::Json::STRING },
                     { "inputSampleRate", json11::Json::NUMBER } }, err)) {
-            throw Failure("malformed load request: " + err);
+            err = "malformed load request: " + err;
+            return {};
         }
     
         Vamp::HostExt::LoadRequest req;
         req.pluginKey = j["pluginKey"].string_value();
         req.inputSampleRate = j["inputSampleRate"].number_value();
         if (!j["adapterFlags"].is_null()) {
-            req.adapterFlags = toAdapterFlags(j["adapterFlags"]);
+            req.adapterFlags = toAdapterFlags(j["adapterFlags"], err);
+            if (failed(err)) return {};
         }
         return req;
     }
@@ -776,21 +842,23 @@ public:
 
     static Vamp::HostExt::LoadResponse
     toLoadResponse(json11::Json j,
-                   const PluginHandleMapper &pmapper) {
-
-        std::string err;
+                   const PluginHandleMapper &pmapper, std::string &err) {
 
         if (!j.has_shape({
                     { "pluginHandle", json11::Json::NUMBER },
                     { "staticData", json11::Json::OBJECT },
                     { "defaultConfiguration", json11::Json::OBJECT } }, err)) {
-            throw Failure("malformed load response: " + err);
+            err = "malformed load response: " + err;
+            return {};
         }
 
         Vamp::HostExt::LoadResponse resp;
         resp.plugin = pmapper.handleToPlugin(j["pluginHandle"].int_value());
-        resp.staticData = toPluginStaticData(j["staticData"]);
-        resp.defaultConfiguration = toPluginConfiguration(j["defaultConfiguration"]);
+        resp.staticData = toPluginStaticData(j["staticData"], err);
+        if (failed(err)) return {};
+        resp.defaultConfiguration = toPluginConfiguration(j["defaultConfiguration"],
+                                                          err);
+        if (failed(err)) return {};
         return resp;
     }
 
@@ -808,19 +876,19 @@ public:
 
     static Vamp::HostExt::ConfigurationRequest
     toConfigurationRequest(json11::Json j,
-                           const PluginHandleMapper &pmapper) {
-
-        std::string err;
+                           const PluginHandleMapper &pmapper, std::string &err) {
 
         if (!j.has_shape({
                     { "pluginHandle", json11::Json::NUMBER },
                     { "configuration", json11::Json::OBJECT } }, err)) {
-            throw Failure("malformed configuration request: " + err);
+            err = "malformed configuration request: " + err;
+            return {};
         }
 
         Vamp::HostExt::ConfigurationRequest cr;
         cr.plugin = pmapper.handleToPlugin(j["pluginHandle"].int_value());
-        cr.configuration = toPluginConfiguration(j["configuration"]);
+        cr.configuration = toPluginConfiguration(j["configuration"], err);
+        if (failed(err)) return {};
         return cr;
     }
 
@@ -843,18 +911,20 @@ public:
 
     static Vamp::HostExt::ConfigurationResponse
     toConfigurationResponse(json11::Json j,
-                            const PluginHandleMapper &pmapper) {
+                            const PluginHandleMapper &pmapper, std::string &err) {
         
         Vamp::HostExt::ConfigurationResponse cr;
 
         cr.plugin = pmapper.handleToPlugin(j["pluginHandle"].int_value());
         
         if (!j["outputList"].is_array()) {
-            throw Failure("array expected for output list");
+            err = "array expected for output list";
+            return {};
         }
 
         for (const auto &o: j["outputList"].array_items()) {
-            cr.outputs.push_back(toOutputDescriptor(o));
+            cr.outputs.push_back(toOutputDescriptor(o, err));
+            if (failed(err)) return {};
         }
 
         return cr;
@@ -892,14 +962,13 @@ public:
     static Vamp::HostExt::ProcessRequest
     toProcessRequest(json11::Json j,
                      const PluginHandleMapper &pmapper,
-                     BufferSerialisation &serialisation) {
-
-        std::string err;
+                     BufferSerialisation &serialisation, std::string &err) {
 
         if (!j.has_shape({
                     { "pluginHandle", json11::Json::NUMBER },
                     { "processInput", json11::Json::OBJECT } }, err)) {
-            throw Failure("malformed process request: " + err);
+            err = "malformed process request: " + err;
+            return {};
         }
 
         auto input = j["processInput"];
@@ -907,18 +976,22 @@ public:
         if (!input.has_shape({
                     { "timestamp", json11::Json::OBJECT },
                     { "inputBuffers", json11::Json::ARRAY } }, err)) {
-            throw Failure("malformed process request: " + err);
+            err = "malformed process request: " + err;
+            return {};
         }
 
         Vamp::HostExt::ProcessRequest r;
         r.plugin = pmapper.handleToPlugin(j["pluginHandle"].int_value());
 
-        r.timestamp = toRealTime(input["timestamp"]);
+        r.timestamp = toRealTime(input["timestamp"], err);
+        if (failed(err)) return {};
 
         for (auto a: input["inputBuffers"].array_items()) {
 
             if (a["b64values"].is_string()) {
-                std::vector<float> buf = toFloatBuffer(a["b64values"].string_value());
+                std::vector<float> buf = toFloatBuffer(a["b64values"].string_value(),
+                                                       err);
+                if (failed(err)) return {};
                 r.inputBuffers.push_back(buf);
                 serialisation = BufferSerialisation::Base64;
 
@@ -931,7 +1004,8 @@ public:
                 serialisation = BufferSerialisation::Text;
 
             } else {
-                throw Failure("expected values or b64values in inputBuffers object");
+                err = "expected values or b64values in inputBuffers object";
+                return {};
             }
         }
 
@@ -1084,39 +1158,37 @@ public:
         jo["errorText"] = std::string("error in ") + type + " request: " + errorText;
         return json11::Json(jo);
     }
-
-    static json11::Json
-    fromException(const std::exception &e, RRType responseType) {
-
-        return fromError(e.what(), responseType);
-    }
     
 private: // go private briefly for a couple of helper functions
     
     static void
-    checkTypeField(json11::Json j, std::string expected) {
+    checkTypeField(json11::Json j, std::string expected, std::string &err) {
         if (!j["type"].is_string()) {
-            throw Failure("string expected for type");
+            err = "string expected for type";
+            return;
         }
         if (j["type"].string_value() != expected) {
-            throw Failure("expected value \"" + expected + "\" for type");
+            err = "expected value \"" + expected + "\" for type";
+            return;
         }
     }
 
     static bool
-    successful(json11::Json j) {
+    successful(json11::Json j, std::string &err) {
         if (!j["success"].is_bool()) {
-            throw Failure("bool expected for success");
+            err = "bool expected for success";
+            return false;
         }
         return j["success"].bool_value();
     }
 
 public:
     static RRType
-    getRequestResponseType(json11::Json j) {
+    getRequestResponseType(json11::Json j, std::string &err) {
 
         if (!j["type"].is_string()) {
-            throw Failure("string expected for type");
+            err = "string expected for type";
+            return RRType::NotValid;
         }
         
         std::string type = j["type"].string_value();
@@ -1126,93 +1198,106 @@ public:
 	else if (type == "configure") return RRType::Configure;
 	else if (type == "process") return RRType::Process;
 	else if (type == "finish") return RRType::Finish;
+        else if (type == "invalid") return RRType::NotValid;
 	else {
-	    throw Failure("unknown or unexpected request/response type \"" +
-                          type + "\"");
+	    err = "unknown or unexpected request/response type \"" + type + "\"";
+            return RRType::NotValid;
 	}
     }
 
     static void
-    toVampRequest_List(json11::Json j) {
-        
-        checkTypeField(j, "list");
+    toVampRequest_List(json11::Json j, std::string &err) {
+        checkTypeField(j, "list", err);
     }
 
     static Vamp::HostExt::ListResponse
-    toVampResponse_List(json11::Json j) {
+    toVampResponse_List(json11::Json j, std::string &err) {
 
         Vamp::HostExt::ListResponse resp;
-        if (successful(j)) {
+        if (successful(j, err) && !failed(err)) {
             for (const auto &a: j["content"]["plugins"].array_items()) {
-                resp.plugins.push_back(toPluginStaticData(a));
+                resp.plugins.push_back(toPluginStaticData(a, err));
+                if (failed(err)) return {};
             }
         }
+        
         return resp;
     }
 
     static Vamp::HostExt::LoadRequest
-    toVampRequest_Load(json11::Json j) {
+    toVampRequest_Load(json11::Json j, std::string &err) {
         
-        checkTypeField(j, "load");
-        return toLoadRequest(j["content"]);
+        checkTypeField(j, "load", err);
+        if (failed(err)) return {};
+        return toLoadRequest(j["content"], err);
     }
     
     static Vamp::HostExt::LoadResponse
-    toVampResponse_Load(json11::Json j, const PluginHandleMapper &pmapper) {
+    toVampResponse_Load(json11::Json j,
+                        const PluginHandleMapper &pmapper,
+                        std::string &err) {
         
         Vamp::HostExt::LoadResponse resp;
-        if (successful(j)) {
-            resp = toLoadResponse(j["content"], pmapper);
+        if (successful(j, err) && !failed(err)) {
+            resp = toLoadResponse(j["content"], pmapper, err);
         }
         return resp;
     }
     
     static Vamp::HostExt::ConfigurationRequest
-    toVampRequest_Configure(json11::Json j, const PluginHandleMapper &pmapper) {
+    toVampRequest_Configure(json11::Json j,
+                            const PluginHandleMapper &pmapper,
+                            std::string &err) {
         
-        checkTypeField(j, "configure");
-        return toConfigurationRequest(j["content"], pmapper);
+        checkTypeField(j, "configure", err);
+        if (failed(err)) return {};
+        return toConfigurationRequest(j["content"], pmapper, err);
     }
     
     static Vamp::HostExt::ConfigurationResponse
-    toVampResponse_Configure(json11::Json j, const PluginHandleMapper &pmapper) {
+    toVampResponse_Configure(json11::Json j,
+                             const PluginHandleMapper &pmapper,
+                             std::string &err) {
         
         Vamp::HostExt::ConfigurationResponse resp;
-        if (successful(j)) {
-            resp = toConfigurationResponse(j["content"], pmapper);
+        if (successful(j, err) && !failed(err)) {
+            resp = toConfigurationResponse(j["content"], pmapper, err);
         }
         return resp;
     }
     
     static Vamp::HostExt::ProcessRequest
     toVampRequest_Process(json11::Json j, const PluginHandleMapper &pmapper,
-                          BufferSerialisation &serialisation) {
+                          BufferSerialisation &serialisation, std::string &err) {
         
-        checkTypeField(j, "process");
-        return toProcessRequest(j["content"], pmapper, serialisation);
+        checkTypeField(j, "process", err);
+        if (failed(err)) return {};
+        return toProcessRequest(j["content"], pmapper, serialisation, err);
     }
     
     static Vamp::HostExt::ProcessResponse
     toVampResponse_Process(json11::Json j,
                            const PluginHandleMapper &pmapper,
-                           BufferSerialisation &serialisation) {
+                           BufferSerialisation &serialisation, std::string &err) {
         
         Vamp::HostExt::ProcessResponse resp;
-        if (successful(j)) {
+        if (successful(j, err) && !failed(err)) {
             auto jc = j["content"];
             auto h = jc["pluginHandle"].int_value();
             resp.plugin = pmapper.handleToPlugin(h);
             resp.features = toFeatureSet(jc["features"],
                                          *pmapper.handleToOutputIdMapper(h),
-                                         serialisation);
+                                         serialisation, err);
         }
         return resp;
     }
     
     static Vamp::HostExt::FinishRequest
-    toVampRequest_Finish(json11::Json j, const PluginHandleMapper &pmapper) {
+    toVampRequest_Finish(json11::Json j, const PluginHandleMapper &pmapper,
+                         std::string &err) {
         
-        checkTypeField(j, "finish");
+        checkTypeField(j, "finish", err);
+        if (failed(err)) return {};
         Vamp::HostExt::FinishRequest req;
         req.plugin = pmapper.handleToPlugin
             (j["content"]["pluginHandle"].int_value());
@@ -1222,16 +1307,16 @@ public:
     static Vamp::HostExt::ProcessResponse
     toVampResponse_Finish(json11::Json j,
                           const PluginHandleMapper &pmapper,
-                          BufferSerialisation &serialisation) {
+                          BufferSerialisation &serialisation, std::string &err) {
         
         Vamp::HostExt::ProcessResponse resp;
-        if (successful(j)) {
+        if (successful(j, err) && !failed(err)) {
             auto jc = j["content"];
             auto h = jc["pluginHandle"].int_value();
             resp.plugin = pmapper.handleToPlugin(h);
             resp.features = toFeatureSet(jc["features"],
                                          *pmapper.handleToOutputIdMapper(h),
-                                         serialisation);
+                                         serialisation, err);
         }
         return resp;
     }
