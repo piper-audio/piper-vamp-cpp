@@ -78,11 +78,12 @@ class VampJson
 {
 public:
     /** Serialisation format for arrays of floats (process input and
-     *  feature values). Structures that can be serialised in more
-     *  than one way will include either a "values" field (for Text
-     *  serialisation) or a "b64values" field (for Base64) but should
-     *  not include both. When parsing, if a "b64values" field is
-     *  found, it will always take priority over a "values" field.
+     *  feature values). Wherever such an array appears, it may
+     *  alternatively be replaced by a single string containing a
+     *  base-64 encoding of the IEEE float buffer. When parsing, if a
+     *  string is found instead of an array in this case, it will be
+     *  interpreted as a base-64 encoded buffer. Only array or base-64
+     *  encoding may be provided, not both.
      */
     enum class BufferSerialisation {
 
@@ -90,13 +91,12 @@ public:
          *  is relatively slow to parse and serialise, and can take a
          *  lot of space.
          */
-        Text,
+        Array,
 
-        /** Base64-encoded string of the raw data as packed IEEE
-         *  32-bit floats. Faster and more compact than the text
-         *  encoding but more complicated to provide, especially if
-         *  starting from an environment that does not use IEEE 32-bit
-         *  floats! Note that Base64 serialisations produced by this
+        /** Base64-encoded string of the raw data as packed
+         *  little-endian IEEE 32-bit floats. Faster and more compact
+         *  than the text encoding but more complicated to
+         *  provide. Note that Base64 serialisations produced by this
          *  library do not including padding characters and so are not
          *  necessarily multiples of 4 characters long. You will need
          *  to pad them yourself if concatenating them or supplying to
@@ -400,12 +400,12 @@ public:
 
         json11::Json::object jo;
         if (f.values.size() > 0) {
-            if (serialisation == BufferSerialisation::Text) {
-                jo["values"] = json11::Json::array(f.values.begin(),
-                                                   f.values.end());
+            if (serialisation == BufferSerialisation::Array) {
+                jo["featureValues"] = json11::Json::array(f.values.begin(),
+                                                          f.values.end());
             } else {
-                jo["b64values"] = fromFloatBuffer(f.values.data(),
-                                                  f.values.size());
+                jo["featureValues"] = fromFloatBuffer(f.values.data(),
+                                                      f.values.size());
             }
         }
         if (f.label != "") {
@@ -438,15 +438,15 @@ public:
             if (failed(err)) return {};
             f.hasDuration = true;
         }
-        if (j["b64values"].is_string()) {
-            f.values = toFloatBuffer(j["b64values"].string_value(), err);
+        if (j["featureValues"].is_string()) {
+            f.values = toFloatBuffer(j["featureValues"].string_value(), err);
             if (failed(err)) return {};
             serialisation = BufferSerialisation::Base64;
-        } else if (j["values"].is_array()) {
-            for (auto v : j["values"].array_items()) {
+        } else if (j["featureValues"].is_array()) {
+            for (auto v : j["featureValues"].array_items()) {
                 f.values.push_back(v.number_value());
             }
-            serialisation = BufferSerialisation::Text;
+            serialisation = BufferSerialisation::Array;
         }
         f.label = j["label"].string_value();
         return f;
@@ -943,15 +943,13 @@ public:
 
         json11::Json::array chans;
         for (size_t i = 0; i < r.inputBuffers.size(); ++i) {
-            json11::Json::object c;
-            if (serialisation == BufferSerialisation::Text) {
-                c["values"] = json11::Json::array(r.inputBuffers[i].begin(),
-                                                  r.inputBuffers[i].end());
+            if (serialisation == BufferSerialisation::Array) {
+                chans.push_back(json11::Json::array(r.inputBuffers[i].begin(),
+                                                    r.inputBuffers[i].end()));
             } else {
-                c["b64values"] = fromFloatBuffer(r.inputBuffers[i].data(),
-                                                 r.inputBuffers[i].size());
+                chans.push_back(fromFloatBuffer(r.inputBuffers[i].data(),
+                                                r.inputBuffers[i].size()));
             }
-            chans.push_back(c);
         }
         io["inputBuffers"] = chans;
         
@@ -986,25 +984,25 @@ public:
         r.timestamp = toRealTime(input["timestamp"], err);
         if (failed(err)) return {};
 
-        for (auto a: input["inputBuffers"].array_items()) {
+        for (const auto &a: input["inputBuffers"].array_items()) {
 
-            if (a["b64values"].is_string()) {
-                std::vector<float> buf = toFloatBuffer(a["b64values"].string_value(),
+            if (a.is_string()) {
+                std::vector<float> buf = toFloatBuffer(a.string_value(),
                                                        err);
                 if (failed(err)) return {};
                 r.inputBuffers.push_back(buf);
                 serialisation = BufferSerialisation::Base64;
 
-            } else if (a["values"].is_array()) {
+            } else if (a.is_array()) {
                 std::vector<float> buf;
-                for (auto v : a["values"].array_items()) {
+                for (auto v : a.array_items()) {
                     buf.push_back(v.number_value());
                 }
                 r.inputBuffers.push_back(buf);
-                serialisation = BufferSerialisation::Text;
+                serialisation = BufferSerialisation::Array;
 
             } else {
-                err = "expected values or b64values in inputBuffers object";
+                err = "expected arrays or strings in inputBuffers array";
                 return {};
             }
         }

@@ -277,7 +277,7 @@ public:
         b.setLabel(f.label);
 
         if (f.values.size() > 0) {
-            auto values = b.initValues(f.values.size());
+            auto values = b.initFeatureValues(f.values.size());
             for (size_t i = 0; i < f.values.size(); ++i) {
                 values.set(i, f.values[i]);
             }
@@ -301,7 +301,7 @@ public:
         f.label = r.getLabel();
 
         f.values.clear();
-        auto vv = r.getValues();
+        auto vv = r.getFeatureValues();
         for (auto v: vv) {
             f.values.push_back(v);
         }

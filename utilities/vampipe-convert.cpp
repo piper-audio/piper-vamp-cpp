@@ -96,7 +96,8 @@ readRequestJson(string &err)
     rr.type = VampJson::getRequestResponseType(j, err);
     if (err != "") return {};
     
-    VampJson::BufferSerialisation serialisation = VampJson::BufferSerialisation::Text;
+    VampJson::BufferSerialisation serialisation =
+        VampJson::BufferSerialisation::Array;
 
     switch (rr.type) {
 
@@ -130,7 +131,7 @@ writeRequestJson(RequestOrResponse &rr, bool useBase64)
     VampJson::BufferSerialisation serialisation =
         (useBase64 ?
          VampJson::BufferSerialisation::Base64 :
-         VampJson::BufferSerialisation::Text);
+         VampJson::BufferSerialisation::Array);
 
     switch (rr.type) {
 
@@ -176,7 +177,8 @@ readResponseJson(string &err)
     rr.type = VampJson::getRequestResponseType(j, err);
     if (err != "") return {};
     
-    VampJson::BufferSerialisation serialisation = VampJson::BufferSerialisation::Text;
+    VampJson::BufferSerialisation serialisation =
+        VampJson::BufferSerialisation::Array;
 
     rr.success = j["success"].bool_value();
     rr.errorText = j["errorText"].string_value();
@@ -213,7 +215,7 @@ writeResponseJson(RequestOrResponse &rr, bool useBase64)
     VampJson::BufferSerialisation serialisation =
         (useBase64 ?
          VampJson::BufferSerialisation::Base64 :
-         VampJson::BufferSerialisation::Text);
+         VampJson::BufferSerialisation::Array);
 
     if (!rr.success) {
 
