@@ -46,10 +46,10 @@ convertRequestJson(string input, string &err)
     }
     if (!j.is_object()) {
 	err = "object expected at top level";
-    } else if (!j["type"].is_string()) {
-	err = "string expected for type field";
-    } else if (!j["content"].is_null() && !j["content"].is_object()) {
-	err = "object expected for content field";
+    } else if (!j["method"].is_string()) {
+	err = "string expected for method field";
+    } else if (!j["params"].is_null() && !j["params"].is_object()) {
+	err = "object expected for params field";
     }
     return j;
 }
@@ -64,10 +64,12 @@ convertResponseJson(string input, string &err)
     }
     if (!j.is_object()) {
 	err = "object expected at top level";
-    } else if (!j["success"].is_bool()) {
-	err = "bool expected for success field";
-    } else if (!j["content"].is_object()) {
-	err = "object expected for content field";
+    } else {
+        if (!j["result"].is_object()) {
+            if (!j["error"].is_object()) {
+                err = "expected either result or error object";
+            }
+        }
     }
     return j;
 }

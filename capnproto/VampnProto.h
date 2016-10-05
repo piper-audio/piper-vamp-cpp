@@ -769,8 +769,9 @@ public:
     buildVampResponse_Finish(VampResponse::Builder &b,
                              const Vamp::HostExt::ProcessResponse &pr,
                              const PluginHandleMapper &pmapper) {
-
-        buildVampResponse_Process(b, pr, pmapper);
+        b.setSuccess(true);
+        auto u = b.getResponse().initFinish();
+        buildProcessResponse(u, pr, pmapper);
     }
 
     static void

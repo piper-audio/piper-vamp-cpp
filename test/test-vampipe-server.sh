@@ -20,27 +20,12 @@ validate_request() {
     local json="$1"
     echo "$json" > "$reqfile"
     validate "$reqfile" "request"
-    type=$(grep '"type":' "$reqfile" | sed 's/^.*"type": *"\([^"]*\)".*$/\1/')
-    if [ "$type" == "configure" ]; then type=configuration; fi
-    if [ "$type" != "list" ]; then
-        echo "$json" | 
-            sed 's/^.*"content"://' |
-            sed 's/}}$/}/' > "$reqfile"
-        validate "$reqfile" "${type}request"
-    fi
 }
 
 validate_response() {
     local json="$1"
     echo "$json" > "$respfile"
     validate "$respfile" "response"
-    type=$(grep '"type":' "$respfile" | sed 's/^.*"type": "\([^"]*\)".*$/\1/')
-    if [ "$type" == "configure" ]; then type=configuration; fi
-    echo "$json" | 
-        sed 's/^.*"content"://' |
-        sed 's/, "error.*$//' |
-        sed 's/, "success.*$//' > "$respfile"
-    validate "$respfile" "${type}response"
 }
 
 ( while read request ; do
@@ -54,9 +39,9 @@ validate_response() {
           validate_response "$response"
       done
 ) <<EOF
-{"type":"list"}
-{"type":"load","content": {"pluginKey":"vamp-example-plugins:percussiononsets","inputSampleRate":44100,"adapterFlags":["AdaptInputDomain","AdaptBufferSize"]}}
-{"type":"configure","content":{"pluginHandle":1,"configuration":{"blockSize": 8, "channelCount": 1, "parameterValues": {"sensitivity": 40, "threshold": 3}, "stepSize": 8}}}
-{"type":"process","content": {"pluginHandle": 1, "processInput": { "timestamp": {"s": 0, "n": 0}, "inputBuffers": [ [1,2,3,4,5,6,7,8] ]}}}
-{"type":"finish","content": {"pluginHandle": 1}}
+{"method":"list"}
+{"method":"load","params": {"pluginKey":"vamp-example-plugins:percussiononsets","inputSampleRate":44100,"adapterFlags":["AdaptInputDomain","AdaptBufferSize"]}}
+{"method":"configure","params":{"pluginHandle":1,"configuration":{"blockSize": 8, "channelCount": 1, "parameterValues": {"sensitivity": 40, "threshold": 3}, "stepSize": 8}}}
+{"method":"process","params": {"pluginHandle": 1, "processInput": { "timestamp": {"s": 0, "n": 0}, "inputBuffers": [ [1,2,3,4,5,6,7,8] ]}}}
+{"method":"finish","params": {"pluginHandle": 1}}
 EOF

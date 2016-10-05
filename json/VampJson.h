@@ -1009,163 +1009,16 @@ public:
 
         return r;
     }
-
-    static json11::Json
-    fromVampRequest_List() {
-
-        json11::Json::object jo;
-        jo["type"] = "list";
-        return json11::Json(jo);
-    }
-
-    static json11::Json
-    fromVampResponse_List(const Vamp::HostExt::ListResponse &resp) {
-
-        json11::Json::object jo;
-        jo["type"] = "list";
-        jo["success"] = true;
-
-        json11::Json::array arr;
-        for (const auto &a: resp.plugins) {
-            arr.push_back(fromPluginStaticData(a));
-        }
-        json11::Json::object po;
-        po["plugins"] = arr;
-
-        jo["content"] = po;
-        return json11::Json(jo);
-    }
-    
-    static json11::Json
-    fromVampRequest_Load(const Vamp::HostExt::LoadRequest &req) {
-
-        json11::Json::object jo;
-        jo["type"] = "load";
-        jo["content"] = fromLoadRequest(req);
-        return json11::Json(jo);
-    }    
-
-    static json11::Json
-    fromVampResponse_Load(const Vamp::HostExt::LoadResponse &resp,
-                          const PluginHandleMapper &pmapper) {
-
-        json11::Json::object jo;
-        jo["type"] = "load";
-        jo["success"] = (resp.plugin != 0);
-        jo["errorText"] = "";
-        jo["content"] = fromLoadResponse(resp, pmapper);
-        return json11::Json(jo);
-    }
-
-    static json11::Json
-    fromVampRequest_Configure(const Vamp::HostExt::ConfigurationRequest &req,
-                              const PluginHandleMapper &pmapper) {
-
-        json11::Json::object jo;
-        jo["type"] = "configure";
-        jo["content"] = fromConfigurationRequest(req, pmapper);
-        return json11::Json(jo);
-    }    
-
-    static json11::Json
-    fromVampResponse_Configure(const Vamp::HostExt::ConfigurationResponse &resp,
-                               const PluginHandleMapper &pmapper) {
-        
-        json11::Json::object jo;
-        jo["type"] = "configure";
-        jo["success"] = (!resp.outputs.empty());
-        jo["errorText"] = "";
-        jo["content"] = fromConfigurationResponse(resp, pmapper);
-        return json11::Json(jo);
-    }
-    
-    static json11::Json
-    fromVampRequest_Process(const Vamp::HostExt::ProcessRequest &req,
-                            const PluginHandleMapper &pmapper,
-                            BufferSerialisation serialisation) {
-
-        json11::Json::object jo;
-        jo["type"] = "process";
-        jo["content"] = fromProcessRequest(req, pmapper, serialisation);
-        return json11::Json(jo);
-    }    
-
-    static json11::Json
-    fromVampResponse_Process(const Vamp::HostExt::ProcessResponse &resp,
-                             const PluginHandleMapper &pmapper,
-                             BufferSerialisation serialisation) {
-        
-        json11::Json::object jo;
-        jo["type"] = "process";
-        jo["success"] = true;
-        jo["errorText"] = "";
-        json11::Json::object po;
-        po["pluginHandle"] = pmapper.pluginToHandle(resp.plugin);
-        po["features"] = fromFeatureSet(resp.features,
-                                        *pmapper.pluginToOutputIdMapper(resp.plugin),
-                                        serialisation);
-        jo["content"] = po;
-        return json11::Json(jo);
-    }
-    
-    static json11::Json
-    fromVampRequest_Finish(const Vamp::HostExt::FinishRequest &req,
-                           const PluginHandleMapper &pmapper) {
-
-        json11::Json::object jo;
-        jo["type"] = "finish";
-        json11::Json::object fo;
-        fo["pluginHandle"] = pmapper.pluginToHandle(req.plugin);
-        jo["content"] = fo;
-        return json11::Json(jo);
-    }    
-    
-    static json11::Json
-    fromVampResponse_Finish(const Vamp::HostExt::ProcessResponse &resp,
-                            const PluginHandleMapper &pmapper,
-                            BufferSerialisation serialisation) {
-
-        json11::Json::object jo;
-        jo["type"] = "finish";
-        jo["success"] = true;
-        jo["errorText"] = "";
-        json11::Json::object po;
-        po["pluginHandle"] = pmapper.pluginToHandle(resp.plugin);
-        po["features"] = fromFeatureSet(resp.features,
-                                        *pmapper.pluginToOutputIdMapper(resp.plugin),
-                                        serialisation);
-        jo["content"] = po;
-        return json11::Json(jo);
-    }
-
-    static json11::Json
-    fromError(std::string errorText, RRType responseType) {
-
-        json11::Json::object jo;
-        std::string type;
-
-        if (responseType == RRType::List) type = "list";
-        else if (responseType == RRType::Load) type = "load";
-        else if (responseType == RRType::Configure) type = "configure";
-        else if (responseType == RRType::Process) type = "process";
-        else if (responseType == RRType::Finish) type = "finish";
-        else type = "invalid";
-
-        jo["type"] = type;
-        jo["success"] = false;
-        jo["errorText"] = std::string("error in ") + type + " request: " + errorText;
-        return json11::Json(jo);
-    }
     
 private: // go private briefly for a couple of helper functions
     
     static void
     checkTypeField(json11::Json j, std::string expected, std::string &err) {
-        if (!j["type"].is_string()) {
-            err = "string expected for type";
+        if (!j["method"].is_string()) {
+            err = "string expected for method";
             return;
         }
-        if (j["type"].string_value() != expected) {
+        if (j["method"].string_value() != expected) {
             err = "expected value \"" + expected + "\" for type";
             return;
         }
@@ -1180,16 +1033,199 @@ private: // go private briefly for a couple of helper functions
         return j["success"].bool_value();
     }
 
+    static void
+    markRPC(json11::Json::object &jo) {
+        jo["jsonrpc"] = "2.0";
+    }
+    
 public:
+
+    static json11::Json
+    fromVampRequest_List() {
+
+        json11::Json::object jo;
+        markRPC(jo);
+
+        jo["method"] = "list";
+        return json11::Json(jo);
+    }
+
+    static json11::Json
+    fromVampResponse_List(const Vamp::HostExt::ListResponse &resp) {
+
+        json11::Json::object jo;
+        markRPC(jo);
+
+        json11::Json::array arr;
+        for (const auto &a: resp.plugins) {
+            arr.push_back(fromPluginStaticData(a));
+        }
+        json11::Json::object po;
+        po["plugins"] = arr;
+
+        jo["method"] = "list";
+        jo["result"] = po;
+        return json11::Json(jo);
+    }
+    
+    static json11::Json
+    fromVampRequest_Load(const Vamp::HostExt::LoadRequest &req) {
+
+        json11::Json::object jo;
+        markRPC(jo);
+
+        jo["method"] = "load";
+        jo["params"] = fromLoadRequest(req);
+        return json11::Json(jo);
+    }    
+
+    static json11::Json
+    fromVampResponse_Load(const Vamp::HostExt::LoadResponse &resp,
+                          const PluginHandleMapper &pmapper) {
+
+        if (resp.plugin) {
+
+            json11::Json::object jo;
+            markRPC(jo);
+
+            jo["method"] = "load";
+            jo["result"] = fromLoadResponse(resp, pmapper);
+            return json11::Json(jo);
+            
+        } else {
+            return fromError("Failed to load plugin", RRType::Load);
+        }
+    }
+
+    static json11::Json
+    fromVampRequest_Configure(const Vamp::HostExt::ConfigurationRequest &req,
+                              const PluginHandleMapper &pmapper) {
+
+        json11::Json::object jo;
+        markRPC(jo);
+
+        jo["method"] = "configure";
+        jo["params"] = fromConfigurationRequest(req, pmapper);
+        return json11::Json(jo);
+    }    
+
+    static json11::Json
+    fromVampResponse_Configure(const Vamp::HostExt::ConfigurationResponse &resp,
+                               const PluginHandleMapper &pmapper) {
+
+        if (!resp.outputs.empty()) {
+        
+            json11::Json::object jo;
+            markRPC(jo);
+
+            jo["method"] = "configure";
+            jo["result"] = fromConfigurationResponse(resp, pmapper);
+            return json11::Json(jo);
+
+        } else {
+            return fromError("Failed to configure plugin", RRType::Configure);
+        }
+    }
+    
+    static json11::Json
+    fromVampRequest_Process(const Vamp::HostExt::ProcessRequest &req,
+                            const PluginHandleMapper &pmapper,
+                            BufferSerialisation serialisation) {
+
+        json11::Json::object jo;
+        markRPC(jo);
+
+        jo["method"] = "process";
+        jo["params"] = fromProcessRequest(req, pmapper, serialisation);
+        return json11::Json(jo);
+    }    
+
+    static json11::Json
+    fromVampResponse_Process(const Vamp::HostExt::ProcessResponse &resp,
+                             const PluginHandleMapper &pmapper,
+                             BufferSerialisation serialisation) {
+        
+        json11::Json::object jo;
+        markRPC(jo);
+
+        json11::Json::object po;
+        po["pluginHandle"] = pmapper.pluginToHandle(resp.plugin);
+        po["features"] = fromFeatureSet(resp.features,
+                                        *pmapper.pluginToOutputIdMapper(resp.plugin),
+                                        serialisation);
+        jo["method"] = "process";
+        jo["result"] = po;
+        return json11::Json(jo);
+    }
+    
+    static json11::Json
+    fromVampRequest_Finish(const Vamp::HostExt::FinishRequest &req,
+                           const PluginHandleMapper &pmapper) {
+
+        json11::Json::object jo;
+        markRPC(jo);
+
+        json11::Json::object fo;
+        fo["pluginHandle"] = pmapper.pluginToHandle(req.plugin);
+
+        jo["method"] = "finish";
+        jo["params"] = fo;
+        return json11::Json(jo);
+    }    
+    
+    static json11::Json
+    fromVampResponse_Finish(const Vamp::HostExt::ProcessResponse &resp,
+                            const PluginHandleMapper &pmapper,
+                            BufferSerialisation serialisation) {
+
+        json11::Json::object jo;
+        markRPC(jo);
+
+        json11::Json::object po;
+        po["pluginHandle"] = pmapper.pluginToHandle(resp.plugin);
+        po["features"] = fromFeatureSet(resp.features,
+                                        *pmapper.pluginToOutputIdMapper(resp.plugin),
+                                        serialisation);
+        jo["method"] = "finish";
+        jo["result"] = po;
+        return json11::Json(jo);
+    }
+
+    static json11::Json
+    fromError(std::string errorText, RRType responseType) {
+
+        json11::Json::object jo;
+        markRPC(jo);
+
+        std::string type;
+
+        if (responseType == RRType::List) type = "list";
+        else if (responseType == RRType::Load) type = "load";
+        else if (responseType == RRType::Configure) type = "configure";
+        else if (responseType == RRType::Process) type = "process";
+        else if (responseType == RRType::Finish) type = "finish";
+        else type = "invalid";
+
+        json11::Json::object eo;
+        //!!! + need code
+        eo["message"] = 
+            std::string("error in ") + type + " request: " + errorText;
+
+        jo["method"] = type;
+        jo["error"] = eo;
+        
+        return json11::Json(jo);
+    }
+
     static RRType
     getRequestResponseType(json11::Json j, std::string &err) {
 
-        if (!j["type"].is_string()) {
-            err = "string expected for type";
+        if (!j["method"].is_string()) {
+            err = "string expected for method";
             return RRType::NotValid;
         }
         
-        std::string type = j["type"].string_value();
+        std::string type = j["method"].string_value();
 
 	if (type == "list") return RRType::List;
 	else if (type == "load") return RRType::Load;
@@ -1213,7 +1249,7 @@ public:
 
         Vamp::HostExt::ListResponse resp;
         if (successful(j, err) && !failed(err)) {
-            for (const auto &a: j["content"]["plugins"].array_items()) {
+            for (const auto &a: j["result"]["plugins"].array_items()) {
                 resp.plugins.push_back(toPluginStaticData(a, err));
                 if (failed(err)) return {};
             }
@@ -1227,7 +1263,7 @@ public:
         
         checkTypeField(j, "load", err);
         if (failed(err)) return {};
-        return toLoadRequest(j["content"], err);
+        return toLoadRequest(j["params"], err);
     }
     
     static Vamp::HostExt::LoadResponse
@@ -1237,7 +1273,7 @@ public:
         
         Vamp::HostExt::LoadResponse resp;
         if (successful(j, err) && !failed(err)) {
-            resp = toLoadResponse(j["content"], pmapper, err);
+            resp = toLoadResponse(j["result"], pmapper, err);
         }
         return resp;
     }
@@ -1249,7 +1285,7 @@ public:
         
         checkTypeField(j, "configure", err);
         if (failed(err)) return {};
-        return toConfigurationRequest(j["content"], pmapper, err);
+        return toConfigurationRequest(j["params"], pmapper, err);
     }
     
     static Vamp::HostExt::ConfigurationResponse
@@ -1259,7 +1295,7 @@ public:
         
         Vamp::HostExt::ConfigurationResponse resp;
         if (successful(j, err) && !failed(err)) {
-            resp = toConfigurationResponse(j["content"], pmapper, err);
+            resp = toConfigurationResponse(j["result"], pmapper, err);
         }
         return resp;
     }
@@ -1270,7 +1306,7 @@ public:
         
         checkTypeField(j, "process", err);
         if (failed(err)) return {};
-        return toProcessRequest(j["content"], pmapper, serialisation, err);
+        return toProcessRequest(j["params"], pmapper, serialisation, err);
     }
     
     static Vamp::HostExt::ProcessResponse
@@ -1280,7 +1316,7 @@ public:
         
         Vamp::HostExt::ProcessResponse resp;
         if (successful(j, err) && !failed(err)) {
-            auto jc = j["content"];
+            auto jc = j["result"];
             auto h = jc["pluginHandle"].int_value();
             resp.plugin = pmapper.handleToPlugin(h);
             resp.features = toFeatureSet(jc["features"],
@@ -1298,7 +1334,7 @@ public:
         if (failed(err)) return {};
         Vamp::HostExt::FinishRequest req;
         req.plugin = pmapper.handleToPlugin
-            (j["content"]["pluginHandle"].int_value());
+            (j["params"]["pluginHandle"].int_value());
         return req;
     }
     
@@ -1309,7 +1345,7 @@ public:
         
         Vamp::HostExt::ProcessResponse resp;
         if (successful(j, err) && !failed(err)) {
-            auto jc = j["content"];
+            auto jc = j["result"];
             auto h = jc["pluginHandle"].int_value();
             resp.plugin = pmapper.handleToPlugin(h);
             resp.features = toFeatureSet(jc["features"],
