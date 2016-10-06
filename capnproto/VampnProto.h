@@ -370,17 +370,17 @@ public:
     }
     
     static void
-    buildPluginStaticData(PluginStaticData::Builder &b,
+    buildExtractorStaticData(ExtractorStaticData::Builder &b,
                           const Vamp::HostExt::PluginStaticData &d) {
 
-        b.setPluginKey(d.pluginKey);
+        b.setKey(d.pluginKey);
 
         auto basic = b.initBasic();
         buildBasicDescriptor(basic, d.basic);
 
         b.setMaker(d.maker);
         b.setCopyright(d.copyright);
-        b.setPluginVersion(d.pluginVersion);
+        b.setVersion(d.pluginVersion);
 
         auto clist = b.initCategory(d.category.size());
         for (size_t i = 0; i < d.category.size(); ++i) {
@@ -414,16 +414,16 @@ public:
     }
 
     static void
-    readPluginStaticData(Vamp::HostExt::PluginStaticData &d,
-                         const PluginStaticData::Reader &r) {
+    readExtractorStaticData(Vamp::HostExt::PluginStaticData &d,
+                         const ExtractorStaticData::Reader &r) {
         
-        d.pluginKey = r.getPluginKey();
+        d.pluginKey = r.getKey();
 
         readBasicDescriptor(d.basic, r.getBasic());
 
         d.maker = r.getMaker();
         d.copyright = r.getCopyright();
-        d.pluginVersion = r.getPluginVersion();
+        d.pluginVersion = r.getVersion();
 
         d.category.clear();
         auto cc = r.getCategory();
@@ -460,8 +460,8 @@ public:
     }
 
     static void
-    buildPluginConfiguration(PluginConfiguration::Builder &b,
-                             const Vamp::HostExt::PluginConfiguration &c) {
+    buildConfiguration(Configuration::Builder &b,
+                       const Vamp::HostExt::PluginConfiguration &c) {
 
         const auto &vparams = c.parameterValues;
         auto params = b.initParameterValues(vparams.size());
@@ -479,8 +479,8 @@ public:
     }
 
     static void
-    readPluginConfiguration(Vamp::HostExt::PluginConfiguration &c,
-                            const PluginConfiguration::Reader &r) {
+    readConfiguration(Vamp::HostExt::PluginConfiguration &c,
+                      const Configuration::Reader &r) {
 
         auto pp = r.getParameterValues();
         for (const auto &p: pp) {
@@ -497,7 +497,7 @@ public:
     buildLoadRequest(LoadRequest::Builder &r,
                      const Vamp::HostExt::LoadRequest &req) {
 
-        r.setPluginKey(req.pluginKey);
+        r.setKey(req.pluginKey);
         r.setInputSampleRate(req.inputSampleRate);
 
         std::vector<AdapterFlag> flags;
@@ -521,7 +521,7 @@ public:
     readLoadRequest(Vamp::HostExt::LoadRequest &req,
                     const LoadRequest::Reader &r) {
 
-        req.pluginKey = r.getPluginKey();
+        req.pluginKey = r.getKey();
         req.inputSampleRate = r.getInputSampleRate();
 
         int flags = 0;
@@ -545,11 +545,11 @@ public:
                       const Vamp::HostExt::LoadResponse &resp,
                       const PluginHandleMapper &pmapper) {
 
-        b.setPluginHandle(pmapper.pluginToHandle(resp.plugin));
+        b.setHandle(pmapper.pluginToHandle(resp.plugin));
         auto sd = b.initStaticData();
-        buildPluginStaticData(sd, resp.staticData);
+        buildExtractorStaticData(sd, resp.staticData);
         auto conf = b.initDefaultConfiguration();
-        buildPluginConfiguration(conf, resp.defaultConfiguration);
+        buildConfiguration(conf, resp.defaultConfiguration);
     }
 
     static void
@@ -557,9 +557,9 @@ public:
                      const LoadResponse::Reader &r,
                      const PluginHandleMapper &pmapper) {
 
-        resp.plugin = pmapper.handleToPlugin(r.getPluginHandle());
-        readPluginStaticData(resp.staticData, r.getStaticData());
-        readPluginConfiguration(resp.defaultConfiguration,
+        resp.plugin = pmapper.handleToPlugin(r.getHandle());
+        readExtractorStaticData(resp.staticData, r.getStaticData());
+        readConfiguration(resp.defaultConfiguration,
                                 r.getDefaultConfiguration());
     }
 
@@ -568,9 +568,9 @@ public:
                               const Vamp::HostExt::ConfigurationRequest &cr,
                               const PluginHandleMapper &pmapper) {
 
-        b.setPluginHandle(pmapper.pluginToHandle(cr.plugin));
+        b.setHandle(pmapper.pluginToHandle(cr.plugin));
         auto c = b.initConfiguration();
-        buildPluginConfiguration(c, cr.configuration);
+        buildConfiguration(c, cr.configuration);
     }
 
     static void
@@ -578,10 +578,10 @@ public:
                              const ConfigurationRequest::Reader &r,
                              const PluginHandleMapper &pmapper) {
 
-        auto h = r.getPluginHandle();
+        auto h = r.getHandle();
         cr.plugin = pmapper.handleToPlugin(h);
         auto c = r.getConfiguration();
-        readPluginConfiguration(cr.configuration, c);
+        readConfiguration(cr.configuration, c);
     }
 
     static void
@@ -589,7 +589,7 @@ public:
                                const Vamp::HostExt::ConfigurationResponse &cr,
                                const PluginHandleMapper &pmapper) {
 
-        b.setPluginHandle(pmapper.pluginToHandle(cr.plugin));
+        b.setHandle(pmapper.pluginToHandle(cr.plugin));
         auto olist = b.initOutputs(cr.outputs.size());
         for (size_t i = 0; i < cr.outputs.size(); ++i) {
             auto od = olist[i];
@@ -602,7 +602,7 @@ public:
                               const ConfigurationResponse::Reader &r,
                               const PluginHandleMapper &pmapper) {
 
-        cr.plugin = pmapper.handleToPlugin(r.getPluginHandle());
+        cr.plugin = pmapper.handleToPlugin(r.getHandle());
         cr.outputs.clear();
         auto oo = r.getOutputs();
         for (const auto &o: oo) {
@@ -652,7 +652,7 @@ public:
                         const Vamp::HostExt::ProcessRequest &pr,
                         const PluginHandleMapper &pmapper) {
 
-        b.setPluginHandle(pmapper.pluginToHandle(pr.plugin));
+        b.setHandle(pmapper.pluginToHandle(pr.plugin));
         auto input = b.initProcessInput();
         buildProcessInput(input, pr.timestamp, pr.inputBuffers);
     }
@@ -662,7 +662,7 @@ public:
                        const ProcessRequest::Reader &r,
                        const PluginHandleMapper &pmapper) {
 
-        auto h = r.getPluginHandle();
+        auto h = r.getHandle();
         pr.plugin = pmapper.handleToPlugin(h);
         readProcessInput(pr.timestamp, pr.inputBuffers, r.getProcessInput());
     }
@@ -672,7 +672,7 @@ public:
                          const Vamp::HostExt::ProcessResponse &pr,
                          const PluginHandleMapper &pmapper) {
 
-        b.setPluginHandle(pmapper.pluginToHandle(pr.plugin));
+        b.setHandle(pmapper.pluginToHandle(pr.plugin));
         auto f = b.initFeatures();
         buildFeatureSet(f, pr.features,
                         *pmapper.pluginToOutputIdMapper(pr.plugin));
@@ -683,47 +683,51 @@ public:
                         const ProcessResponse::Reader &r,
                         const PluginHandleMapper &pmapper) {
 
-        auto h = r.getPluginHandle();
+        auto h = r.getHandle();
         pr.plugin = pmapper.handleToPlugin(h);
         readFeatureSet(pr.features, r.getFeatures(),
-                       *pmapper.handleToOutputIdMapper(r.getPluginHandle()));
+                       *pmapper.handleToOutputIdMapper(r.getHandle()));
     }
 
     static void
-    buildVampRequest_List(VampRequest::Builder &b) {
-        b.getRequest().setList();
+    buildRpcRequest_List(RpcRequest::Builder &b) {
+        b.getRequest().initList();
     }
 
     static void
-    buildVampResponse_List(VampResponse::Builder &b,
+    buildRpcResponse_List(RpcResponse::Builder &b,
                            const Vamp::HostExt::ListResponse &resp) {
-        b.setSuccess(true);
+
         auto r = b.getResponse().initList();
-        auto p = r.initPlugins(resp.plugins.size());
+        auto p = r.initAvailable(resp.plugins.size());
         for (size_t i = 0; i < resp.plugins.size(); ++i) {
             auto pd = p[i];
-            buildPluginStaticData(pd, resp.plugins[i]);
+            buildExtractorStaticData(pd, resp.plugins[i]);
         }
     }
     
     static void
-    buildVampRequest_Load(VampRequest::Builder &b,
+    buildRpcRequest_Load(RpcRequest::Builder &b,
                           const Vamp::HostExt::LoadRequest &req) {
         auto u = b.getRequest().initLoad();
         buildLoadRequest(u, req);
     }
 
     static void
-    buildVampResponse_Load(VampResponse::Builder &b,
+    buildRpcResponse_Load(RpcResponse::Builder &b,
                            const Vamp::HostExt::LoadResponse &resp,
                            const PluginHandleMapper &pmapper) {
-        b.setSuccess(resp.plugin != 0);
-        auto u = b.getResponse().initLoad();
-        buildLoadResponse(u, resp, pmapper);
+
+        if (resp.plugin) {
+            auto u = b.getResponse().initLoad();
+            buildLoadResponse(u, resp, pmapper);
+        } else {
+            buildRpcResponse_Error(b, "Failed to load plugin", RRType::Load);
+        }
     }
 
     static void
-    buildVampRequest_Configure(VampRequest::Builder &b,
+    buildRpcRequest_Configure(RpcRequest::Builder &b,
                                const Vamp::HostExt::ConfigurationRequest &cr,
                                const PluginHandleMapper &pmapper) {
         auto u = b.getRequest().initConfigure();
@@ -731,16 +735,21 @@ public:
     }
 
     static void
-    buildVampResponse_Configure(VampResponse::Builder &b,
+    buildRpcResponse_Configure(RpcResponse::Builder &b,
                                 const Vamp::HostExt::ConfigurationResponse &cr,
                                 const PluginHandleMapper &pmapper) {
-        b.setSuccess(!cr.outputs.empty());
-        auto u = b.getResponse().initConfigure();
-        buildConfigurationResponse(u, cr, pmapper);
+
+        if (!cr.outputs.empty()) {
+            auto u = b.getResponse().initConfigure();
+            buildConfigurationResponse(u, cr, pmapper);
+        } else {
+            buildRpcResponse_Error(b, "Failed to configure plugin",
+                                   RRType::Configure);
+        }
     }
     
     static void
-    buildVampRequest_Process(VampRequest::Builder &b,
+    buildRpcRequest_Process(RpcRequest::Builder &b,
                              const Vamp::HostExt::ProcessRequest &pr,
                              const PluginHandleMapper &pmapper) {
         auto u = b.getRequest().initProcess();
@@ -748,130 +757,140 @@ public:
     }
     
     static void
-    buildVampResponse_Process(VampResponse::Builder &b,
+    buildRpcResponse_Process(RpcResponse::Builder &b,
                               const Vamp::HostExt::ProcessResponse &pr,
                               const PluginHandleMapper &pmapper) {
-        b.setSuccess(true);
+
         auto u = b.getResponse().initProcess();
         buildProcessResponse(u, pr, pmapper);
     }
     
     static void
-    buildVampRequest_Finish(VampRequest::Builder &b,
+    buildRpcRequest_Finish(RpcRequest::Builder &b,
                             const Vamp::HostExt::FinishRequest &req,
                             const PluginHandleMapper &pmapper) {
 
         auto u = b.getRequest().initFinish();
-        u.setPluginHandle(pmapper.pluginToHandle(req.plugin));
+        u.setHandle(pmapper.pluginToHandle(req.plugin));
     }
     
     static void
-    buildVampResponse_Finish(VampResponse::Builder &b,
+    buildRpcResponse_Finish(RpcResponse::Builder &b,
                              const Vamp::HostExt::ProcessResponse &pr,
                              const PluginHandleMapper &pmapper) {
 
-        buildVampResponse_Process(b, pr, pmapper);
+        auto u = b.getResponse().initFinish();
+        buildProcessResponse(u, pr, pmapper);
     }
 
     static void
-    buildVampResponse_Error(VampResponse::Builder &b,
+    buildRpcResponse_Error(RpcResponse::Builder &b,
                             const std::string &errorText,
                             RRType responseType)
     {
         std::string type;
 
+        auto e = b.getResponse().initError();
+
         if (responseType == RRType::List) {
             type = "list";
-            b.getResponse().initList();
         } else if (responseType == RRType::Load) {
             type = "load";
-            b.getResponse().initLoad();
         } else if (responseType == RRType::Configure) {
             type = "configure";
-            b.getResponse().initConfigure();
         } else if (responseType == RRType::Process) {
             type = "process";
-            b.getResponse().initProcess();
         } else if (responseType == RRType::Finish) {
             type = "finish";
-            b.getResponse().initFinish();
         } else {
             type = "invalid";
         }
 
-        b.setSuccess(false);
-        b.setErrorText(std::string("error in ") + type + " request: " + errorText);
+        //!!! + code
+        
+        e.setMessage(std::string("error in ") + type + " request: " + errorText);
     }
 
     static void
-    buildVampResponse_Exception(VampResponse::Builder &b,
+    buildRpcResponse_Exception(RpcResponse::Builder &b,
                                 const std::exception &e,
                                 RRType responseType)
     {
-        return buildVampResponse_Error(b, e.what(), responseType);
+        return buildRpcResponse_Error(b, e.what(), responseType);
     }
     
     static RRType
-    getRequestResponseType(const VampRequest::Reader &r) {
+    getRequestResponseType(const RpcRequest::Reader &r) {
         switch (r.getRequest().which()) {
-        case VampRequest::Request::Which::LIST:
+        case RpcRequest::Request::Which::LIST:
             return RRType::List;
-        case VampRequest::Request::Which::LOAD:
+        case RpcRequest::Request::Which::LOAD:
             return RRType::Load;
-        case VampRequest::Request::Which::CONFIGURE:
+        case RpcRequest::Request::Which::CONFIGURE:
             return RRType::Configure;
-        case VampRequest::Request::Which::PROCESS:
+        case RpcRequest::Request::Which::PROCESS:
             return RRType::Process;
-        case VampRequest::Request::Which::FINISH:
+        case RpcRequest::Request::Which::FINISH:
             return RRType::Finish;
         }
         return RRType::NotValid;
     }
 
     static RRType
-    getRequestResponseType(const VampResponse::Reader &r) {
+    getRequestResponseType(const RpcResponse::Reader &r) {
         switch (r.getResponse().which()) {
-        case VampResponse::Response::Which::LIST:
+        case RpcResponse::Response::Which::ERROR:
+            return RRType::NotValid; //!!! or error type? test this
+        case RpcResponse::Response::Which::LIST:
             return RRType::List;
-        case VampResponse::Response::Which::LOAD:
+        case RpcResponse::Response::Which::LOAD:
             return RRType::Load;
-        case VampResponse::Response::Which::CONFIGURE:
+        case RpcResponse::Response::Which::CONFIGURE:
             return RRType::Configure;
-        case VampResponse::Response::Which::PROCESS:
+        case RpcResponse::Response::Which::PROCESS:
             return RRType::Process;
-        case VampResponse::Response::Which::FINISH:
+        case RpcResponse::Response::Which::FINISH:
             return RRType::Finish;
         }
         return RRType::NotValid;
     }
     
     static void
-    readVampRequest_List(const VampRequest::Reader &r) {
+    readRpcResponse_Error(int &code,
+                          std::string &message,
+                          const RpcResponse::Reader &r) {
+        if (getRequestResponseType(r) != RRType::NotValid) {
+            throw std::logic_error("not an error response");
+        }
+        code = r.getResponse().getError().getCode();
+        message = r.getResponse().getError().getMessage();
+    }
+        
+    static void
+    readRpcRequest_List(const RpcRequest::Reader &r) {
         if (getRequestResponseType(r) != RRType::List) {
             throw std::logic_error("not a list request");
         }
     }
 
     static void
-    readVampResponse_List(Vamp::HostExt::ListResponse &resp,
-                          const VampResponse::Reader &r) {
+    readRpcResponse_List(Vamp::HostExt::ListResponse &resp,
+                          const RpcResponse::Reader &r) {
         if (getRequestResponseType(r) != RRType::List) {
             throw std::logic_error("not a list response");
         }
         resp.plugins.clear();
-        if (r.getSuccess()) {
-            auto pp = r.getResponse().getList().getPlugins();
-            for (const auto &p: pp) {
-                Vamp::HostExt::PluginStaticData psd;
-                readPluginStaticData(psd, p);
-                resp.plugins.push_back(psd);
-            }
+        auto pp = r.getResponse().getList().getAvailable();
+        for (const auto &p: pp) {
+            Vamp::HostExt::PluginStaticData psd;
+            readExtractorStaticData(psd, p);
+            resp.plugins.push_back(psd);
         }
     }
     
     static void
-    readVampRequest_Load(Vamp::HostExt::LoadRequest &req,
-                         const VampRequest::Reader &r) {
+    readRpcRequest_Load(Vamp::HostExt::LoadRequest &req,
+                         const RpcRequest::Reader &r) {
         if (getRequestResponseType(r) != RRType::Load) {
             throw std::logic_error("not a load request");
         }
@@ -879,21 +898,19 @@ public:
     }
 
     static void
-    readVampResponse_Load(Vamp::HostExt::LoadResponse &resp,
-                          const VampResponse::Reader &r,
-                          const PluginHandleMapper &pmapper) {
+    readRpcResponse_Load(Vamp::HostExt::LoadResponse &resp,
+                         const RpcResponse::Reader &r,
+                         const PluginHandleMapper &pmapper) {
         if (getRequestResponseType(r) != RRType::Load) {
             throw std::logic_error("not a load response");
         }
         resp = {};
-        if (r.getSuccess()) {
-            readLoadResponse(resp, r.getResponse().getLoad(), pmapper);
-        }
+        readLoadResponse(resp, r.getResponse().getLoad(), pmapper);
     }
     
     static void
-    readVampRequest_Configure(Vamp::HostExt::ConfigurationRequest &req,
-                              const VampRequest::Reader &r,
+    readRpcRequest_Configure(Vamp::HostExt::ConfigurationRequest &req,
+                              const RpcRequest::Reader &r,
                               const PluginHandleMapper &pmapper) {
         if (getRequestResponseType(r) != RRType::Configure) {
             throw std::logic_error("not a configuration request");
@@ -902,23 +919,21 @@ public:
     }
 
     static void
-    readVampResponse_Configure(Vamp::HostExt::ConfigurationResponse &resp,
-                               const VampResponse::Reader &r,
+    readRpcResponse_Configure(Vamp::HostExt::ConfigurationResponse &resp,
+                               const RpcResponse::Reader &r,
                                const PluginHandleMapper &pmapper) {
         if (getRequestResponseType(r) != RRType::Configure) {
             throw std::logic_error("not a configuration response");
         }
         resp = {};
-        if (r.getSuccess()) {
-            readConfigurationResponse(resp,
-                                      r.getResponse().getConfigure(),
-                                      pmapper);
-        }
+        readConfigurationResponse(resp,
+                                  r.getResponse().getConfigure(),
+                                  pmapper);
     }
     
     static void
-    readVampRequest_Process(Vamp::HostExt::ProcessRequest &req,
-                            const VampRequest::Reader &r,
+    readRpcRequest_Process(Vamp::HostExt::ProcessRequest &req,
+                            const RpcRequest::Reader &r,
                             const PluginHandleMapper &pmapper) {
         if (getRequestResponseType(r) != RRType::Process) {
             throw std::logic_error("not a process request");
@@ -927,40 +942,36 @@ public:
     }
 
     static void
-    readVampResponse_Process(Vamp::HostExt::ProcessResponse &resp,
-                             const VampResponse::Reader &r,
+    readRpcResponse_Process(Vamp::HostExt::ProcessResponse &resp,
+                             const RpcResponse::Reader &r,
                              const PluginHandleMapper &pmapper) {
         if (getRequestResponseType(r) != RRType::Process) {
             throw std::logic_error("not a process response");
         }
         resp = {};
-        if (r.getSuccess()) {
-            readProcessResponse(resp, r.getResponse().getProcess(), pmapper);
-        }
+        readProcessResponse(resp, r.getResponse().getProcess(), pmapper);
     }
     
     static void
-    readVampRequest_Finish(Vamp::HostExt::FinishRequest &req,
-                           const VampRequest::Reader &r,
+    readRpcRequest_Finish(Vamp::HostExt::FinishRequest &req,
+                           const RpcRequest::Reader &r,
                            const PluginHandleMapper &pmapper) {
         if (getRequestResponseType(r) != RRType::Finish) {
             throw std::logic_error("not a finish request");
         }
         req.plugin = pmapper.handleToPlugin
-            (r.getRequest().getFinish().getPluginHandle());
+            (r.getRequest().getFinish().getHandle());
     }
 
     static void
-    readVampResponse_Finish(Vamp::HostExt::ProcessResponse &resp,
-                            const VampResponse::Reader &r,
+    readRpcResponse_Finish(Vamp::HostExt::ProcessResponse &resp,
+                            const RpcResponse::Reader &r,
                             const PluginHandleMapper &pmapper) {
         if (getRequestResponseType(r) != RRType::Finish) {
             throw std::logic_error("not a finish response");
         }
         resp = {};
-        if (r.getSuccess()) {
-            readProcessResponse(resp, r.getResponse().getFinish(), pmapper);
-        }
+        readProcessResponse(resp, r.getResponse().getFinish(), pmapper);
     }
 };
 
