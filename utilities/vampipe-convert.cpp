@@ -104,19 +104,19 @@ readRequestJson(string &err)
     switch (rr.type) {
 
     case RRType::List:
-	VampJson::toVampRequest_List(j, err); // type check only
+	VampJson::toRpcRequest_List(j, err); // type check only
 	break;
     case RRType::Load:
-	rr.loadRequest = VampJson::toVampRequest_Load(j, err);
+	rr.loadRequest = VampJson::toRpcRequest_Load(j, err);
 	break;
     case RRType::Configure:
-	rr.configurationRequest = VampJson::toVampRequest_Configure(j, mapper, err);
+	rr.configurationRequest = VampJson::toRpcRequest_Configure(j, mapper, err);
 	break;
     case RRType::Process:
-	rr.processRequest = VampJson::toVampRequest_Process(j, mapper, serialisation, err);
+	rr.processRequest = VampJson::toRpcRequest_Process(j, mapper, serialisation, err);
 	break;
     case RRType::Finish:
-	rr.finishRequest = VampJson::toVampRequest_Finish(j, mapper, err);
+	rr.finishRequest = VampJson::toRpcRequest_Finish(j, mapper, err);
 	break;
     case RRType::NotValid:
 	break;
@@ -138,20 +138,20 @@ writeRequestJson(RequestOrResponse &rr, bool useBase64)
     switch (rr.type) {
 
     case RRType::List:
-	j = VampJson::fromVampRequest_List();
+	j = VampJson::fromRpcRequest_List();
 	break;
     case RRType::Load:
-	j = VampJson::fromVampRequest_Load(rr.loadRequest);
+	j = VampJson::fromRpcRequest_Load(rr.loadRequest);
 	break;
     case RRType::Configure:
-	j = VampJson::fromVampRequest_Configure(rr.configurationRequest, mapper);
+	j = VampJson::fromRpcRequest_Configure(rr.configurationRequest, mapper);
 	break;
     case RRType::Process:
-	j = VampJson::fromVampRequest_Process
+	j = VampJson::fromRpcRequest_Process
 	    (rr.processRequest, mapper, serialisation);
 	break;
     case RRType::Finish:
-	j = VampJson::fromVampRequest_Finish(rr.finishRequest, mapper);
+	j = VampJson::fromRpcRequest_Finish(rr.finishRequest, mapper);
 	break;
     case RRType::NotValid:
 	break;
@@ -188,19 +188,19 @@ readResponseJson(string &err)
     switch (rr.type) {
 
     case RRType::List:
-	rr.listResponse = VampJson::toVampResponse_List(j, err);
+	rr.listResponse = VampJson::toRpcResponse_List(j, err);
 	break;
     case RRType::Load:
-	rr.loadResponse = VampJson::toVampResponse_Load(j, mapper, err);
+	rr.loadResponse = VampJson::toRpcResponse_Load(j, mapper, err);
 	break;
     case RRType::Configure:
-	rr.configurationResponse = VampJson::toVampResponse_Configure(j, mapper, err);
+	rr.configurationResponse = VampJson::toRpcResponse_Configure(j, mapper, err);
 	break;
     case RRType::Process: 
-	rr.processResponse = VampJson::toVampResponse_Process(j, mapper, serialisation, err);
+	rr.processResponse = VampJson::toRpcResponse_Process(j, mapper, serialisation, err);
 	break;
     case RRType::Finish:
-	rr.finishResponse = VampJson::toVampResponse_Finish(j, mapper, serialisation, err);
+	rr.finishResponse = VampJson::toRpcResponse_Finish(j, mapper, serialisation, err);
 	break;
     case RRType::NotValid:
 	break;
@@ -228,21 +228,21 @@ writeResponseJson(RequestOrResponse &rr, bool useBase64)
 	switch (rr.type) {
 
 	case RRType::List:
-	    j = VampJson::fromVampResponse_List(rr.listResponse);
+	    j = VampJson::fromRpcResponse_List(rr.listResponse);
 	    break;
 	case RRType::Load:
-	    j = VampJson::fromVampResponse_Load(rr.loadResponse, mapper);
+	    j = VampJson::fromRpcResponse_Load(rr.loadResponse, mapper);
 	    break;
 	case RRType::Configure:
-	    j = VampJson::fromVampResponse_Configure(rr.configurationResponse,
+	    j = VampJson::fromRpcResponse_Configure(rr.configurationResponse,
                                                      mapper);
 	    break;
 	case RRType::Process:
-	    j = VampJson::fromVampResponse_Process
+	    j = VampJson::fromRpcResponse_Process
 		(rr.processResponse, mapper, serialisation);
 	    break;
 	case RRType::Finish:
-	    j = VampJson::fromVampResponse_Finish
+	    j = VampJson::fromRpcResponse_Finish
 		(rr.finishResponse, mapper, serialisation);
 	    break;
 	case RRType::NotValid:
@@ -260,27 +260,27 @@ readRequestCapnp(kj::BufferedInputStreamWrapper &buffered)
     rr.direction = RequestOrResponse::Request;
 
     ::capnp::InputStreamMessageReader message(buffered);
-    VampRequest::Reader reader = message.getRoot<VampRequest>();
+    RpcRequest::Reader reader = message.getRoot<RpcRequest>();
     
     rr.type = VampnProto::getRequestResponseType(reader);
 
     switch (rr.type) {
 
     case RRType::List:
-	VampnProto::readVampRequest_List(reader); // type check only
+	VampnProto::readRpcRequest_List(reader); // type check only
 	break;
     case RRType::Load:
-	VampnProto::readVampRequest_Load(rr.loadRequest, reader);
+	VampnProto::readRpcRequest_Load(rr.loadRequest, reader);
 	break;
     case RRType::Configure:
-	VampnProto::readVampRequest_Configure(rr.configurationRequest,
+	VampnProto::readRpcRequest_Configure(rr.configurationRequest,
 					      reader, mapper);
 	break;
     case RRType::Process:
-	VampnProto::readVampRequest_Process(rr.processRequest, reader, mapper);
+	VampnProto::readRpcRequest_Process(rr.processRequest, reader, mapper);
 	break;
     case RRType::Finish:
-	VampnProto::readVampRequest_Finish(rr.finishRequest, reader, mapper);
+	VampnProto::readRpcRequest_Finish(rr.finishRequest, reader, mapper);
 	break;
     case RRType::NotValid:
 	break;
@@ -293,25 +293,25 @@ void
 writeRequestCapnp(RequestOrResponse &rr)
 {
     ::capnp::MallocMessageBuilder message;
-    VampRequest::Builder builder = message.initRoot<VampRequest>();
+    RpcRequest::Builder builder = message.initRoot<RpcRequest>();
 
     switch (rr.type) {
 
     case RRType::List:
-	VampnProto::buildVampRequest_List(builder);
+	VampnProto::buildRpcRequest_List(builder);
 	break;
     case RRType::Load:
-	VampnProto::buildVampRequest_Load(builder, rr.loadRequest);
+	VampnProto::buildRpcRequest_Load(builder, rr.loadRequest);
 	break;
     case RRType::Configure:
-	VampnProto::buildVampRequest_Configure(builder,
-					       rr.configurationRequest, mapper);
+	VampnProto::buildRpcRequest_Configure(builder,
+                                              rr.configurationRequest, mapper);
 	break;
     case RRType::Process:
-	VampnProto::buildVampRequest_Process(builder, rr.processRequest, mapper);
+	VampnProto::buildRpcRequest_Process(builder, rr.processRequest, mapper);
 	break;
     case RRType::Finish:
-	VampnProto::buildVampRequest_Finish(builder, rr.finishRequest, mapper);
+	VampnProto::buildRpcRequest_Finish(builder, rr.finishRequest, mapper);
 	break;
     case RRType::NotValid:
 	break;
@@ -327,31 +327,35 @@ readResponseCapnp(kj::BufferedInputStreamWrapper &buffered)
     rr.direction = RequestOrResponse::Response;
 
     ::capnp::InputStreamMessageReader message(buffered);
-    VampResponse::Reader reader = message.getRoot<VampResponse>();
+    RpcResponse::Reader reader = message.getRoot<RpcResponse>();
     
     rr.type = VampnProto::getRequestResponseType(reader);
-    rr.success = reader.getSuccess();
-    rr.errorText = reader.getErrorText();
+    rr.success = true;
+    rr.errorText = "";
+    int errorCode = 0;
 
     switch (rr.type) {
 
     case RRType::List:
-	VampnProto::readVampResponse_List(rr.listResponse, reader);
+	VampnProto::readRpcResponse_List(rr.listResponse, reader);
 	break;
     case RRType::Load:
-	VampnProto::readVampResponse_Load(rr.loadResponse, reader, mapper);
+	VampnProto::readRpcResponse_Load(rr.loadResponse, reader, mapper);
 	break;
     case RRType::Configure:
-	VampnProto::readVampResponse_Configure(rr.configurationResponse,
+	VampnProto::readRpcResponse_Configure(rr.configurationResponse,
 					       reader, mapper);
 	break;
     case RRType::Process:
-	VampnProto::readVampResponse_Process(rr.processResponse, reader, mapper);
+	VampnProto::readRpcResponse_Process(rr.processResponse, reader, mapper);
 	break;
     case RRType::Finish:
-	VampnProto::readVampResponse_Finish(rr.finishResponse, reader, mapper);
+	VampnProto::readRpcResponse_Finish(rr.finishResponse, reader, mapper);
 	break;
     case RRType::NotValid:
+        // error
+        rr.success = false;
+        VampnProto::readRpcResponse_Error(errorCode, rr.errorText, reader);
 	break;
     }
 
@@ -362,30 +366,30 @@ void
 writeResponseCapnp(RequestOrResponse &rr)
 {
     ::capnp::MallocMessageBuilder message;
-    VampResponse::Builder builder = message.initRoot<VampResponse>();
+    RpcResponse::Builder builder = message.initRoot<RpcResponse>();
 
     if (!rr.success) {
 
-	VampnProto::buildVampResponse_Error(builder, rr.errorText, rr.type);
+	VampnProto::buildRpcResponse_Error(builder, rr.errorText, rr.type);
 
     } else {
 	
 	switch (rr.type) {
 
 	case RRType::List:
-	    VampnProto::buildVampResponse_List(builder, rr.listResponse);
+	    VampnProto::buildRpcResponse_List(builder, rr.listResponse);
 	    break;
 	case RRType::Load:
-	    VampnProto::buildVampResponse_Load(builder, rr.loadResponse, mapper);
+	    VampnProto::buildRpcResponse_Load(builder, rr.loadResponse, mapper);
 	    break;
 	case RRType::Configure:
-	    VampnProto::buildVampResponse_Configure(builder, rr.configurationResponse, mapper);
+	    VampnProto::buildRpcResponse_Configure(builder, rr.configurationResponse, mapper);
 	    break;
 	case RRType::Process:
-	    VampnProto::buildVampResponse_Process(builder, rr.processResponse, mapper);
+	    VampnProto::buildRpcResponse_Process(builder, rr.processResponse, mapper);
 	    break;
 	case RRType::Finish:
-	    VampnProto::buildVampResponse_Finish(builder, rr.finishResponse, mapper);
+	    VampnProto::buildRpcResponse_Finish(builder, rr.finishResponse, mapper);
 	    break;
 	case RRType::NotValid:
 	    break;

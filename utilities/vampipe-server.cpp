@@ -45,27 +45,27 @@ readRequestCapnp()
     }
 
     ::capnp::InputStreamMessageReader message(buffered);
-    VampRequest::Reader reader = message.getRoot<VampRequest>();
+    RpcRequest::Reader reader = message.getRoot<RpcRequest>();
     
     rr.type = VampnProto::getRequestResponseType(reader);
 
     switch (rr.type) {
 
     case RRType::List:
-	VampnProto::readVampRequest_List(reader); // type check only
+	VampnProto::readRpcRequest_List(reader); // type check only
 	break;
     case RRType::Load:
-	VampnProto::readVampRequest_Load(rr.loadRequest, reader);
+	VampnProto::readRpcRequest_Load(rr.loadRequest, reader);
 	break;
     case RRType::Configure:
-	VampnProto::readVampRequest_Configure(rr.configurationRequest,
+	VampnProto::readRpcRequest_Configure(rr.configurationRequest,
 					      reader, mapper);
 	break;
     case RRType::Process:
-	VampnProto::readVampRequest_Process(rr.processRequest, reader, mapper);
+	VampnProto::readRpcRequest_Process(rr.processRequest, reader, mapper);
 	break;
     case RRType::Finish:
-	VampnProto::readVampRequest_Finish(rr.finishRequest, reader, mapper);
+	VampnProto::readRpcRequest_Finish(rr.finishRequest, reader, mapper);
 	break;
     case RRType::NotValid:
 	break;
@@ -78,30 +78,30 @@ void
 writeResponseCapnp(RequestOrResponse &rr)
 {
     ::capnp::MallocMessageBuilder message;
-    VampResponse::Builder builder = message.initRoot<VampResponse>();
+    RpcResponse::Builder builder = message.initRoot<RpcResponse>();
 
     if (!rr.success) {
 
-	VampnProto::buildVampResponse_Error(builder, rr.errorText, rr.type);
+	VampnProto::buildRpcResponse_Error(builder, rr.errorText, rr.type);
 
     } else {
 	
 	switch (rr.type) {
 
 	case RRType::List:
-	    VampnProto::buildVampResponse_List(builder, rr.listResponse);
+	    VampnProto::buildRpcResponse_List(builder, rr.listResponse);
 	    break;
 	case RRType::Load:
-	    VampnProto::buildVampResponse_Load(builder, rr.loadResponse, mapper);
+	    VampnProto::buildRpcResponse_Load(builder, rr.loadResponse, mapper);
 	    break;
 	case RRType::Configure:
-	    VampnProto::buildVampResponse_Configure(builder, rr.configurationResponse, mapper);
+	    VampnProto::buildRpcResponse_Configure(builder, rr.configurationResponse, mapper);
 	    break;
 	case RRType::Process:
-	    VampnProto::buildVampResponse_Process(builder, rr.processResponse, mapper);
+	    VampnProto::buildRpcResponse_Process(builder, rr.processResponse, mapper);
 	    break;
 	case RRType::Finish:
-	    VampnProto::buildVampResponse_Finish(builder, rr.finishResponse, mapper);
+	    VampnProto::buildRpcResponse_Finish(builder, rr.finishResponse, mapper);
 	    break;
 	case RRType::NotValid:
 	    break;
@@ -115,8 +115,8 @@ void
 writeExceptionCapnp(const std::exception &e, RRType type)
 {
     ::capnp::MallocMessageBuilder message;
-    VampResponse::Builder builder = message.initRoot<VampResponse>();
-    VampnProto::buildVampResponse_Exception(builder, e, type);
+    RpcResponse::Builder builder = message.initRoot<RpcResponse>();
+    VampnProto::buildRpcResponse_Exception(builder, e, type);
     
     writeMessageToFd(1, message);
 }
