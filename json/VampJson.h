@@ -1037,6 +1037,13 @@ private: // go private briefly for a couple of helper functions
     markRPC(json11::Json::object &jo) {
         jo["jsonrpc"] = "2.0";
     }
+
+    static void
+    addId(json11::Json::object &jo, const json11::Json &id) {
+        if (!id.is_null()) {
+            jo["id"] = id;
+        }
+    }
     
 public:
 
@@ -1051,7 +1058,8 @@ public:
     }
 
     static json11::Json
-    fromRpcResponse_List(const Vamp::HostExt::ListResponse &resp) {
+    fromRpcResponse_List(const Vamp::HostExt::ListResponse &resp,
+                         const json11::Json &id) {
 
         json11::Json::object jo;
         markRPC(jo);
@@ -1065,6 +1073,7 @@ public:
 
         jo["method"] = "list";
         jo["result"] = po;
+        addId(jo, id);
         return json11::Json(jo);
     }
     
@@ -1081,7 +1090,8 @@ public:
 
     static json11::Json
     fromRpcResponse_Load(const Vamp::HostExt::LoadResponse &resp,
-                          const PluginHandleMapper &pmapper) {
+                         const PluginHandleMapper &pmapper,
+                         const json11::Json &id) {
 
         if (resp.plugin) {
 
@@ -1090,10 +1100,11 @@ public:
 
             jo["method"] = "load";
             jo["result"] = fromLoadResponse(resp, pmapper);
+            addId(jo, id);
             return json11::Json(jo);
             
         } else {
-            return fromError("Failed to load plugin", RRType::Load);
+            return fromError("Failed to load plugin", RRType::Load, id);
         }
     }
 
@@ -1111,7 +1122,8 @@ public:
 
     static json11::Json
     fromRpcResponse_Configure(const Vamp::HostExt::ConfigurationResponse &resp,
-                               const PluginHandleMapper &pmapper) {
+                              const PluginHandleMapper &pmapper,
+                              const json11::Json &id) {
 
         if (!resp.outputs.empty()) {
         
@@ -1120,17 +1132,18 @@ public:
 
             jo["method"] = "configure";
             jo["result"] = fromConfigurationResponse(resp, pmapper);
+            addId(jo, id);
             return json11::Json(jo);
 
         } else {
-            return fromError("Failed to configure plugin", RRType::Configure);
+            return fromError("Failed to configure plugin", RRType::Configure, id);
         }
     }
     
     static json11::Json
     fromRpcRequest_Process(const Vamp::HostExt::ProcessRequest &req,
-                            const PluginHandleMapper &pmapper,
-                            BufferSerialisation serialisation) {
+                           const PluginHandleMapper &pmapper,
+                           BufferSerialisation serialisation) {
 
         json11::Json::object jo;
         markRPC(jo);
@@ -1142,8 +1155,9 @@ public:
 
     static json11::Json
     fromRpcResponse_Process(const Vamp::HostExt::ProcessResponse &resp,
-                             const PluginHandleMapper &pmapper,
-                             BufferSerialisation serialisation) {
+                            const PluginHandleMapper &pmapper,
+                            BufferSerialisation serialisation,
+                            const json11::Json &id) {
         
         json11::Json::object jo;
         markRPC(jo);
@@ -1155,6 +1169,7 @@ public:
                                         serialisation);
         jo["method"] = "process";
         jo["result"] = po;
+        addId(jo, id);
         return json11::Json(jo);
     }
     
@@ -1175,8 +1190,9 @@ public:
     
     static json11::Json
     fromRpcResponse_Finish(const Vamp::HostExt::ProcessResponse &resp,
-                            const PluginHandleMapper &pmapper,
-                            BufferSerialisation serialisation) {
+                           const PluginHandleMapper &pmapper,
+                           BufferSerialisation serialisation,
+                           const json11::Json &id) {
 
         json11::Json::object jo;
         markRPC(jo);
@@ -1188,11 +1204,14 @@ public:
                                         serialisation);
         jo["method"] = "finish";
         jo["result"] = po;
+        addId(jo, id);
         return json11::Json(jo);
     }
 
     static json11::Json
-    fromError(std::string errorText, RRType responseType) {
+    fromError(std::string errorText,
+              RRType responseType,
+              const json11::Json &id) {
 
         json11::Json::object jo;
         markRPC(jo);
@@ -1213,7 +1232,7 @@ public:
 
         jo["method"] = type;
         jo["error"] = eo;
-        
+        addId(jo, id);
         return json11::Json(jo);
     }
 
