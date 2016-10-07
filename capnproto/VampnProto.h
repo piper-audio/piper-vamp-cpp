@@ -415,7 +415,7 @@ public:
 
     static void
     readExtractorStaticData(Vamp::HostExt::PluginStaticData &d,
-                         const ExtractorStaticData::Reader &r) {
+                            const ExtractorStaticData::Reader &r) {
         
         d.pluginKey = r.getKey();
 
@@ -690,6 +690,28 @@ public:
     }
 
     static void
+    buildFinishResponse(FinishResponse::Builder &b,
+                        const Vamp::HostExt::ProcessResponse &pr,
+                        const PluginHandleMapper &pmapper) {
+
+        b.setHandle(pmapper.pluginToHandle(pr.plugin));
+        auto f = b.initFeatures();
+        buildFeatureSet(f, pr.features,
+                        *pmapper.pluginToOutputIdMapper(pr.plugin));
+    }
+    
+    static void
+    readFinishResponse(Vamp::HostExt::ProcessResponse &pr,
+                       const FinishResponse::Reader &r,
+                       const PluginHandleMapper &pmapper) {
+
+        auto h = r.getHandle();
+        pr.plugin = pmapper.handleToPlugin(h);
+        readFeatureSet(pr.features, r.getFeatures(),
+                       *pmapper.handleToOutputIdMapper(r.getHandle()));
+    }
+
+    static void
     buildRpcRequest_List(RpcRequest::Builder &b) {
         b.getRequest().initList();
     }
@@ -780,7 +802,7 @@ public:
                              const PluginHandleMapper &pmapper) {
 
         auto u = b.getResponse().initFinish();
-        buildProcessResponse(u, pr, pmapper);
+        buildFinishResponse(u, pr, pmapper);
     }
 
     static void
@@ -971,7 +993,7 @@ public:
             throw std::logic_error("not a finish response");
         }
         resp = {};
-        readProcessResponse(resp, r.getResponse().getFinish(), pmapper);
+        readFinishResponse(resp, r.getResponse().getFinish(), pmapper);
     }
 };
 

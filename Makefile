@@ -38,3 +38,5 @@ clean:
 distclean:	clean
 	rm -f bin/*
 
+# cancel implicit rule which otherwise could try to link %.capnp
+%:	%.o
