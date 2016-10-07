@@ -32,7 +32,7 @@
     authorization.
 */
 
-#include "vamp.capnp.h"
+#include "piper.capnp.h"
 
 #include <capnp/message.h>
 #include <capnp/serialize-packed.h>
@@ -47,6 +47,8 @@
 
 namespace vampipe
 {
+
+using namespace piper;
 
 /**
  * Convert the structures laid out in the Vamp SDK classes into Cap'n

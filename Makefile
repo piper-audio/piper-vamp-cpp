@@ -8,32 +8,32 @@ LDFLAGS		:= vamp-plugin-sdk/libvamp-hostsdk.a -L/usr/local/lib -lcapnp -lkj -ldl
 
 all:	bin/vampipe-convert bin/vampipe-server
 
-bin/vampipe-convert: o/vampipe-convert.o o/json11.o o/vamp.capnp.o
+bin/vampipe-convert: o/vampipe-convert.o o/json11.o o/piper.capnp.o
 	c++ $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-bin/vampipe-server: o/vampipe-server.o o/vamp.capnp.o
+bin/vampipe-server: o/vampipe-server.o o/piper.capnp.o
 	c++ $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-capnproto/vamp.capnp.h:	capnproto/vamp.capnp
+capnproto/piper.capnp.h:	capnproto/piper.capnp
 	capnp compile $< -oc++
 
-o/vamp.capnp.o:	capnproto/vamp.capnp.c++ capnproto/vamp.capnp.h
+o/piper.capnp.o:	capnproto/piper.capnp.c++ capnproto/piper.capnp.h
 	c++ $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
 o/json11.o:	json/json11/json11.cpp
 	c++ $(CXXFLAGS) -c $< -o $@
 
-o/vampipe-convert.o:	utilities/vampipe-convert.cpp capnproto/vamp.capnp.h capnproto/VampnProto.h json/VampJson.h
+o/vampipe-convert.o:	utilities/vampipe-convert.cpp capnproto/piper.capnp.h capnproto/VampnProto.h json/VampJson.h
 	c++ $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
-o/vampipe-server.o:	utilities/vampipe-server.cpp capnproto/vamp.capnp.h capnproto/VampnProto.h 
+o/vampipe-server.o:	utilities/vampipe-server.cpp capnproto/piper.capnp.h capnproto/VampnProto.h 
 	c++ $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
 test:	all
 	test/test-vampipe-server.sh
 
 clean:
-	rm -f */*.o capnproto/vamp.capnp.h capnproto/vamp.capnp.c++
+	rm -f */*.o capnproto/piper.capnp.h capnproto/piper.capnp.c++
 
 distclean:	clean
 	rm -f bin/*
