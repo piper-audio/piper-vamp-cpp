@@ -1,7 +1,7 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 
 /*
-    Vampipe
+    Piper C++
 
     Centre for Digital Music, Queen Mary, University of London.
     Copyright 2006-2016 Chris Cannam and QMUL.
@@ -32,40 +32,54 @@
     authorization.
 */
 
-#ifndef VAMPIPE_DEFAULT_PLUGIN_ID_MAPPER_H
-#define VAMPIPE_DEFAULT_PLUGIN_ID_MAPPER_H
+#ifndef PIPER_REQUEST_OR_RESPONSE_H
+#define PIPER_REQUEST_OR_RESPONSE_H
 
-#include <vamp-hostsdk/Plugin.h>
+#include "RequestResponseType.h"
 
-namespace vampipe {
+#include <vamp-hostsdk/PluginStaticData.h>
+#include <vamp-hostsdk/RequestResponse.h>
 
-class DefaultPluginOutputIdMapper : public PluginOutputIdMapper
+#include <string>
+#include <vector>
+
+namespace piper {
+
+class RequestOrResponse
 {
 public:
-    DefaultPluginOutputIdMapper(Vamp::Plugin *p) {
-	Vamp::Plugin::OutputList outputs = p->getOutputDescriptors();
-	for (const auto &d: outputs) {
-	    m_ids.push_back(d.identifier);
-	}
-    }
+    enum Direction {
+	Request, Response
+    };
 
-    virtual int idToIndex(std::string outputId) const noexcept {
-	int n = int(m_ids.size());
-	for (int i = 0; i < n; ++i) {
-	    if (outputId == m_ids[i]) {
-		return i;
-	    }
-	}
-	return -1;
-    }
+    struct RpcId {
+        enum { Absent, Number, Tag } type;
+        int number;
+        std::string tag;
+    };
+    
+    RequestOrResponse() : // nothing by default
+	direction(Request),
+	type(RRType::NotValid),
+	success(false),
+        id({ RpcId::Absent, 0, "" })
+    { }
 
-    virtual std::string indexToId(int index) const noexcept {
-        if (index < 0 || size_t(index) >= m_ids.size()) return "";
-	return m_ids[index];
-    }
+    Direction direction;
+    RRType type;
+    bool success;
+    std::string errorText;
+    RpcId id;
 
-private:
-    std::vector<std::string> m_ids;
+    Vamp::HostExt::ListResponse listResponse;
+    Vamp::HostExt::LoadRequest loadRequest;
+    Vamp::HostExt::LoadResponse loadResponse;
+    Vamp::HostExt::ConfigurationRequest configurationRequest;
+    Vamp::HostExt::ConfigurationResponse configurationResponse;
+    Vamp::HostExt::ProcessRequest processRequest;
+    Vamp::HostExt::ProcessResponse processResponse;
+    Vamp::HostExt::FinishRequest finishRequest;
+    Vamp::HostExt::ProcessResponse finishResponse;
 };
 
 }

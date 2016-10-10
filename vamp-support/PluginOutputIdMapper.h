@@ -1,7 +1,7 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 
 /*
-    Vampipe
+    Piper C++
 
     Centre for Digital Music, Queen Mary, University of London.
     Copyright 2006-2016 Chris Cannam and QMUL.
@@ -32,54 +32,33 @@
     authorization.
 */
 
-#ifndef VAMPIPE_REQUEST_OR_RESPONSE_H
-#define VAMPIPE_REQUEST_OR_RESPONSE_H
+#ifndef PIPER_PLUGIN_ID_MAPPER_H
+#define PIPER_PLUGIN_ID_MAPPER_H
 
-#include "RequestResponseType.h"
+#include <vamp-hostsdk/Plugin.h>
 
-#include <vamp-hostsdk/PluginStaticData.h>
-#include <vamp-hostsdk/RequestResponse.h>
-
+#include <map>
 #include <string>
-#include <vector>
 
-namespace vampipe {
+namespace piper {
 
-class RequestOrResponse
+class PluginOutputIdMapper
 {
 public:
-    enum Direction {
-	Request, Response
-    };
+    virtual ~PluginOutputIdMapper() { }
 
-    struct RpcId {
-        enum { Absent, Number, Tag } type;
-        int number;
-        std::string tag;
-    };
-    
-    RequestOrResponse() : // nothing by default
-	direction(Request),
-	type(RRType::NotValid),
-	success(false),
-        id({ RpcId::Absent, 0, "" })
-    { }
+    /**
+     * Return the index of the given output id in the plugin. The
+     * first output has index 0. If the given output id is unknown,
+     * return -1.
+     */
+    virtual int idToIndex(std::string outputId) const noexcept = 0;
 
-    Direction direction;
-    RRType type;
-    bool success;
-    std::string errorText;
-    RpcId id;
-
-    Vamp::HostExt::ListResponse listResponse;
-    Vamp::HostExt::LoadRequest loadRequest;
-    Vamp::HostExt::LoadResponse loadResponse;
-    Vamp::HostExt::ConfigurationRequest configurationRequest;
-    Vamp::HostExt::ConfigurationResponse configurationResponse;
-    Vamp::HostExt::ProcessRequest processRequest;
-    Vamp::HostExt::ProcessResponse processResponse;
-    Vamp::HostExt::FinishRequest finishRequest;
-    Vamp::HostExt::ProcessResponse finishResponse;
+    /**
+     * Return the id of the output with the given index in the
+     * plugin. If the index is out of range, return the empty string.
+     */
+    virtual std::string indexToId(int index) const noexcept = 0;
 };
 
 }

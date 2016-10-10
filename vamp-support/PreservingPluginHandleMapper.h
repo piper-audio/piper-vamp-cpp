@@ -1,7 +1,7 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 
 /*
-    Vampipe
+    Piper C++
 
     Centre for Digital Music, Queen Mary, University of London.
     Copyright 2006-2016 Chris Cannam and QMUL.
@@ -32,15 +32,15 @@
     authorization.
 */
 
-#ifndef VAMPIPE_PRESERVING_PLUGIN_HANDLE_MAPPER_H
-#define VAMPIPE_PRESERVING_PLUGIN_HANDLE_MAPPER_H
+#ifndef PIPER_PRESERVING_PLUGIN_HANDLE_MAPPER_H
+#define PIPER_PRESERVING_PLUGIN_HANDLE_MAPPER_H
 
 #include "PluginHandleMapper.h"
 #include "PreservingPluginOutputIdMapper.h"
 
 #include <iostream>
 
-namespace vampipe {
+namespace piper {
 
 //!!! document -- this is a passthrough thing for a single plugin
 //!!! handle only, it does not use actually valid Plugin pointers at

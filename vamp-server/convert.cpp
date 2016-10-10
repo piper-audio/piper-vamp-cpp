@@ -1,9 +1,8 @@
 
-#include "VampJson.h"
-#include "VampnProto.h"
-
-#include "bits/RequestOrResponse.h"
-#include "bits/PreservingPluginHandleMapper.h"
+#include "vamp-json/VampJson.h"
+#include "vamp-capnp/VampnProto.h"
+#include "vamp-support/RequestOrResponse.h"
+#include "vamp-support/PreservingPluginHandleMapper.h"
 
 #include <iostream>
 #include <sstream>
@@ -11,13 +10,13 @@
 
 using namespace std;
 using namespace json11;
-using namespace vampipe;
+using namespace piper;
 
 void usage()
 {
-    string myname = "vampipe-convert";
+    string myname = "piper-convert";
     cerr << "\n" << myname <<
-	": Validate and convert Vamp request and response messages\n\n"
+	": Validate and convert Piper request and response messages\n\n"
 	"    Usage: " << myname << " [-i <informat>] [-o <outformat>] request\n"
 	"           " << myname << " [-i <informat>] [-o <outformat>] response\n\n"
 	"    where\n"

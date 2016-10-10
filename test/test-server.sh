@@ -2,6 +2,10 @@
 
 set -eu
 
+piperdir=../piper
+vampsdkdir=../vamp-plugin-sdk
+schemadir="$piperdir"/json/schema
+
 reqfile="/tmp/$$.req.json"
 respfile="/tmp/$$.resp.json"
 allrespfile="/tmp/$$.resp.all"
@@ -9,12 +13,10 @@ expected="/tmp/$$.expected"
 obtained="/tmp/$$.obtained"
 trap "rm -f $reqfile $respfile $allrespfile $obtained $expected" 0
 
-schema=vamp-json-schema/schema
-
 validate() {
     local file="$1"
     local schemaname="$2"
-    jsonschema -i "$file" "$schema/$schemaname.json" 1>&2 && \
+    jsonschema -i "$file" "$schemadir/$schemaname.json" 1>&2 && \
         echo "validated $schemaname" 1>&2 || \
         echo "failed to validate $schemaname" 1>&2
 }
@@ -35,9 +37,9 @@ validate_response() {
       validate_request "$request"
       echo "$request"
   done |
-      bin/vampipe-convert request -i json -o capnp |
-      VAMP_PATH=./vamp-plugin-sdk/examples bin/vampipe-server |
-      bin/vampipe-convert response -i capnp -o json |
+      bin/piper-convert request -i json -o capnp |
+      VAMP_PATH="$vampsdkdir"/examples bin/piper-vamp-server |
+      bin/piper-convert response -i capnp -o json |
       while read response ; do
           echo "$response" >> "$allrespfile"
           validate_response "$response"

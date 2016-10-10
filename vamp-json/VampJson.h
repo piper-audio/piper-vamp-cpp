@@ -1,7 +1,7 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 
 /*
-    VamPipe
+    Piper C++
 
     Centre for Digital Music, Queen Mary, University of London.
     Copyright 2015-2016 QMUL.
@@ -32,8 +32,8 @@
     authorization.
 */
 
-#ifndef VAMP_JSON_H
-#define VAMP_JSON_H
+#ifndef PIPER_VAMP_JSON_H
+#define PIPER_VAMP_JSON_H
 
 #include <vector>
 #include <string>
@@ -45,11 +45,11 @@
 #include <vamp-hostsdk/Plugin.h>
 #include <vamp-hostsdk/PluginLoader.h>
 
-#include "bits/PluginHandleMapper.h"
-#include "bits/PluginOutputIdMapper.h"
-#include "bits/RequestResponseType.h"
+#include "vamp-support/PluginHandleMapper.h"
+#include "vamp-support/PluginOutputIdMapper.h"
+#include "vamp-support/RequestResponseType.h"
 
-namespace vampipe {
+namespace piper {
 
 /**
  * Convert the structures laid out in the Vamp SDK classes into JSON
@@ -1064,7 +1064,7 @@ public:
         markRPC(jo);
 
         json11::Json::array arr;
-        for (const auto &a: resp.plugins) {
+        for (const auto &a: resp.available) {
             arr.push_back(fromPluginStaticData(a));
         }
         json11::Json::object po;
@@ -1276,7 +1276,7 @@ public:
         Vamp::HostExt::ListResponse resp;
         if (successful(j, err) && !failed(err)) {
             for (const auto &a: j["result"]["available"].array_items()) {
-                resp.plugins.push_back(toPluginStaticData(a, err));
+                resp.available.push_back(toPluginStaticData(a, err));
                 if (failed(err)) return {};
             }
         }

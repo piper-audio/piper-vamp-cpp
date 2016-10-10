@@ -1,7 +1,7 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 
 /*
-    VamPipe
+    Piper C++
 
     Centre for Digital Music, Queen Mary, University of London.
     Copyright 2015-2016 QMUL.
@@ -41,14 +41,12 @@
 #include <vamp-hostsdk/PluginLoader.h>
 #include <vamp-hostsdk/PluginStaticData.h>
 
-#include "bits/PluginHandleMapper.h"
-#include "bits/PluginOutputIdMapper.h"
-#include "bits/RequestResponseType.h"
+#include "vamp-support/PluginHandleMapper.h"
+#include "vamp-support/PluginOutputIdMapper.h"
+#include "vamp-support/RequestResponseType.h"
 
-namespace vampipe
+namespace piper
 {
-
-using namespace piper;
 
 /**
  * Convert the structures laid out in the Vamp SDK classes into Cap'n
@@ -723,10 +721,10 @@ public:
                            const Vamp::HostExt::ListResponse &resp) {
 
         auto r = b.getResponse().initList();
-        auto p = r.initAvailable(resp.plugins.size());
-        for (size_t i = 0; i < resp.plugins.size(); ++i) {
+        auto p = r.initAvailable(resp.available.size());
+        for (size_t i = 0; i < resp.available.size(); ++i) {
             auto pd = p[i];
-            buildExtractorStaticData(pd, resp.plugins[i]);
+            buildExtractorStaticData(pd, resp.available[i]);
         }
     }
     
@@ -902,12 +900,12 @@ public:
         if (getRequestResponseType(r) != RRType::List) {
             throw std::logic_error("not a list response");
         }
-        resp.plugins.clear();
+        resp.available.clear();
         auto pp = r.getResponse().getList().getAvailable();
         for (const auto &p: pp) {
             Vamp::HostExt::PluginStaticData psd;
             readExtractorStaticData(psd, p);
-            resp.plugins.push_back(psd);
+            resp.available.push_back(psd);
         }
     }
     

@@ -1,7 +1,7 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 
 /*
-    Vampipe
+    Piper C++
 
     Centre for Digital Music, Queen Mary, University of London.
     Copyright 2006-2016 Chris Cannam and QMUL.
@@ -32,33 +32,43 @@
     authorization.
 */
 
-#ifndef VAMPIPE_PLUGIN_ID_MAPPER_H
-#define VAMPIPE_PLUGIN_ID_MAPPER_H
+#ifndef PIPER_PRESERVING_PLUGIN_OUTPUT_ID_MAPPER_H
+#define PIPER_PRESERVING_PLUGIN_OUTPUT_ID_MAPPER_H
 
-#include <vamp-hostsdk/Plugin.h>
+#include "PluginOutputIdMapper.h"
 
-#include <map>
-#include <string>
+#include <iostream>
 
-namespace vampipe {
+namespace piper {
 
-class PluginOutputIdMapper
+//!!! document -- this is a passthrough thing that invents its
+//!!! numerical ids, they have no correspondence with any real plugin
+
+class PreservingPluginOutputIdMapper : public PluginOutputIdMapper
 {
 public:
-    virtual ~PluginOutputIdMapper() { }
+    PreservingPluginOutputIdMapper() { }
 
-    /**
-     * Return the index of the given output id in the plugin. The
-     * first output has index 0. If the given output id is unknown,
-     * return -1.
-     */
-    virtual int idToIndex(std::string outputId) const noexcept = 0;
+    virtual int idToIndex(std::string outputId) const noexcept {
+	int n = int(m_ids.size());
+	int i = 0;
+	while (i < n) {
+	    if (outputId == m_ids[i]) {
+		return i;
+	    }
+	    ++i;
+	}
+	m_ids.push_back(outputId);
+	return i;
+    }
 
-    /**
-     * Return the id of the output with the given index in the
-     * plugin. If the index is out of range, return the empty string.
-     */
-    virtual std::string indexToId(int index) const noexcept = 0;
+    virtual std::string indexToId(int index) const noexcept {
+        if (index < 0 || size_t(index) >= m_ids.size()) return "";
+	return m_ids[index];
+    }
+
+private:
+    mutable std::vector<std::string> m_ids;
 };
 
 }

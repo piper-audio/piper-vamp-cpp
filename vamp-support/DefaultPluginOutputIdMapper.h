@@ -1,7 +1,7 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 
 /*
-    Vampipe
+    Piper C++
 
     Centre for Digital Music, Queen Mary, University of London.
     Copyright 2006-2016 Chris Cannam and QMUL.
@@ -32,34 +32,31 @@
     authorization.
 */
 
-#ifndef VAMPIPE_PRESERVING_PLUGIN_OUTPUT_ID_MAPPER_H
-#define VAMPIPE_PRESERVING_PLUGIN_OUTPUT_ID_MAPPER_H
+#ifndef PIPER_DEFAULT_PLUGIN_ID_MAPPER_H
+#define PIPER_DEFAULT_PLUGIN_ID_MAPPER_H
 
-#include "PluginOutputIdMapper.h"
+#include <vamp-hostsdk/Plugin.h>
 
-#include <iostream>
+namespace piper {
 
-namespace vampipe {
-
-//!!! document -- this is a passthrough thing that invents its
-//!!! numerical ids, they have no correspondence with any real plugin
-
-class PreservingPluginOutputIdMapper : public PluginOutputIdMapper
+class DefaultPluginOutputIdMapper : public PluginOutputIdMapper
 {
 public:
-    PreservingPluginOutputIdMapper() { }
+    DefaultPluginOutputIdMapper(Vamp::Plugin *p) {
+	Vamp::Plugin::OutputList outputs = p->getOutputDescriptors();
+	for (const auto &d: outputs) {
+	    m_ids.push_back(d.identifier);
+	}
+    }
 
     virtual int idToIndex(std::string outputId) const noexcept {
 	int n = int(m_ids.size());
-	int i = 0;
-	while (i < n) {
+	for (int i = 0; i < n; ++i) {
 	    if (outputId == m_ids[i]) {
 		return i;
 	    }
-	    ++i;
 	}
-	m_ids.push_back(outputId);
-	return i;
+	return -1;
     }
 
     virtual std::string indexToId(int index) const noexcept {
@@ -68,7 +65,7 @@ public:
     }
 
 private:
-    mutable std::vector<std::string> m_ids;
+    std::vector<std::string> m_ids;
 };
 
 }

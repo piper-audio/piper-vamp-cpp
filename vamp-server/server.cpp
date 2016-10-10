@@ -1,8 +1,7 @@
 
-#include "VampnProto.h"
-
-#include "bits/RequestOrResponse.h"
-#include "bits/CountingPluginHandleMapper.h"
+#include "vamp-capnp/VampnProto.h"
+#include "vamp-support/RequestOrResponse.h"
+#include "vamp-support/CountingPluginHandleMapper.h"
 
 #include <iostream>
 #include <sstream>
@@ -12,18 +11,18 @@
 #include <set>
 
 using namespace std;
-using namespace vampipe;
+using namespace piper;
 using namespace Vamp;
 using namespace Vamp::HostExt;
 
 void usage()
 {
-    string myname = "vampipe-server";
+    string myname = "piper-vamp-server";
     cerr << "\n" << myname <<
 	": Load and run Vamp plugins in response to messages from stdin\n\n"
 	"    Usage: " << myname << "\n\n"
-	"Expects Vamp request messages in Cap'n Proto packed format on stdin,\n"
-	"and writes Vamp response messages in the same format to stdout.\n\n";
+	"Expects Piper request messages in Cap'n Proto packed format on stdin,\n"
+	"and writes Piper response messages in the same format to stdout.\n\n";
 
     exit(2);
 }
@@ -264,25 +263,25 @@ int main(int argc, char **argv)
 
 	    request = readRequestCapnp();
 
-	    cerr << "vampipe-server: request received, of type "
+	    cerr << "piper-vamp-server: request received, of type "
 		 << int(request.type)
 		 << endl;
 	    
 	    // NotValid without an exception indicates EOF:
 	    if (request.type == RRType::NotValid) {
-		cerr << "vampipe-server: eof reached" << endl;
+		cerr << "piper-vamp-server: eof reached" << endl;
 		break;
 	    }
 
 	    RequestOrResponse response = handleRequest(request);
             response.id = request.id;
 
-	    cerr << "vampipe-server: request handled, writing response"
+	    cerr << "piper-vamp-server: request handled, writing response"
 		 << endl;
 	    
 	    writeResponseCapnp(response);
 
-	    cerr << "vampipe-server: response written" << endl;
+	    cerr << "piper-vamp-server: response written" << endl;
 
 	    if (request.type == RRType::Finish) {
 		auto h = mapper.pluginToHandle(request.finishRequest.plugin);
@@ -292,7 +291,7 @@ int main(int argc, char **argv)
 	    
 	} catch (std::exception &e) {
 
-	    cerr << "vampipe-server: error: " << e.what() << endl;
+	    cerr << "piper-vamp-server: error: " << e.what() << endl;
 
 	    writeExceptionCapnp(e, request.type);
 	    
