@@ -1233,7 +1233,7 @@ public:
         else type = "invalid";
 
         json11::Json::object eo;
-        //!!! + need code
+        eo["code"] = 0;
         eo["message"] = 
             std::string("error in ") + type + " request: " + errorText;
 

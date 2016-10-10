@@ -830,8 +830,7 @@ public:
             type = "invalid";
         }
 
-        //!!! + code
-        
+        e.setCode(0);
         e.setMessage(std::string("error in ") + type + " request: " + errorText);
     }
 
