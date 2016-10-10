@@ -30,6 +30,38 @@ void usage()
 
 static CountingPluginHandleMapper mapper;
 
+static RequestOrResponse::RpcId readId(const RpcRequest::Reader &r)
+{
+    int number;
+    string tag;
+    switch (r.getId().which()) {
+    case RpcRequest::Id::Which::NUMBER:
+        number = r.getId().getNumber();
+        return { RequestOrResponse::RpcId::Number, number, "" };
+    case RpcRequest::Id::Which::TAG:
+        tag = r.getId().getTag();
+        return { RequestOrResponse::RpcId::Tag, 0, tag };
+    case RpcRequest::Id::Which::NONE:
+        return { RequestOrResponse::RpcId::Absent, 0, "" };
+    }
+    return {};
+}
+
+static void buildId(RpcResponse::Builder &b, const RequestOrResponse::RpcId &id)
+{
+    switch (id.type) {
+    case RequestOrResponse::RpcId::Number:
+        b.getId().setNumber(id.number);
+        break;
+    case RequestOrResponse::RpcId::Tag:
+        b.getId().setTag(id.tag);
+        break;
+    case RequestOrResponse::RpcId::Absent:
+        b.getId().setNone();
+        break;
+    }
+}
+
 RequestOrResponse
 readRequestCapnp()
 {
@@ -48,6 +80,7 @@ readRequestCapnp()
     RpcRequest::Reader reader = message.getRoot<RpcRequest>();
     
     rr.type = VampnProto::getRequestResponseType(reader);
+    rr.id = readId(reader);
 
     switch (rr.type) {
 
@@ -80,6 +113,8 @@ writeResponseCapnp(RequestOrResponse &rr)
     ::capnp::MallocMessageBuilder message;
     RpcResponse::Builder builder = message.initRoot<RpcResponse>();
 
+    buildId(builder, rr.id);
+    
     if (!rr.success) {
 
 	VampnProto::buildRpcResponse_Error(builder, rr.errorText, rr.type);
@@ -240,6 +275,7 @@ int main(int argc, char **argv)
 	    }
 
 	    RequestOrResponse response = handleRequest(request);
+            response.id = request.id;
 
 	    cerr << "vampipe-server: request handled, writing response"
 		 << endl;

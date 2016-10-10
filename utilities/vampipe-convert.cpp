@@ -79,6 +79,72 @@ convertResponseJson(string input, string &err)
 
 PreservingPluginHandleMapper mapper;
 
+static RequestOrResponse::RpcId
+readJsonId(const Json &j)
+{
+    RequestOrResponse::RpcId id;
+
+    if (j["id"].is_number()) {
+        id.type = RequestOrResponse::RpcId::Number;
+        id.number = j["id"].number_value();
+    } else if (j["id"].is_string()) {
+        id.type = RequestOrResponse::RpcId::Tag;
+        id.tag = j["id"].string_value();
+    } else {
+        id.type = RequestOrResponse::RpcId::Absent;
+    }
+
+    return id;
+}
+
+static Json
+writeJsonId(const RequestOrResponse::RpcId &id)
+{
+    if (id.type == RequestOrResponse::RpcId::Number) {
+        return id.number;
+    } else if (id.type == RequestOrResponse::RpcId::Tag) {
+        return id.tag;
+    } else {
+        return Json();
+    }
+}
+
+template <typename Reader>
+static RequestOrResponse::RpcId
+readCapnpId(const Reader &r)
+{
+    int number;
+    string tag;
+    switch (r.getId().which()) {
+    case RpcRequest::Id::Which::NUMBER:
+        number = r.getId().getNumber();
+        return { RequestOrResponse::RpcId::Number, number, "" };
+    case RpcRequest::Id::Which::TAG:
+        tag = r.getId().getTag();
+        return { RequestOrResponse::RpcId::Tag, 0, tag };
+    case RpcRequest::Id::Which::NONE:
+        return { RequestOrResponse::RpcId::Absent, 0, "" };
+    }
+    return {};
+}
+
+template <typename Builder>
+static void
+buildCapnpId(Builder &b, const RequestOrResponse::RpcId &id)
+{
+    switch (id.type) {
+    case RequestOrResponse::RpcId::Number:
+        b.getId().setNumber(id.number);
+        break;
+    case RequestOrResponse::RpcId::Tag:
+        b.getId().setTag(id.tag);
+        break;
+    case RequestOrResponse::RpcId::Absent:
+        b.getId().setNone();
+        break;
+    }
+}
+
 RequestOrResponse
 readRequestJson(string &err)
 {
@@ -97,7 +163,9 @@ readRequestJson(string &err)
 
     rr.type = VampJson::getRequestResponseType(j, err);
     if (err != "") return {};
-    
+
+    rr.id = readJsonId(j);
+
     VampJson::BufferSerialisation serialisation =
         VampJson::BufferSerialisation::Array;
 
@@ -135,23 +203,25 @@ writeRequestJson(RequestOrResponse &rr, bool useBase64)
          VampJson::BufferSerialisation::Base64 :
          VampJson::BufferSerialisation::Array);
 
+    Json id = writeJsonId(rr.id);
+    
     switch (rr.type) {
 
     case RRType::List:
-	j = VampJson::fromRpcRequest_List();
+	j = VampJson::fromRpcRequest_List(id);
 	break;
     case RRType::Load:
-	j = VampJson::fromRpcRequest_Load(rr.loadRequest);
+	j = VampJson::fromRpcRequest_Load(rr.loadRequest, id);
 	break;
     case RRType::Configure:
-	j = VampJson::fromRpcRequest_Configure(rr.configurationRequest, mapper);
+	j = VampJson::fromRpcRequest_Configure(rr.configurationRequest, mapper, id);
 	break;
     case RRType::Process:
 	j = VampJson::fromRpcRequest_Process
-	    (rr.processRequest, mapper, serialisation);
+	    (rr.processRequest, mapper, serialisation, id);
 	break;
     case RRType::Finish:
-	j = VampJson::fromRpcRequest_Finish(rr.finishRequest, mapper);
+	j = VampJson::fromRpcRequest_Finish(rr.finishRequest, mapper, id);
 	break;
     case RRType::NotValid:
 	break;
@@ -178,6 +248,8 @@ readResponseJson(string &err)
 
     rr.type = VampJson::getRequestResponseType(j, err);
     if (err != "") return {};
+
+    rr.id = readJsonId(j);
     
     VampJson::BufferSerialisation serialisation =
         VampJson::BufferSerialisation::Array;
@@ -219,31 +291,33 @@ writeResponseJson(RequestOrResponse &rr, bool useBase64)
          VampJson::BufferSerialisation::Base64 :
          VampJson::BufferSerialisation::Array);
 
+    Json id = writeJsonId(rr.id);
+
     if (!rr.success) {
 
-	j = VampJson::fromError(rr.errorText, rr.type);
+	j = VampJson::fromError(rr.errorText, rr.type, id);
 
     } else {
     
 	switch (rr.type) {
 
 	case RRType::List:
-	    j = VampJson::fromRpcResponse_List(rr.listResponse);
+	    j = VampJson::fromRpcResponse_List(rr.listResponse, id);
 	    break;
 	case RRType::Load:
-	    j = VampJson::fromRpcResponse_Load(rr.loadResponse, mapper);
+	    j = VampJson::fromRpcResponse_Load(rr.loadResponse, mapper, id);
 	    break;
 	case RRType::Configure:
 	    j = VampJson::fromRpcResponse_Configure(rr.configurationResponse,
-                                                     mapper);
+                                                    mapper, id);
 	    break;
 	case RRType::Process:
 	    j = VampJson::fromRpcResponse_Process
-		(rr.processResponse, mapper, serialisation);
+		(rr.processResponse, mapper, serialisation, id);
 	    break;
 	case RRType::Finish:
 	    j = VampJson::fromRpcResponse_Finish
-		(rr.finishResponse, mapper, serialisation);
+		(rr.finishResponse, mapper, serialisation, id);
 	    break;
 	case RRType::NotValid:
 	    break;
@@ -263,6 +337,7 @@ readRequestCapnp(kj::BufferedInputStreamWrapper &buffered)
     RpcRequest::Reader reader = message.getRoot<RpcRequest>();
     
     rr.type = VampnProto::getRequestResponseType(reader);
+    rr.id = readCapnpId(reader);
 
     switch (rr.type) {
 
@@ -295,6 +370,8 @@ writeRequestCapnp(RequestOrResponse &rr)
     ::capnp::MallocMessageBuilder message;
     RpcRequest::Builder builder = message.initRoot<RpcRequest>();
 
+    buildCapnpId(builder, rr.id);
+    
     switch (rr.type) {
 
     case RRType::List:
@@ -332,6 +409,7 @@ readResponseCapnp(kj::BufferedInputStreamWrapper &buffered)
     rr.type = VampnProto::getRequestResponseType(reader);
     rr.success = true;
     rr.errorText = "";
+    rr.id = readCapnpId(reader);
     int errorCode = 0;
 
     switch (rr.type) {
@@ -367,6 +445,8 @@ writeResponseCapnp(RequestOrResponse &rr)
 {
     ::capnp::MallocMessageBuilder message;
     RpcResponse::Builder builder = message.initRoot<RpcResponse>();
+
+    buildCapnpId(builder, rr.id);
 
     if (!rr.success) {
 

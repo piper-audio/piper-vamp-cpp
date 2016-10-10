@@ -51,16 +51,25 @@ public:
     enum Direction {
 	Request, Response
     };
+
+    struct RpcId {
+        enum { Absent, Number, Tag } type;
+        int number;
+        std::string tag;
+    };
     
     RequestOrResponse() : // nothing by default
 	direction(Request),
 	type(RRType::NotValid),
-	success(false) { }
+	success(false),
+        id({ RpcId::Absent, 0, "" })
+    { }
 
     Direction direction;
     RRType type;
     bool success;
     std::string errorText;
+    RpcId id;
 
     Vamp::HostExt::ListResponse listResponse;
     Vamp::HostExt::LoadRequest loadRequest;

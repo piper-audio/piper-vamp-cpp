@@ -72,8 +72,6 @@ namespace vampipe {
  * success) before using the returned value.
  */
 
-//!!! todo: convert pmapper to err style
-
 class VampJson
 {
 public:
@@ -1048,12 +1046,13 @@ private: // go private briefly for a couple of helper functions
 public:
 
     static json11::Json
-    fromRpcRequest_List() {
+    fromRpcRequest_List(const json11::Json &id) {
 
         json11::Json::object jo;
         markRPC(jo);
 
         jo["method"] = "list";
+        addId(jo, id);
         return json11::Json(jo);
     }
 
@@ -1078,13 +1077,15 @@ public:
     }
     
     static json11::Json
-    fromRpcRequest_Load(const Vamp::HostExt::LoadRequest &req) {
+    fromRpcRequest_Load(const Vamp::HostExt::LoadRequest &req,
+                        const json11::Json &id) {
 
         json11::Json::object jo;
         markRPC(jo);
 
         jo["method"] = "load";
         jo["params"] = fromLoadRequest(req);
+        addId(jo, id);
         return json11::Json(jo);
     }    
 
@@ -1110,13 +1111,15 @@ public:
 
     static json11::Json
     fromRpcRequest_Configure(const Vamp::HostExt::ConfigurationRequest &req,
-                              const PluginHandleMapper &pmapper) {
+                             const PluginHandleMapper &pmapper,
+                             const json11::Json &id) {
 
         json11::Json::object jo;
         markRPC(jo);
 
         jo["method"] = "configure";
         jo["params"] = fromConfigurationRequest(req, pmapper);
+        addId(jo, id);
         return json11::Json(jo);
     }    
 
@@ -1143,13 +1146,15 @@ public:
     static json11::Json
     fromRpcRequest_Process(const Vamp::HostExt::ProcessRequest &req,
                            const PluginHandleMapper &pmapper,
-                           BufferSerialisation serialisation) {
+                           BufferSerialisation serialisation,
+                           const json11::Json &id) {
 
         json11::Json::object jo;
         markRPC(jo);
 
         jo["method"] = "process";
         jo["params"] = fromProcessRequest(req, pmapper, serialisation);
+        addId(jo, id);
         return json11::Json(jo);
     }    
 
@@ -1175,7 +1180,8 @@ public:
     
     static json11::Json
     fromRpcRequest_Finish(const Vamp::HostExt::FinishRequest &req,
-                           const PluginHandleMapper &pmapper) {
+                          const PluginHandleMapper &pmapper,
+                          const json11::Json &id) {
 
         json11::Json::object jo;
         markRPC(jo);
@@ -1185,6 +1191,7 @@ public:
 
         jo["method"] = "finish";
         jo["params"] = fo;
+        addId(jo, id);
         return json11::Json(jo);
     }    
     
