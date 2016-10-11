@@ -230,14 +230,21 @@ handleRequest(const RequestOrResponse &request)
 
     case RRType::Finish:
     {
-	response.finishResponse.plugin = request.finishRequest.plugin;
-	response.finishResponse.features =
-	    request.finishRequest.plugin->getRemainingFeatures();
+	auto &freq = request.finishRequest;
+	response.finishResponse.plugin = freq.plugin;
+
+	auto h = mapper.pluginToHandle(freq.plugin);
+        // Finish can be called (to unload the plugin) even if the
+        // plugin has never been configured or used. But we want to
+        // make sure we call getRemainingFeatures only if we have
+        // actually configured the plugin.
+	if (mapper.isConfigured(h)) {
+            response.finishResponse.features = freq.plugin->getRemainingFeatures();
+	}
 
 	// We do not delete the plugin here -- we need it in the
-	// mapper when converting the features. It gets deleted by the
-	// caller.
-	
+	// mapper when converting the features. It gets deleted in the
+	// calling function.
 	response.success = true;
 	break;
     }
