@@ -60,7 +60,7 @@ namespace piper {
 class PluginHandleMapper
 {
 public:
-    typedef int32_t Handle;
+    typedef uint32_t Handle; // unsigned to avoid undefined behaviour on possible wrap
     const Handle INVALID_HANDLE = 0;
 
     virtual ~PluginHandleMapper() noexcept { }

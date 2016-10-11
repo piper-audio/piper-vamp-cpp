@@ -5,11 +5,32 @@
 
 #include "vamp-support/AssignedPluginHandleMapper.h"
 
-namespace piper {
+namespace piper { //!!! probably something different
 
 class PiperClient : public PiperClientBase
 {
+    // unsigned to avoid undefined behaviour on possible wrap
+    typedef uint32_t ReqId;
+    
 public:
+
+    PiperClient() { }
+
+    Vamp::Plugin *
+    load(std::string key, float inputSampleRate, int adapterFlags) {
+
+        Vamp::HostExt::LoadRequest request;
+        request.pluginKey = key;
+        request.inputSampleRate = inputSampleRate;
+        request.adapterFlags = adapterFlags;
+
+        ::capnp::MallocMessageBuilder message;
+        RpcRequest::Builder builder = message.initRoot<RpcRequest>();
+
+        VampnProto::buildRpcRequest_Load(builder, request);
+        ReqId id = getId();
+        builder.getId().setNumber(id);
+    };     
     
     virtual
     Vamp::Plugin::OutputList
@@ -24,9 +45,11 @@ public:
         RpcRequest::Builder builder = message.initRoot<RpcRequest>();
 
         VampnProto::buildRpcRequest_Configure(builder, request, m_mapper);
+        ReqId id = getId();
+        builder.getId().setNumber(id);
 
         //!!! now what?
-    }
+    };
     
     
     virtual
@@ -40,6 +63,11 @@ public:
 
 private:
     AssignedPluginHandleMapper m_mapper;
+    int getId() {
+        //!!! todo: mutex
+        static ReqId m_nextId = 0;
+        return m_nextId++;
+    }
 };
     
 }
