@@ -32,69 +32,114 @@
     authorization.
 */
 
-#ifndef PIPER_COUNTING_PLUGIN_HANDLE_MAPPER_H
-#define PIPER_COUNTING_PLUGIN_HANDLE_MAPPER_H
+#ifndef PIPER_ASSIGNED_PLUGIN_HANDLE_MAPPER_H
+#define PIPER_ASSIGNED_PLUGIN_HANDLE_MAPPER_H
 
 #include "PluginHandleMapper.h"
 #include "PluginOutputIdMapper.h"
-#include "AssignedPluginHandleMapper.h"
+#include "DefaultPluginOutputIdMapper.h"
 
 #include <set>
 #include <map>
+#include <iostream>
 
 namespace piper {
 
-class CountingPluginHandleMapper : public PluginHandleMapper
+class AssignedPluginHandleMapper : public PluginHandleMapper
 {
 public:
-    CountingPluginHandleMapper() : m_nextHandle(1) { }
+    AssignedPluginHandleMapper() { }
 
-    void addPlugin(Vamp::Plugin *p) {
-        Handle h = m_nextHandle++;
-        m_sub.addPlugin(p, h);
+    void addPlugin(Vamp::Plugin *p, Handle h) {
+        if (!p) return;
+	if (m_rplugins.find(p) == m_rplugins.end()) {
+            if (m_plugins.find(h) != m_plugins.end()) {
+                std::cerr << "ERROR: Duplicate plugin handle " << h
+                          << " for plugin " << p << " (already used for plugin "
+                          << m_plugins[h] << ")" << std::endl;
+                throw std::logic_error("Duplicate plugin handle");
+            }
+	    m_plugins[h] = p;
+	    m_rplugins[p] = h;
+            m_outputMappers[h] =
+                std::make_shared<DefaultPluginOutputIdMapper>(p);
+	}
     }
 
     void removePlugin(Handle h) {
-        m_sub.removePlugin(h);
+	if (m_plugins.find(h) == m_plugins.end()) return;
+	Vamp::Plugin *p = m_plugins[h];
+        m_outputMappers.erase(h);
+	m_plugins.erase(h);
+	if (isConfigured(h)) {
+	    m_configuredPlugins.erase(h);
+	    m_channelCounts.erase(h);
+	}
+	m_rplugins.erase(p);
     }
     
     Handle pluginToHandle(Vamp::Plugin *p) const noexcept {
-        return m_sub.pluginToHandle(p);
+	if (m_rplugins.find(p) == m_rplugins.end()) {
+            return INVALID_HANDLE;
+	}
+	return m_rplugins.at(p);
     }
     
     Vamp::Plugin *handleToPlugin(Handle h) const noexcept {
-        return m_sub.handleToPlugin(h);
+	if (m_plugins.find(h) == m_plugins.end()) {
+            return nullptr;
+	}
+	return m_plugins.at(h);
     }
 
     const std::shared_ptr<PluginOutputIdMapper> pluginToOutputIdMapper
     (Vamp::Plugin *p) const noexcept {
-        return m_sub.pluginToOutputIdMapper(p);
+        return handleToOutputIdMapper(pluginToHandle(p));
     }
 
     const std::shared_ptr<PluginOutputIdMapper> handleToOutputIdMapper
     (Handle h) const noexcept {
-        return m_sub.handleToOutputIdMapper(h);
+	if (h != INVALID_HANDLE &&
+            m_outputMappers.find(h) != m_outputMappers.end()) {
+            return m_outputMappers.at(h);
+        } else {
+	    return {};
+	}
     }
 
     bool isConfigured(Handle h) const noexcept {
-        return m_sub.isConfigured(h);
+        if (h == INVALID_HANDLE) return false;
+	return m_configuredPlugins.find(h) != m_configuredPlugins.end();
     }
 
     void markConfigured(Handle h, int channelCount, int blockSize) {
-        m_sub.markConfigured(h, channelCount, blockSize);
+        if (h == INVALID_HANDLE) return;
+	m_configuredPlugins.insert(h);
+	m_channelCounts[h] = channelCount;
+	m_blockSizes[h] = blockSize;
     }
 
     int getChannelCount(Handle h) const noexcept {
-        return m_sub.getChannelCount(h);
+	if (m_channelCounts.find(h) == m_channelCounts.end()) {
+	    return 0;
+	}
+	return m_channelCounts.at(h);
     }
 
     int getBlockSize(Handle h) const noexcept {
-        return m_sub.getBlockSize(h);
+	if (m_blockSizes.find(h) == m_blockSizes.end()) {
+            return 0;
+	}
+	return m_blockSizes.at(h);
     }
     
 private:
-    Handle m_nextHandle; // NB plugin handle type must fit in JSON number
-    AssignedPluginHandleMapper m_sub;
+    std::map<Handle, Vamp::Plugin *> m_plugins;
+    std::map<Vamp::Plugin *, Handle> m_rplugins;
+    std::set<Handle> m_configuredPlugins;
+    std::map<Handle, int> m_channelCounts;
+    std::map<Handle, int> m_blockSizes;
+    std::map<Handle, std::shared_ptr<PluginOutputIdMapper>> m_outputMappers;
 };
 
 }

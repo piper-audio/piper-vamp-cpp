@@ -44,6 +44,9 @@
 
 #include <vamp-hostsdk/Plugin.h>
 #include <vamp-hostsdk/PluginLoader.h>
+#include <vamp-hostsdk/PluginStaticData.h>
+#include <vamp-hostsdk/PluginConfiguration.h>
+#include <vamp-hostsdk/RequestResponse.h>
 
 #include "vamp-support/PluginHandleMapper.h"
 #include "vamp-support/PluginOutputIdMapper.h"

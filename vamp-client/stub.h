@@ -8,24 +8,24 @@
 
 namespace piper { //!!! should be something else
 
-typedef int32_t PiperPluginHandle;
+class PiperStubPlugin;
 
 class PiperClientBase
 {
 public:
     virtual
     Vamp::Plugin::OutputList
-    configure(PiperPluginHandle handle,
+    configure(PiperStubPlugin *plugin,
               Vamp::HostExt::PluginConfiguration config) = 0;
     
     virtual
     Vamp::Plugin::FeatureSet
-    process(PiperPluginHandle handle,
+    process(PiperStubPlugin *plugin,
             const float *const *inputBuffers,
             Vamp::RealTime timestamp) = 0;
 
     virtual Vamp::Plugin::FeatureSet
-    finish(PiperPluginHandle handle) = 0;
+    finish(PiperStubPlugin *plugin) = 0;
 };
 
 class PiperStubPlugin : public Vamp::Plugin
@@ -36,13 +36,11 @@ class PiperStubPlugin : public Vamp::Plugin
     
 public:
     PiperStubPlugin(PiperClientBase *client,
-                    PiperPluginHandle handle,
                     float inputSampleRate,
                     Vamp::HostExt::PluginStaticData psd,
                     Vamp::HostExt::PluginConfiguration defaultConfig) :
         Plugin(inputSampleRate),
         m_client(client),
-        m_handle(handle),
         m_state(Loaded),
         m_psd(psd),
         m_defaultConfig(defaultConfig),
@@ -51,8 +49,7 @@ public:
 
     virtual ~PiperStubPlugin() {
         if (m_state != Finished) {
-            (void)m_client->finish(m_handle);
-            m_state = Finished;
+            std::cerr << "WARNING: PiperStubPlugin destroyed without finish() call, may be a server-side resource leak" << std::endl;
         }
     }
 
@@ -126,7 +123,7 @@ public:
         m_config.stepSize = stepSize;
         m_config.blockSize = blockSize;
 
-        m_outputs = m_client->configure(m_handle, m_config);
+        m_outputs = m_client->configure(this, m_config);
 
         if (!m_outputs.empty()) {
             m_state = Configured;
@@ -192,7 +189,7 @@ public:
             throw std::logic_error("Plugin has already been disposed of");
         }
 
-        return m_client->process(m_handle, inputBuffers, timestamp);
+        return m_client->process(this, inputBuffers, timestamp);
     }
 
     virtual FeatureSet getRemainingFeatures() {
@@ -206,12 +203,11 @@ public:
 
         m_state = Finished;
 
-        return m_client->finish(m_handle);
+        return m_client->finish(this);
     }
     
 private:
     PiperClientBase *m_client;
-    PiperPluginHandle m_handle;
     State m_state;
     Vamp::HostExt::PluginStaticData m_psd;
     OutputList m_outputs;
