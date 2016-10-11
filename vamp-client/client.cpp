@@ -5,6 +5,13 @@
 
 #include "vamp-support/AssignedPluginHandleMapper.h"
 
+#include <QProcess>
+
+#include <stdexcept>
+
+using std::cerr;
+using std::endl;
+
 // First cut plan: this is to be client-qt.cpp, using a QProcess, so
 // we're using pipes and the server is completely synchronous,
 // handling only one call at once. Our PiperClient will fire off a
@@ -19,7 +26,7 @@
 // servicing more than one request at a time).
 
 // Next level: Capnp RPC, but I want to get the first level to work
-// first.
+// first, not least because the server already exists.
 
 namespace piper { //!!! probably something different
 
@@ -29,11 +36,36 @@ class PiperClient : public PiperClientBase
     typedef uint32_t ReqId;
     
 public:
+    PiperClient() {
+        m_process = new QProcess();
+        m_process->setReadChannel(QProcess::StandardOutput);
+        m_process->setProcessChannelMode(QProcess::ForwardedErrorChannel);
+        m_process->start("../bin/piper-vamp-server"); //!!!
+        if (!m_process->waitForStarted()) {
+            cerr << "server failed to start" << endl;
+            delete m_process;
+            m_process = 0;
+        }
+    }
 
-    PiperClient() { }
+    ~PiperClient() {
+        if (m_process) {
+            if (m_process->state() != QProcess::NotRunning) {
+                m_process->close();
+                m_process->waitForFinished();
+            }
+            delete m_process;
+        }
+    }
 
+    //!!! obviously, factor out all repetitive guff
+    
     Vamp::Plugin *
     load(std::string key, float inputSampleRate, int adapterFlags) {
+
+        if (!m_process) {
+            throw std::runtime_error("Piper server failed to start");
+        }
 
         Vamp::HostExt::LoadRequest request;
         request.pluginKey = key;
@@ -46,12 +78,21 @@ public:
         VampnProto::buildRpcRequest_Load(builder, request);
         ReqId id = getId();
         builder.getId().setNumber(id);
+
+        auto arr = messageToFlatArray(message);
+        m_process->write(arr.asChars().begin(), arr.asChars().size());
+
+        ///.... read...
     };     
     
     virtual
     Vamp::Plugin::OutputList
     configure(PiperStubPlugin *plugin,
               Vamp::HostExt::PluginConfiguration config) {
+
+        if (!m_process) {
+            throw std::runtime_error("Piper server failed to start");
+        }
 
         Vamp::HostExt::ConfigurationRequest request;
         request.plugin = plugin;
@@ -78,6 +119,7 @@ public:
     finish(PiperStubPlugin *plugin) = 0;
 
 private:
+    QProcess *m_process;
     AssignedPluginHandleMapper m_mapper;
     int getId() {
         //!!! todo: mutex

@@ -4,3 +4,4 @@ o
 *.capnp.c++
 *.capnp.h
 *~
+.qmake.stash
