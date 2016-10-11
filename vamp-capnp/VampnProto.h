@@ -371,7 +371,7 @@ public:
     
     static void
     buildExtractorStaticData(ExtractorStaticData::Builder &b,
-                          const Vamp::HostExt::PluginStaticData &d) {
+                             const Vamp::HostExt::PluginStaticData &d) {
 
         b.setKey(d.pluginKey);
 
