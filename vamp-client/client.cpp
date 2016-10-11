@@ -5,6 +5,22 @@
 
 #include "vamp-support/AssignedPluginHandleMapper.h"
 
+// First cut plan: this is to be client-qt.cpp, using a QProcess, so
+// we're using pipes and the server is completely synchronous,
+// handling only one call at once. Our PiperClient will fire off a
+// QProcess and refer to its io device. Each request message is
+// serialised into memory using capnp::MallocMessageBuilder and
+// shunted into the process pipe; we then wait for some bytes to come
+// back and use capnp::expectedSizeInWordsFromPrefix to work out when
+// a whole message is available, reading only that amount from the
+// device and using FlatArrayMessageReader to convert to a response
+// message. If the response message's id does not match the request
+// message's, then the server has gone wrong (it should never be
+// servicing more than one request at a time).
+
+// Next level: Capnp RPC, but I want to get the first level to work
+// first.
+
 namespace piper { //!!! probably something different
 
 class PiperClient : public PiperClientBase
