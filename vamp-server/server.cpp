@@ -276,7 +276,7 @@ int main(int argc, char **argv)
 	    
 	    // NotValid without an exception indicates EOF:
 	    if (request.type == RRType::NotValid) {
-		cerr << "piper-vamp-server: eof reached" << endl;
+		cerr << "piper-vamp-server: eof reached, exiting" << endl;
 		break;
 	    }
 

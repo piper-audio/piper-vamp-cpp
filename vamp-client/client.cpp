@@ -51,8 +51,11 @@ public:
     ~PiperClient() {
         if (m_process) {
             if (m_process->state() != QProcess::NotRunning) {
+		m_process->closeWriteChannel();
+                m_process->waitForFinished(200);
                 m_process->close();
                 m_process->waitForFinished();
+		cerr << "server exited" << endl;
             }
             delete m_process;
         }
@@ -338,6 +341,23 @@ int main(int, char **)
     }
 
     (void)plugin->getRemainingFeatures();
+
+    cerr << "calling reset..." << endl;
+    plugin->reset();
+    cerr << "...round 2!" << endl;
+
+    std::vector<float> buf = { 1.0, -1.0, 1.0, -1.0 };
+    float *bd = buf.data();
+    Vamp::Plugin::FeatureSet features = plugin->process
+	(&bd, Vamp::RealTime::zeroTime);
+    cerr << "results for output 0:" << endl;
+    auto fl(features[0]);
+    for (const auto &f: fl) {
+	cerr << f.values[0] << endl;
+    }
+    
+    (void)plugin->getRemainingFeatures();
+
     delete plugin;
     //!!! -- and also implement reset(), which will need to reconstruct internally
 }
