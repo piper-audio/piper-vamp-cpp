@@ -79,8 +79,6 @@ public:
         ReqId id = getId();
         builder.getId().setNumber(id);
 
-        cerr << "id = " << id << endl;
-        
         auto arr = messageToFlatArray(message);
         m_process->write(arr.asChars().begin(), arr.asChars().size());
 
@@ -88,7 +86,9 @@ public:
         //!!! (from another thread)
 
         QByteArray buffer = readResponseBuffer();
-        capnp::FlatArrayMessageReader responseMessage(toArrayPtr(buffer));
+	auto karr = toKJArray(buffer);
+        capnp::FlatArrayMessageReader responseMessage(karr);
+	cerr << "made reader" << endl;
         RpcResponse::Reader reader = responseMessage.getRoot<RpcResponse>();
 
         //!!! handle (explicit) error case
@@ -136,7 +136,8 @@ public:
         m_process->write(arr.asChars().begin(), arr.asChars().size());
         
         QByteArray buffer = readResponseBuffer();
-        capnp::FlatArrayMessageReader responseMessage(toArrayPtr(buffer));
+	auto karr = toKJArray(buffer);
+        capnp::FlatArrayMessageReader responseMessage(karr);
         RpcResponse::Reader reader = responseMessage.getRoot<RpcResponse>();
 
         //!!! handle (explicit) error case
@@ -177,7 +178,8 @@ public:
         m_process->write(arr.asChars().begin(), arr.asChars().size());
         
         QByteArray buffer = readResponseBuffer();
-        capnp::FlatArrayMessageReader responseMessage(toArrayPtr(buffer));
+	auto karr = toKJArray(buffer);
+        capnp::FlatArrayMessageReader responseMessage(karr);
         RpcResponse::Reader reader = responseMessage.getRoot<RpcResponse>();
 
         //!!! handle (explicit) error case
@@ -213,7 +215,8 @@ public:
         m_process->write(arr.asChars().begin(), arr.asChars().size());
         
         QByteArray buffer = readResponseBuffer();
-        capnp::FlatArrayMessageReader responseMessage(toArrayPtr(buffer));
+	auto karr = toKJArray(buffer);
+        capnp::FlatArrayMessageReader responseMessage(karr);
         RpcResponse::Reader reader = responseMessage.getRoot<RpcResponse>();
 
         //!!! handle (explicit) error case
@@ -240,12 +243,16 @@ private:
         return m_nextId++;
     }
 
-    kj::ArrayPtr<const capnp::word>
-    toArrayPtr(QByteArray arr) {
+    kj::Array<capnp::word>
+    toKJArray(QByteArray qarr) {
+	// We could do this whole thing with fewer copies, but let's
+	// see whether it matters first
         size_t wordSize = sizeof(capnp::word);
-        capnp::word *dptr = reinterpret_cast<capnp::word *>(arr.data());
-        kj::ArrayPtr<const capnp::word> kptr(dptr, arr.size() / wordSize);
-        return kptr;
+	size_t words = qarr.size() / wordSize;
+	cerr << "converting " << words << " words (" << (words * wordSize) << " bytes)" << endl;
+	kj::Array<capnp::word> karr(kj::heapArray<capnp::word>(words));
+	memcpy(karr.begin(), qarr.data(), words * wordSize);
+	return karr;
     }
 
     QByteArray
@@ -270,7 +277,7 @@ private:
                 buffer.append(m_process->read(wordCount * wordSize));
                 size_t haveWords = buffer.size() / wordSize;
                 size_t expectedWords =
-                    capnp::expectedSizeInWordsFromPrefix(toArrayPtr(buffer));
+                    capnp::expectedSizeInWordsFromPrefix(toKJArray(buffer));
 
                 cerr << "haveWords = " << haveWords << ", expectedWords = " << expectedWords << endl;
                 
@@ -284,14 +291,14 @@ private:
                 }
             }
         }
-
+/*
         cerr << "buffer = ";
         for (int i = 0; i < buffer.size(); ++i) {
             if (i % 16 == 0) cerr << "\n";
             cerr << int(buffer[i]) << " ";
         }
         cerr << "\n";
-        
+*/        
         return buffer;
     }
 
@@ -328,6 +335,9 @@ int main(int, char **)
             cerr << f.values[0] << endl;
         }
     }
-    delete plugin;
+    //!!! todo: make it possible to do both of the following --
+    (void)plugin->getRemainingFeatures();
+//    delete plugin;
+    //!!! -- and also implement reset(), which will need to reconstruct internally
 }
 
