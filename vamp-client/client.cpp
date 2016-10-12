@@ -79,6 +79,8 @@ public:
         ReqId id = getId();
         builder.getId().setNumber(id);
 
+        cerr << "id = " << id << endl;
+        
         auto arr = messageToFlatArray(message);
         m_process->write(arr.asChars().begin(), arr.asChars().size());
 
@@ -283,6 +285,13 @@ private:
             }
         }
 
+        cerr << "buffer = ";
+        for (int i = 0; i < buffer.size(); ++i) {
+            if (i % 16 == 0) cerr << "\n";
+            cerr << int(buffer[i]) << " ";
+        }
+        cerr << "\n";
+        
         return buffer;
     }
 
