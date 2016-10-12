@@ -21,7 +21,7 @@ public:
     virtual
     Vamp::Plugin::FeatureSet
     process(PiperStubPlugin *plugin,
-            const float *const *inputBuffers,
+            std::vector<std::vector<float> > inputBuffers,
             Vamp::RealTime timestamp) = 0;
 
     virtual Vamp::Plugin::FeatureSet
@@ -189,7 +189,15 @@ public:
             throw std::logic_error("Plugin has already been disposed of");
         }
 
-        return m_client->process(this, inputBuffers, timestamp);
+        //!!! ew
+        std::vector<std::vector<float> > vecbuf;
+        for (int c = 0; c < m_config.channelCount; ++c) {
+            vecbuf.push_back(std::vector<float>
+                             (inputBuffers[c],
+                              inputBuffers[c] + m_config.blockSize));
+        }
+        
+        return m_client->process(this, vecbuf, timestamp);
     }
 
     virtual FeatureSet getRemainingFeatures() {

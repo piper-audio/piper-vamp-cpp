@@ -50,7 +50,7 @@ class AssignedPluginHandleMapper : public PluginHandleMapper
 public:
     AssignedPluginHandleMapper() { }
 
-    void addPlugin(Vamp::Plugin *p, Handle h) {
+    void addPlugin(Handle h, Vamp::Plugin *p) {
         if (!p) return;
 	if (m_rplugins.find(p) == m_rplugins.end()) {
             if (m_plugins.find(h) != m_plugins.end()) {

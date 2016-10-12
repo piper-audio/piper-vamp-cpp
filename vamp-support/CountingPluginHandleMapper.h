@@ -51,7 +51,7 @@ public:
 
     void addPlugin(Vamp::Plugin *p) {
         Handle h = m_nextHandle++;
-        m_sub.addPlugin(p, h);
+        m_sub.addPlugin(h, p);
     }
 
     void removePlugin(Handle h) {

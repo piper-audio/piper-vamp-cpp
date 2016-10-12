@@ -16,6 +16,8 @@ PIPER_DIR = ../../piper
 
 QMAKE_CXXFLAGS = -I$$VAMPSDK_DIR -I..
 
+LIBS += -lcapnp -lkj -lvamp-hostsdk
+
 # Using the "console" CONFIG flag above should ensure this happens for
 # normal Windows builds, but this may be necessary when cross-compiling
 win32-x-g++:QMAKE_LFLAGS += -Wl,-subsystem,console
@@ -23,5 +25,5 @@ win32-x-g++:QMAKE_LFLAGS += -Wl,-subsystem,console
 TARGET = client
 
 SOURCES += \
-	client.cpp
+	client.cpp ../vamp-capnp/piper.capnp.c++
 

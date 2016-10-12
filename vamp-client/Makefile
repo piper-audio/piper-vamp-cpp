@@ -36,7 +36,7 @@ DISTNAME      = client1.0.0
 DISTDIR = /home/cannam/code/piper-cpp/o/client1.0.0
 LINK          = g++
 LFLAGS        = -Wl,-O1 -Wl,-O1,--sort-common,--as-needed,-z,relro
-LIBS          = $(SUBLIBS) -lQt5Core -lpthread 
+LIBS          = $(SUBLIBS) -lcapnp -lkj -lvamp-hostsdk -lQt5Core -lpthread 
 AR            = ar cqs
 RANLIB        = 
 SED           = sed
@@ -48,8 +48,10 @@ OBJECTS_DIR   = ../o/
 
 ####### Files
 
-SOURCES       = client.cpp 
-OBJECTS       = ../o/client.o
+SOURCES       = client.cpp \
+		../vamp-capnp/piper.capnp.c++ 
+OBJECTS       = ../o/client.o \
+		../o/piper.capnp.o
 DIST          = /usr/lib/qt/mkspecs/features/spec_pre.prf \
 		/usr/lib/qt/mkspecs/common/unix.conf \
 		/usr/lib/qt/mkspecs/common/linux.conf \
@@ -203,7 +205,8 @@ DIST          = /usr/lib/qt/mkspecs/features/spec_pre.prf \
 		/usr/lib/qt/mkspecs/features/testcase_targets.prf \
 		/usr/lib/qt/mkspecs/features/yacc.prf \
 		/usr/lib/qt/mkspecs/features/lex.prf \
-		client.pro  client.cpp
+		client.pro  client.cpp \
+		../vamp-capnp/piper.capnp.c++
 QMAKE_TARGET  = client
 DESTDIR       = 
 TARGET        = client
@@ -540,7 +543,7 @@ dist: distdir FORCE
 distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
-	$(COPY_FILE) --parents client.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents client.cpp ../vamp-capnp/piper.capnp.c++ $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -582,6 +585,9 @@ compiler_clean:
 
 ../o/client.o: client.cpp stub.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../o/client.o client.cpp
+
+../o/piper.capnp.o: ../vamp-capnp/piper.capnp.c++ ../vamp-capnp/piper.capnp.h
+	$(CC) -c $(CFLAGS) $(INCPATH) -o ../o/piper.capnp.o ../vamp-capnp/piper.capnp.c++
 
 ####### Install
 
