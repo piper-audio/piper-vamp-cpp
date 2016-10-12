@@ -869,7 +869,7 @@ public:
 
         json11::Json::object jo;
 
-        jo["handle"] = pmapper.pluginToHandle(cr.plugin);
+        jo["handle"] = double(pmapper.pluginToHandle(cr.plugin));
         jo["configuration"] = fromPluginConfiguration(cr.configuration);
         
         return json11::Json(jo);
@@ -899,7 +899,7 @@ public:
 
         json11::Json::object jo;
 
-        jo["handle"] = pmapper.pluginToHandle(cr.plugin);
+        jo["handle"] = double(pmapper.pluginToHandle(cr.plugin));
         
         json11::Json::array outs;
         for (auto &d: cr.outputs) {
@@ -937,7 +937,7 @@ public:
                        BufferSerialisation serialisation) {
 
         json11::Json::object jo;
-        jo["handle"] = pmapper.pluginToHandle(r.plugin);
+        jo["handle"] = double(pmapper.pluginToHandle(r.plugin));
 
         json11::Json::object io;
         io["timestamp"] = fromRealTime(r.timestamp);
@@ -1171,7 +1171,7 @@ public:
         markRPC(jo);
 
         json11::Json::object po;
-        po["handle"] = pmapper.pluginToHandle(resp.plugin);
+        po["handle"] = double(pmapper.pluginToHandle(resp.plugin));
         po["features"] = fromFeatureSet(resp.features,
                                         *pmapper.pluginToOutputIdMapper(resp.plugin),
                                         serialisation);
@@ -1190,7 +1190,7 @@ public:
         markRPC(jo);
 
         json11::Json::object fo;
-        fo["handle"] = pmapper.pluginToHandle(req.plugin);
+        fo["handle"] = double(pmapper.pluginToHandle(req.plugin));
 
         jo["method"] = "finish";
         jo["params"] = fo;
@@ -1208,7 +1208,7 @@ public:
         markRPC(jo);
 
         json11::Json::object po;
-        po["handle"] = pmapper.pluginToHandle(resp.plugin);
+        po["handle"] = double(pmapper.pluginToHandle(resp.plugin));
         po["features"] = fromFeatureSet(resp.features,
                                         *pmapper.pluginToOutputIdMapper(resp.plugin),
                                         serialisation);
