@@ -10,7 +10,7 @@ namespace piper { //!!! should be something else
 
 class PiperStubPlugin;
 
-class PiperClientBase
+class PiperClientStubRequirements
 {
 public:
     virtual
@@ -35,7 +35,7 @@ class PiperStubPlugin : public Vamp::Plugin
     };
     
 public:
-    PiperStubPlugin(PiperClientBase *client,
+    PiperStubPlugin(PiperClientStubRequirements *client,
                     float inputSampleRate,
                     Vamp::HostExt::PluginStaticData psd,
                     Vamp::HostExt::PluginConfiguration defaultConfig) :
@@ -49,7 +49,7 @@ public:
 
     virtual ~PiperStubPlugin() {
         if (m_state != Finished) {
-            std::cerr << "WARNING: PiperStubPlugin destroyed without finish() call, may be a server-side resource leak" << std::endl;
+	    (void)m_client->finish(this);
         }
     }
 
@@ -215,7 +215,7 @@ public:
     }
     
 private:
-    PiperClientBase *m_client;
+    PiperClientStubRequirements *m_client;
     State m_state;
     Vamp::HostExt::PluginStaticData m_psd;
     OutputList m_outputs;

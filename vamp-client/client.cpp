@@ -30,7 +30,7 @@ using std::endl;
 
 namespace piper { //!!! probably something different
 
-class PiperClient : public PiperClientBase
+class PiperClient : public PiperClientStubRequirements
 {
     // unsigned to avoid undefined behaviour on possible wrap
     typedef uint32_t ReqId;
@@ -60,6 +60,10 @@ public:
 
     //!!! obviously, factor out all repetitive guff
 
+    //!!! list and load are supposed to be called by application code,
+    //!!! but the rest are only supposed to be called by the plugin --
+    //!!! sort out the api here
+    
     Vamp::Plugin *
     load(std::string key, float inputSampleRate, int adapterFlags) {
 
@@ -88,7 +92,6 @@ public:
         QByteArray buffer = readResponseBuffer();
 	auto karr = toKJArray(buffer);
         capnp::FlatArrayMessageReader responseMessage(karr);
-	cerr << "made reader" << endl;
         RpcResponse::Reader reader = responseMessage.getRoot<RpcResponse>();
 
         //!!! handle (explicit) error case
@@ -229,7 +232,9 @@ public:
                                        m_mapper);
 
         m_mapper.removePlugin(m_mapper.pluginToHandle(plugin));
-        delete plugin;
+
+	// Don't delete the plugin. It's the plugin that is supposed
+	// to be calling us here
         
         return pr.features;
     }
@@ -249,7 +254,6 @@ private:
 	// see whether it matters first
         size_t wordSize = sizeof(capnp::word);
 	size_t words = qarr.size() / wordSize;
-	cerr << "converting " << words << " words (" << (words * wordSize) << " bytes)" << endl;
 	kj::Array<capnp::word> karr(kj::heapArray<capnp::word>(words));
 	memcpy(karr.begin(), qarr.data(), words * wordSize);
 	return karr;
@@ -278,9 +282,6 @@ private:
                 size_t haveWords = buffer.size() / wordSize;
                 size_t expectedWords =
                     capnp::expectedSizeInWordsFromPrefix(toKJArray(buffer));
-
-                cerr << "haveWords = " << haveWords << ", expectedWords = " << expectedWords << endl;
-                
                 if (haveWords >= expectedWords) {
                     if (haveWords > expectedWords) {
                         cerr << "WARNING: obtained more data than expected ("
@@ -335,9 +336,9 @@ int main(int, char **)
             cerr << f.values[0] << endl;
         }
     }
-    //!!! todo: make it possible to do both of the following --
+
     (void)plugin->getRemainingFeatures();
-//    delete plugin;
+    delete plugin;
     //!!! -- and also implement reset(), which will need to reconstruct internally
 }
 
