@@ -1,6 +1,7 @@
 
 #include "ProcessQtTransport.h"
 #include "CapnpRRClient.h"
+#include "AutoPlugin.h"
 
 #include <stdexcept>
 
@@ -58,5 +59,26 @@ int main(int, char **)
     (void)plugin->getRemainingFeatures();
 
     delete plugin;
+
+    // Let's try a crazy AutoPlugin
+
+    piper_vamp::client::AutoPlugin ap("vamp-example-plugins:zerocrossing", 16, 0);
+    if (!ap.isOK()) {
+	cerr << "AutoPlugin creation failed" << endl;
+    } else {
+	if (!ap.initialise(1, 4, 4)) {
+	    cerr << "initialisation failed" << endl;
+	} else {
+	    std::vector<float> buf = { 1.0, -1.0, 1.0, -1.0 };
+	    float *bd = buf.data();
+	    Vamp::Plugin::FeatureSet features = ap.process
+		(&bd, Vamp::RealTime::zeroTime);
+	    cerr << "results for output 0:" << endl;
+	    auto fl(features[0]);
+	    for (const auto &f: fl) {
+		cerr << f.values[0] << endl;
+	    }
+	}
+    }
 }
 

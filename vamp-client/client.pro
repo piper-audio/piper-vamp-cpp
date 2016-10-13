@@ -34,6 +34,7 @@ HEADERS += \
         Loader.h \
         PluginClient.h \
         PluginStub.h \
+        AutoPlugin.h \
         SynchronousTransport.h
         
 

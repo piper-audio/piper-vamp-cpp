@@ -216,6 +216,7 @@ DIST          = /usr/lib/qt/mkspecs/features/spec_pre.prf \
 		Loader.h \
 		PluginClient.h \
 		PluginStub.h \
+		AutoPlugin.h \
 		SynchronousTransport.h client.cpp \
 		../vamp-capnp/piper.capnp.c++
 QMAKE_TARGET  = client
@@ -566,7 +567,7 @@ dist: distdir FORCE
 distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
-	$(COPY_FILE) --parents ProcessQtTransport.h CapnpRRClient.h Loader.h PluginClient.h PluginStub.h SynchronousTransport.h $(DISTDIR)/
+	$(COPY_FILE) --parents ProcessQtTransport.h CapnpRRClient.h Loader.h PluginClient.h PluginStub.h AutoPlugin.h SynchronousTransport.h $(DISTDIR)/
 	$(COPY_FILE) --parents client.cpp ../vamp-capnp/piper.capnp.c++ $(DISTDIR)/
 
 
@@ -612,7 +613,8 @@ compiler_clean:
 		CapnpRRClient.h \
 		Loader.h \
 		PluginClient.h \
-		PluginStub.h
+		PluginStub.h \
+		AutoPlugin.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../o/client.o client.cpp
 
 ../o/piper.capnp.o: ../vamp-capnp/piper.capnp.c++ ../vamp-capnp/piper.capnp.h
