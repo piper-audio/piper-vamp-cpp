@@ -205,7 +205,7 @@ DIST          = /usr/lib/qt/mkspecs/features/spec_pre.prf \
 		/usr/lib/qt/mkspecs/features/testcase_targets.prf \
 		/usr/lib/qt/mkspecs/features/yacc.prf \
 		/usr/lib/qt/mkspecs/features/lex.prf \
-		client.pro PipedQProcessTransport.h \
+		client.pro PiperQProcessTransport.h \
 		PiperCapnpClient.h \
 		PiperClient.h \
 		PiperPluginStub.h \
@@ -547,7 +547,7 @@ dist: distdir FORCE
 distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
-	$(COPY_FILE) --parents PipedQProcessTransport.h PiperCapnpClient.h PiperClient.h PiperPluginStub.h SynchronousTransport.h $(DISTDIR)/
+	$(COPY_FILE) --parents PiperQProcessTransport.h PiperCapnpClient.h PiperClient.h PiperPluginStub.h SynchronousTransport.h $(DISTDIR)/
 	$(COPY_FILE) --parents client.cpp ../vamp-capnp/piper.capnp.c++ $(DISTDIR)/
 
 
@@ -588,7 +588,7 @@ compiler_clean:
 
 ####### Compile
 
-../o/client.o: client.cpp PipedQProcessTransport.h \
+../o/client.o: client.cpp PiperQProcessTransport.h \
 		SynchronousTransport.h \
 		PiperCapnpClient.h \
 		PiperClient.h \

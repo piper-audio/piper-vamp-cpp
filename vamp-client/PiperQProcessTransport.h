@@ -1,6 +1,6 @@
 
-#ifndef PIPER_PIPED_QPROCESS_TRANSPORT_H
-#define PIPER_PIPED_QPROCESS_TRANSPORT_H
+#ifndef PIPER_QPROCESS_TRANSPORT_H
+#define PIPER_QPROCESS_TRANSPORT_H
 
 #include "SynchronousTransport.h"
 
@@ -11,10 +11,10 @@
 
 namespace piper { //!!! change
 
-class PipedQProcessTransport : public SynchronousTransport
+class PiperQProcessTransport : public SynchronousTransport
 {
 public:
-    PipedQProcessTransport(QString processName) :
+    PiperQProcessTransport(QString processName) :
         m_completenessChecker(0) {
         m_process = new QProcess();
         m_process->setReadChannel(QProcess::StandardOutput);
@@ -27,7 +27,7 @@ public:
         }
     }
 
-    ~PipedQProcessTransport() {
+    ~PiperQProcessTransport() {
         if (m_process) {
             if (m_process->state() != QProcess::NotRunning) {
 		m_process->closeWriteChannel();

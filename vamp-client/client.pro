@@ -29,7 +29,7 @@ SOURCES += \
         ../vamp-capnp/piper.capnp.c++
         
 HEADERS += \
-        PipedQProcessTransport.h \
+        PiperQProcessTransport.h \
         PiperCapnpClient.h \
         PiperClient.h \
         PiperPluginStub.h \
