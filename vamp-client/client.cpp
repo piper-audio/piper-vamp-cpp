@@ -9,20 +9,20 @@ using std::endl;
 
 int main(int, char **)
 {
-    piper::vampclient::ProcessQtTransport transport("../bin/piper-vamp-server");
-    piper::vampclient::CapnpRRClient client(&transport);
+    piper_vamp::client::ProcessQtTransport transport("../bin/piper-vamp-server");
+    piper_vamp::client::CapnpRRClient client(&transport);
 
-    Vamp::HostExt::ListResponse lr = client.listPluginData();
+    piper_vamp::ListResponse lr = client.listPluginData();
     cerr << "Plugins available:" << endl;
     int i = 1;
     for (const auto &p: lr.available) {
         cerr << i++ << ". [" << p.pluginKey << "] " << p.basic.name << endl;
     }
     
-    Vamp::HostExt::LoadRequest req;
+    piper_vamp::LoadRequest req;
     req.pluginKey = "vamp-example-plugins:zerocrossing";
     req.inputSampleRate = 16;
-    Vamp::HostExt::LoadResponse resp = client.loadPlugin(req);
+    piper_vamp::LoadResponse resp = client.loadPlugin(req);
     Vamp::Plugin *plugin = resp.plugin;
     
     if (!plugin->initialise(1, 4, 4)) {

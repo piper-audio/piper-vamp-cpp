@@ -2,6 +2,7 @@
 #include "vamp-capnp/VampnProto.h"
 #include "vamp-support/RequestOrResponse.h"
 #include "vamp-support/CountingPluginHandleMapper.h"
+#include "vamp-support/LoaderRequests.h"
 
 #include <iostream>
 #include <sstream>
@@ -13,9 +14,8 @@
 #include <set>
 
 using namespace std;
-using namespace piper;
+using namespace piper_vamp;
 using namespace Vamp;
-using namespace Vamp::HostExt;
 
 void usage()
 {
@@ -31,24 +31,24 @@ void usage()
 
 static CountingPluginHandleMapper mapper;
 
-static RequestOrResponse::RpcId readId(const RpcRequest::Reader &r)
+static RequestOrResponse::RpcId readId(const piper::RpcRequest::Reader &r)
 {
     int number;
     string tag;
     switch (r.getId().which()) {
-    case RpcRequest::Id::Which::NUMBER:
+    case piper::RpcRequest::Id::Which::NUMBER:
         number = r.getId().getNumber();
         return { RequestOrResponse::RpcId::Number, number, "" };
-    case RpcRequest::Id::Which::TAG:
+    case piper::RpcRequest::Id::Which::TAG:
         tag = r.getId().getTag();
         return { RequestOrResponse::RpcId::Tag, 0, tag };
-    case RpcRequest::Id::Which::NONE:
+    case piper::RpcRequest::Id::Which::NONE:
         return { RequestOrResponse::RpcId::Absent, 0, "" };
     }
     return {};
 }
 
-static void buildId(RpcResponse::Builder &b, const RequestOrResponse::RpcId &id)
+static void buildId(piper::RpcResponse::Builder &b, const RequestOrResponse::RpcId &id)
 {
     switch (id.type) {
     case RequestOrResponse::RpcId::Number:
@@ -77,8 +77,8 @@ readRequestCapnp()
 	return rr;
     }
 
-    ::capnp::InputStreamMessageReader message(buffered);
-    RpcRequest::Reader reader = message.getRoot<RpcRequest>();
+    capnp::InputStreamMessageReader message(buffered);
+    piper::RpcRequest::Reader reader = message.getRoot<piper::RpcRequest>();
     
     rr.type = VampnProto::getRequestResponseType(reader);
     rr.id = readId(reader);
@@ -111,8 +111,8 @@ readRequestCapnp()
 void
 writeResponseCapnp(RequestOrResponse &rr)
 {
-    ::capnp::MallocMessageBuilder message;
-    RpcResponse::Builder builder = message.initRoot<RpcResponse>();
+    capnp::MallocMessageBuilder message;
+    piper::RpcResponse::Builder builder = message.initRoot<piper::RpcResponse>();
 
     buildId(builder, rr.id);
     
@@ -150,8 +150,8 @@ writeResponseCapnp(RequestOrResponse &rr)
 void
 writeExceptionCapnp(const std::exception &e, RRType type)
 {
-    ::capnp::MallocMessageBuilder message;
-    RpcResponse::Builder builder = message.initRoot<RpcResponse>();
+    capnp::MallocMessageBuilder message;
+    piper::RpcResponse::Builder builder = message.initRoot<piper::RpcResponse>();
     VampnProto::buildRpcResponse_Exception(builder, e, type);
     
     writeMessageToFd(1, message);
@@ -164,17 +164,15 @@ handleRequest(const RequestOrResponse &request)
     response.direction = RequestOrResponse::Response;
     response.type = request.type;
 
-    auto loader = PluginLoader::getInstance();
-
     switch (request.type) {
 
     case RRType::List:
-	response.listResponse = loader->listPluginData();
+	response.listResponse = LoaderRequests().listPluginData();
 	response.success = true;
 	break;
 
     case RRType::Load:
-	response.loadResponse = loader->loadPlugin(request.loadRequest);
+	response.loadResponse = LoaderRequests().loadPlugin(request.loadRequest);
 	if (response.loadResponse.plugin != nullptr) {
 	    mapper.addPlugin(response.loadResponse.plugin);
             cerr << "loaded plugin, handle = " << mapper.pluginToHandle(response.loadResponse.plugin) << endl;
@@ -190,7 +188,7 @@ handleRequest(const RequestOrResponse &request)
 	    throw runtime_error("plugin has already been configured");
 	}
 
-	response.configurationResponse = loader->configurePlugin(creq);
+	response.configurationResponse = LoaderRequests().configurePlugin(creq);
 	
 	if (!response.configurationResponse.outputs.empty()) {
 	    mapper.markConfigured

@@ -35,7 +35,7 @@
 #ifndef PIPER_REQUEST_RESPONSE_TYPE_H
 #define PIPER_REQUEST_RESPONSE_TYPE_H
 
-namespace piper {
+namespace piper_vamp {
 
 enum class RRType {
     List, Load, Configure, Process, Finish, NotValid

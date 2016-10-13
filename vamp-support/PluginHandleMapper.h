@@ -40,7 +40,7 @@
 #include <vamp-hostsdk/Plugin.h>
 #include <memory>
 
-namespace piper {
+namespace piper_vamp {
 
 /**
  * Convert plugin pointers to handles within some scope defined by the

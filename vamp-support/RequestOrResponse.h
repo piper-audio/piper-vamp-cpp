@@ -36,14 +36,13 @@
 #define PIPER_REQUEST_OR_RESPONSE_H
 
 #include "RequestResponseType.h"
-
-#include <vamp-hostsdk/PluginStaticData.h>
-#include <vamp-hostsdk/RequestResponse.h>
+#include "PluginStaticData.h"
+#include "RequestResponse.h"
 
 #include <string>
 #include <vector>
 
-namespace piper {
+namespace piper_vamp {
 
 class RequestOrResponse
 {
@@ -71,15 +70,15 @@ public:
     std::string errorText;
     RpcId id;
 
-    Vamp::HostExt::ListResponse listResponse;
-    Vamp::HostExt::LoadRequest loadRequest;
-    Vamp::HostExt::LoadResponse loadResponse;
-    Vamp::HostExt::ConfigurationRequest configurationRequest;
-    Vamp::HostExt::ConfigurationResponse configurationResponse;
-    Vamp::HostExt::ProcessRequest processRequest;
-    Vamp::HostExt::ProcessResponse processResponse;
-    Vamp::HostExt::FinishRequest finishRequest;
-    Vamp::HostExt::ProcessResponse finishResponse;
+    ListResponse listResponse;
+    LoadRequest loadRequest;
+    LoadResponse loadResponse;
+    ConfigurationRequest configurationRequest;
+    ConfigurationResponse configurationResponse;
+    ProcessRequest processRequest;
+    ProcessResponse processResponse;
+    FinishRequest finishRequest;
+    FinishResponse finishResponse;
 };
 
 }

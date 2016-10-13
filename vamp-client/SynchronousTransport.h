@@ -5,8 +5,8 @@
 #include <vector>
 #include <cstdlib>
 
-namespace piper {
-namespace vampclient {
+namespace piper_vamp {
+namespace client {
 
 class MessageCompletenessChecker // interface
 {

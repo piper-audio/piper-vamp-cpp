@@ -9,8 +9,8 @@
 
 #include <iostream>
 
-namespace piper {
-namespace vampclient {
+namespace piper_vamp {
+namespace client {
 
 class ProcessQtTransport : public SynchronousTransport
 {

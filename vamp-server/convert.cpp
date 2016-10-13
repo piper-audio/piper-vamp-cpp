@@ -12,7 +12,7 @@
 
 using namespace std;
 using namespace json11;
-using namespace piper;
+using namespace piper_vamp;
 
 void usage()
 {
@@ -117,13 +117,13 @@ readCapnpId(const Reader &r)
     int number;
     string tag;
     switch (r.getId().which()) {
-    case RpcRequest::Id::Which::NUMBER:
+    case piper::RpcRequest::Id::Which::NUMBER:
         number = r.getId().getNumber();
         return { RequestOrResponse::RpcId::Number, number, "" };
-    case RpcRequest::Id::Which::TAG:
+    case piper::RpcRequest::Id::Which::TAG:
         tag = r.getId().getTag();
         return { RequestOrResponse::RpcId::Tag, 0, tag };
-    case RpcRequest::Id::Which::NONE:
+    case piper::RpcRequest::Id::Which::NONE:
         return { RequestOrResponse::RpcId::Absent, 0, "" };
     }
     return {};
@@ -334,8 +334,8 @@ readRequestCapnp(kj::BufferedInputStreamWrapper &buffered)
     RequestOrResponse rr;
     rr.direction = RequestOrResponse::Request;
 
-    ::capnp::InputStreamMessageReader message(buffered);
-    RpcRequest::Reader reader = message.getRoot<RpcRequest>();
+    capnp::InputStreamMessageReader message(buffered);
+    piper::RpcRequest::Reader reader = message.getRoot<piper::RpcRequest>();
     
     rr.type = VampnProto::getRequestResponseType(reader);
     rr.id = readCapnpId(reader);
@@ -368,8 +368,8 @@ readRequestCapnp(kj::BufferedInputStreamWrapper &buffered)
 void
 writeRequestCapnp(RequestOrResponse &rr)
 {
-    ::capnp::MallocMessageBuilder message;
-    RpcRequest::Builder builder = message.initRoot<RpcRequest>();
+    capnp::MallocMessageBuilder message;
+    piper::RpcRequest::Builder builder = message.initRoot<piper::RpcRequest>();
 
     buildCapnpId(builder, rr.id);
     
@@ -404,8 +404,8 @@ readResponseCapnp(kj::BufferedInputStreamWrapper &buffered)
     RequestOrResponse rr;
     rr.direction = RequestOrResponse::Response;
 
-    ::capnp::InputStreamMessageReader message(buffered);
-    RpcResponse::Reader reader = message.getRoot<RpcResponse>();
+    capnp::InputStreamMessageReader message(buffered);
+    piper::RpcResponse::Reader reader = message.getRoot<piper::RpcResponse>();
     
     rr.type = VampnProto::getRequestResponseType(reader);
     rr.success = true;
@@ -444,8 +444,8 @@ readResponseCapnp(kj::BufferedInputStreamWrapper &buffered)
 void
 writeResponseCapnp(RequestOrResponse &rr)
 {
-    ::capnp::MallocMessageBuilder message;
-    RpcResponse::Builder builder = message.initRoot<RpcResponse>();
+    capnp::MallocMessageBuilder message;
+    piper::RpcResponse::Builder builder = message.initRoot<piper::RpcResponse>();
 
     buildCapnpId(builder, rr.id);
 

@@ -42,7 +42,7 @@
 #include <set>
 #include <map>
 
-namespace piper {
+namespace piper_vamp {
 
 class CountingPluginHandleMapper : public PluginHandleMapper
 {

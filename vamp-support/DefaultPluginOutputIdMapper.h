@@ -37,7 +37,7 @@
 
 #include <vamp-hostsdk/Plugin.h>
 
-namespace piper {
+namespace piper_vamp {
 
 class DefaultPluginOutputIdMapper : public PluginOutputIdMapper
 {

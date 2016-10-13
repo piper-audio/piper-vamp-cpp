@@ -2,10 +2,10 @@
 #ifndef PIPER_PLUGIN_CLIENT_H
 #define PIPER_PLUGIN_CLIENT_H
 
-#include <vamp-hostsdk/PluginConfiguration.h>
+#include "vamp-support/PluginConfiguration.h"
 
-namespace piper {
-namespace vampclient {
+namespace piper_vamp {
+namespace client {
 
 class PluginStub;
 
@@ -15,7 +15,7 @@ public:
     virtual
     Vamp::Plugin::OutputList
     configure(PluginStub *plugin,
-              Vamp::HostExt::PluginConfiguration config) = 0;
+              PluginConfiguration config) = 0;
     
     virtual
     Vamp::Plugin::FeatureSet
@@ -29,8 +29,7 @@ public:
 
     virtual
     void
-    reset(PluginStub *plugin,
-          Vamp::HostExt::PluginConfiguration config) = 0;
+    reset(PluginStub *plugin, PluginConfiguration config) = 0;
 };
 
 }

@@ -3,6 +3,8 @@
 /*
     Piper C++
 
+    An API for audio analysis and feature extraction plugins.
+
     Centre for Digital Music, Queen Mary, University of London.
     Copyright 2006-2016 Chris Cannam and QMUL.
   
@@ -32,8 +34,8 @@
     authorization.
 */
 
-#ifndef PIPER_PLUGIN_ID_MAPPER_H
-#define PIPER_PLUGIN_ID_MAPPER_H
+#ifndef PIPER_PLUGIN_CONFIGURATION_H
+#define PIPER_PLUGIN_CONFIGURATION_H
 
 #include <vamp-hostsdk/Plugin.h>
 
@@ -42,23 +44,55 @@
 
 namespace piper_vamp {
 
-class PluginOutputIdMapper
+/**
+ * \class PluginConfiguration
+ * 
+ * PluginConfiguration is a structure bundling together data that
+ * affect the configuration of a plugin: parameter values, programs,
+ * and initialisation settings. Although an interactive Vamp plugin
+ * host may configure a plugin in stages, for example to take into
+ * account that a plugin's preferred step and block size may change
+ * when its parameters are changed, a batch host or a host supporting
+ * store and recall of configurations may wish to keep all
+ * configuration settings together.
+ */
+struct PluginConfiguration
 {
-public:
-    virtual ~PluginOutputIdMapper() { }
+    PluginConfiguration() : // invalid configuration by default
+	channelCount(0), stepSize(0), blockSize(0) { }
+	
+    int channelCount;
+    int stepSize;
+    int blockSize;
+    typedef std::map<std::string, float> ParameterMap;
+    ParameterMap parameterValues;
+    std::string currentProgram;
 
-    /**
-     * Return the index of the given output id in the plugin. The
-     * first output has index 0. If the given output id is unknown,
-     * return -1.
-     */
-    virtual int idToIndex(std::string outputId) const noexcept = 0;
+    static PluginConfiguration
+    fromPlugin(Vamp::Plugin *p,
+	       int channelCount,
+	       int stepSize,
+	       int blockSize) {
+	
+	PluginConfiguration c;
+	
+	c.channelCount = channelCount;
+	c.stepSize = stepSize;
+	c.blockSize = blockSize;
 
-    /**
-     * Return the id of the output with the given index in the
-     * plugin. If the index is out of range, return the empty string.
-     */
-    virtual std::string indexToId(int index) const noexcept = 0;
+	Vamp::PluginBase::ParameterList params = p->getParameterDescriptors();
+	for (Vamp::PluginBase::ParameterList::const_iterator i = params.begin();
+	     i != params.end(); ++i) {
+	    std::string pid = i->identifier;
+	    c.parameterValues[pid] = p->getParameter(pid);
+	}
+	
+	if (!p->getPrograms().empty()) {
+	    c.currentProgram = p->getCurrentProgram();
+	}
+
+	return c;
+    }
 };
 
 }

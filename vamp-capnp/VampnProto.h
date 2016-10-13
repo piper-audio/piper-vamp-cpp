@@ -39,15 +39,16 @@
 
 #include <vamp-hostsdk/Plugin.h>
 #include <vamp-hostsdk/PluginLoader.h>
-#include <vamp-hostsdk/PluginStaticData.h>
-#include <vamp-hostsdk/PluginConfiguration.h>
-#include <vamp-hostsdk/RequestResponse.h>
+
+#include "vamp-support/PluginStaticData.h"
+#include "vamp-support/PluginConfiguration.h"
+#include "vamp-support/RequestResponse.h"
 
 #include "vamp-support/PluginHandleMapper.h"
 #include "vamp-support/PluginOutputIdMapper.h"
 #include "vamp-support/RequestResponseType.h"
 
-namespace piper
+namespace piper_vamp
 {
 
 /**
@@ -92,44 +93,46 @@ public:
         t.maxValue = m.getMaxValue();
     }
 
-    static void buildRealTime(RealTime::Builder &b, const Vamp::RealTime &t) {
+    static void buildRealTime(piper::RealTime::Builder &b,
+                              const Vamp::RealTime &t) {
         b.setSec(t.sec);
         b.setNsec(t.nsec);
     }
 
-    static void readRealTime(Vamp::RealTime &t, const RealTime::Reader &r) {
+    static void readRealTime(Vamp::RealTime &t,
+                             const piper::RealTime::Reader &r) {
         t.sec = r.getSec();
         t.nsec = r.getNsec();
     }
 
-    static SampleType
+    static piper::SampleType
     fromSampleType(Vamp::Plugin::OutputDescriptor::SampleType t) {
         switch (t) {
         case Vamp::Plugin::OutputDescriptor::OneSamplePerStep:
-            return SampleType::ONE_SAMPLE_PER_STEP;
+            return piper::SampleType::ONE_SAMPLE_PER_STEP;
         case Vamp::Plugin::OutputDescriptor::FixedSampleRate:
-            return SampleType::FIXED_SAMPLE_RATE;
+            return piper::SampleType::FIXED_SAMPLE_RATE;
         case Vamp::Plugin::OutputDescriptor::VariableSampleRate:
-            return SampleType::VARIABLE_SAMPLE_RATE;
+            return piper::SampleType::VARIABLE_SAMPLE_RATE;
         }
         throw std::logic_error("unexpected Vamp SampleType enum value");
     }
 
     static Vamp::Plugin::OutputDescriptor::SampleType
-    toSampleType(SampleType t) {
+    toSampleType(piper::SampleType t) {
         switch (t) {
-        case SampleType::ONE_SAMPLE_PER_STEP:
+        case piper::SampleType::ONE_SAMPLE_PER_STEP:
             return Vamp::Plugin::OutputDescriptor::OneSamplePerStep;
-        case SampleType::FIXED_SAMPLE_RATE:
+        case piper::SampleType::FIXED_SAMPLE_RATE:
             return Vamp::Plugin::OutputDescriptor::FixedSampleRate;
-        case SampleType::VARIABLE_SAMPLE_RATE:
+        case piper::SampleType::VARIABLE_SAMPLE_RATE:
             return Vamp::Plugin::OutputDescriptor::VariableSampleRate;
         }
         throw std::logic_error("unexpected Capnp SampleType enum value");
     }
 
     static void
-    buildConfiguredOutputDescriptor(ConfiguredOutputDescriptor::Builder &b,
+    buildConfiguredOutputDescriptor(piper::ConfiguredOutputDescriptor::Builder &b,
                                     const Vamp::Plugin::OutputDescriptor &od) {
 
         b.setUnit(od.unit);
@@ -161,7 +164,7 @@ public:
     }
 
     static void
-    buildOutputDescriptor(OutputDescriptor::Builder &b,
+    buildOutputDescriptor(piper::OutputDescriptor::Builder &b,
                           const Vamp::Plugin::OutputDescriptor &od) {
 
         auto basic = b.initBasic();
@@ -173,7 +176,7 @@ public:
     
     static void
     readConfiguredOutputDescriptor(Vamp::Plugin::OutputDescriptor &od,
-                                   const ConfiguredOutputDescriptor::Reader &r) {
+                                   const piper::ConfiguredOutputDescriptor::Reader &r) {
 
         od.unit = r.getUnit();
 
@@ -204,14 +207,14 @@ public:
 
     static void
     readOutputDescriptor(Vamp::Plugin::OutputDescriptor &od,
-                         const OutputDescriptor::Reader &r) {
+                         const piper::OutputDescriptor::Reader &r) {
 
         readBasicDescriptor(od, r.getBasic());
         readConfiguredOutputDescriptor(od, r.getConfigured());
     }
 
     static void
-    buildParameterDescriptor(ParameterDescriptor::Builder &b,
+    buildParameterDescriptor(piper::ParameterDescriptor::Builder &b,
                              const Vamp::Plugin::ParameterDescriptor &pd) {
 
         auto basic = b.initBasic();
@@ -238,7 +241,7 @@ public:
 
     static void
     readParameterDescriptor(Vamp::Plugin::ParameterDescriptor &pd,
-                            const ParameterDescriptor::Reader &r) {
+                            const piper::ParameterDescriptor::Reader &r) {
 
         readBasicDescriptor(pd, r.getBasic());
 
@@ -261,7 +264,7 @@ public:
     }
     
     static void
-    buildFeature(Feature::Builder &b,
+    buildFeature(piper::Feature::Builder &b,
                  const Vamp::Plugin::Feature &f) {
 
         b.setHasTimestamp(f.hasTimestamp);
@@ -288,7 +291,7 @@ public:
 
     static void
     readFeature(Vamp::Plugin::Feature &f,
-                const Feature::Reader &r) {
+                const piper::Feature::Reader &r) {
 
         f.hasTimestamp = r.getHasTimestamp();
         if (f.hasTimestamp) {
@@ -310,7 +313,7 @@ public:
     }
     
     static void
-    buildFeatureSet(FeatureSet::Builder &b,
+    buildFeatureSet(piper::FeatureSet::Builder &b,
                     const Vamp::Plugin::FeatureSet &fs,
                     const PluginOutputIdMapper &omapper) {
 
@@ -330,7 +333,7 @@ public:
 
     static void
     readFeatureSet(Vamp::Plugin::FeatureSet &fs,
-                   const FeatureSet::Reader &r,
+                   const piper::FeatureSet::Reader &r,
                    const PluginOutputIdMapper &omapper) {
 
         fs.clear();
@@ -347,24 +350,24 @@ public:
         }
     }
     
-    static InputDomain
+    static piper::InputDomain
     fromInputDomain(Vamp::Plugin::InputDomain d) {
         switch(d) {
         case Vamp::Plugin::TimeDomain:
-            return InputDomain::TIME_DOMAIN;
+            return piper::InputDomain::TIME_DOMAIN;
         case Vamp::Plugin::FrequencyDomain:
-            return InputDomain::FREQUENCY_DOMAIN;
+            return piper::InputDomain::FREQUENCY_DOMAIN;
         default:
             throw std::logic_error("unexpected Vamp InputDomain enum value");
         }
     }
 
     static Vamp::Plugin::InputDomain
-    toInputDomain(InputDomain d) {
+    toInputDomain(piper::InputDomain d) {
         switch(d) {
-        case InputDomain::TIME_DOMAIN:
+        case piper::InputDomain::TIME_DOMAIN:
             return Vamp::Plugin::TimeDomain;
-        case InputDomain::FREQUENCY_DOMAIN:
+        case piper::InputDomain::FREQUENCY_DOMAIN:
             return Vamp::Plugin::FrequencyDomain;
         default:
             throw std::logic_error("unexpected Capnp InputDomain enum value");
@@ -372,8 +375,8 @@ public:
     }
     
     static void
-    buildExtractorStaticData(ExtractorStaticData::Builder &b,
-                             const Vamp::HostExt::PluginStaticData &d) {
+    buildExtractorStaticData(piper::ExtractorStaticData::Builder &b,
+                             const PluginStaticData &d) {
 
         b.setKey(d.pluginKey);
 
@@ -416,8 +419,8 @@ public:
     }
 
     static void
-    readExtractorStaticData(Vamp::HostExt::PluginStaticData &d,
-                            const ExtractorStaticData::Reader &r) {
+    readExtractorStaticData(PluginStaticData &d,
+                            const piper::ExtractorStaticData::Reader &r) {
         
         d.pluginKey = r.getKey();
 
@@ -455,15 +458,15 @@ public:
         d.basicOutputInfo.clear();
         auto oo = r.getBasicOutputInfo();
         for (auto o: oo) {
-            Vamp::HostExt::PluginStaticData::Basic b;
+            PluginStaticData::Basic b;
             readBasicDescriptor(b, o);
             d.basicOutputInfo.push_back(b);
         }
     }
 
     static void
-    buildConfiguration(Configuration::Builder &b,
-                       const Vamp::HostExt::PluginConfiguration &c) {
+    buildConfiguration(piper::Configuration::Builder &b,
+                       const PluginConfiguration &c) {
 
         const auto &vparams = c.parameterValues;
         auto params = b.initParameterValues(vparams.size());
@@ -481,8 +484,8 @@ public:
     }
 
     static void
-    readConfiguration(Vamp::HostExt::PluginConfiguration &c,
-                      const Configuration::Reader &r) {
+    readConfiguration(PluginConfiguration &c,
+                      const piper::Configuration::Reader &r) {
 
         auto pp = r.getParameterValues();
         for (const auto &p: pp) {
@@ -496,34 +499,34 @@ public:
     }
 
     static void
-    readListResponse(Vamp::HostExt::ListResponse &lr,
-                     const ListResponse::Reader &r) {
+    readListResponse(ListResponse &lr,
+                     const piper::ListResponse::Reader &r) {
 
         lr.available.clear();
         auto pp = r.getAvailable();
         for (const auto &p: pp) {
-            Vamp::HostExt::PluginStaticData psd;
+            PluginStaticData psd;
             readExtractorStaticData(psd, p);
             lr.available.push_back(psd);
         }
     }
 
     static void
-    buildLoadRequest(LoadRequest::Builder &r,
-                     const Vamp::HostExt::LoadRequest &req) {
+    buildLoadRequest(piper::LoadRequest::Builder &r,
+                     const LoadRequest &req) {
 
         r.setKey(req.pluginKey);
         r.setInputSampleRate(req.inputSampleRate);
 
-        std::vector<AdapterFlag> flags;
+        std::vector<piper::AdapterFlag> flags;
         if (req.adapterFlags & Vamp::HostExt::PluginLoader::ADAPT_INPUT_DOMAIN) {
-            flags.push_back(AdapterFlag::ADAPT_INPUT_DOMAIN);
+            flags.push_back(piper::AdapterFlag::ADAPT_INPUT_DOMAIN);
         }
         if (req.adapterFlags & Vamp::HostExt::PluginLoader::ADAPT_CHANNEL_COUNT) {
-            flags.push_back(AdapterFlag::ADAPT_CHANNEL_COUNT);
+            flags.push_back(piper::AdapterFlag::ADAPT_CHANNEL_COUNT);
         }
         if (req.adapterFlags & Vamp::HostExt::PluginLoader::ADAPT_BUFFER_SIZE) {
-            flags.push_back(AdapterFlag::ADAPT_BUFFER_SIZE);
+            flags.push_back(piper::AdapterFlag::ADAPT_BUFFER_SIZE);
         }
 
         auto f = r.initAdapterFlags(flags.size());
@@ -533,8 +536,8 @@ public:
     }
 
     static void
-    readLoadRequest(Vamp::HostExt::LoadRequest &req,
-                    const LoadRequest::Reader &r) {
+    readLoadRequest(LoadRequest &req,
+                    const piper::LoadRequest::Reader &r) {
 
         req.pluginKey = r.getKey();
         req.inputSampleRate = r.getInputSampleRate();
@@ -542,13 +545,13 @@ public:
         int flags = 0;
         auto aa = r.getAdapterFlags();
         for (auto a: aa) {
-            if (a == AdapterFlag::ADAPT_INPUT_DOMAIN) {
+            if (a == piper::AdapterFlag::ADAPT_INPUT_DOMAIN) {
                 flags |= Vamp::HostExt::PluginLoader::ADAPT_INPUT_DOMAIN;
             }
-            if (a == AdapterFlag::ADAPT_CHANNEL_COUNT) {
+            if (a == piper::AdapterFlag::ADAPT_CHANNEL_COUNT) {
                 flags |= Vamp::HostExt::PluginLoader::ADAPT_CHANNEL_COUNT;
             }
-            if (a == AdapterFlag::ADAPT_BUFFER_SIZE) {
+            if (a == piper::AdapterFlag::ADAPT_BUFFER_SIZE) {
                 flags |= Vamp::HostExt::PluginLoader::ADAPT_BUFFER_SIZE;
             }
         }
@@ -556,8 +559,8 @@ public:
     }
 
     static void
-    buildLoadResponse(LoadResponse::Builder &b,
-                      const Vamp::HostExt::LoadResponse &resp,
+    buildLoadResponse(piper::LoadResponse::Builder &b,
+                      const LoadResponse &resp,
                       const PluginHandleMapper &pmapper) {
 
         b.setHandle(pmapper.pluginToHandle(resp.plugin));
@@ -568,8 +571,8 @@ public:
     }
 
     static void
-    readLoadResponse(Vamp::HostExt::LoadResponse &resp,
-                     const LoadResponse::Reader &r,
+    readLoadResponse(LoadResponse &resp,
+                     const piper::LoadResponse::Reader &r,
                      const PluginHandleMapper &pmapper) {
 
         resp.plugin = pmapper.handleToPlugin(r.getHandle());
@@ -579,8 +582,8 @@ public:
     }
 
     static void
-    buildConfigurationRequest(ConfigurationRequest::Builder &b,
-                              const Vamp::HostExt::ConfigurationRequest &cr,
+    buildConfigurationRequest(piper::ConfigurationRequest::Builder &b,
+                              const ConfigurationRequest &cr,
                               const PluginHandleMapper &pmapper) {
 
         b.setHandle(pmapper.pluginToHandle(cr.plugin));
@@ -589,8 +592,8 @@ public:
     }
 
     static void
-    readConfigurationRequest(Vamp::HostExt::ConfigurationRequest &cr,
-                             const ConfigurationRequest::Reader &r,
+    readConfigurationRequest(ConfigurationRequest &cr,
+                             const piper::ConfigurationRequest::Reader &r,
                              const PluginHandleMapper &pmapper) {
 
         auto h = r.getHandle();
@@ -600,8 +603,8 @@ public:
     }
 
     static void
-    buildConfigurationResponse(ConfigurationResponse::Builder &b,
-                               const Vamp::HostExt::ConfigurationResponse &cr,
+    buildConfigurationResponse(piper::ConfigurationResponse::Builder &b,
+                               const ConfigurationResponse &cr,
                                const PluginHandleMapper &pmapper) {
 
         b.setHandle(pmapper.pluginToHandle(cr.plugin));
@@ -613,8 +616,8 @@ public:
     }
 
     static void
-    readConfigurationResponse(Vamp::HostExt::ConfigurationResponse &cr,
-                              const ConfigurationResponse::Reader &r,
+    readConfigurationResponse(ConfigurationResponse &cr,
+                              const piper::ConfigurationResponse::Reader &r,
                               const PluginHandleMapper &pmapper) {
 
         cr.plugin = pmapper.handleToPlugin(r.getHandle());
@@ -628,7 +631,7 @@ public:
     }
 
     static void
-    buildProcessInput(ProcessInput::Builder &b,
+    buildProcessInput(piper::ProcessInput::Builder &b,
                       Vamp::RealTime timestamp,
                       const std::vector<std::vector<float> > &buffers) {
 
@@ -648,7 +651,7 @@ public:
     static void
     readProcessInput(Vamp::RealTime &timestamp,
                      std::vector<std::vector<float> > &buffers,
-                     const ProcessInput::Reader &b) {
+                     const piper::ProcessInput::Reader &b) {
 
         readRealTime(timestamp, b.getTimestamp());
         buffers.clear();
@@ -663,8 +666,8 @@ public:
     }
     
     static void
-    buildProcessRequest(ProcessRequest::Builder &b,
-                        const Vamp::HostExt::ProcessRequest &pr,
+    buildProcessRequest(piper::ProcessRequest::Builder &b,
+                        const ProcessRequest &pr,
                         const PluginHandleMapper &pmapper) {
 
         b.setHandle(pmapper.pluginToHandle(pr.plugin));
@@ -673,8 +676,8 @@ public:
     }
 
     static void
-    readProcessRequest(Vamp::HostExt::ProcessRequest &pr,
-                       const ProcessRequest::Reader &r,
+    readProcessRequest(ProcessRequest &pr,
+                       const piper::ProcessRequest::Reader &r,
                        const PluginHandleMapper &pmapper) {
 
         auto h = r.getHandle();
@@ -683,8 +686,8 @@ public:
     }
 
     static void
-    buildProcessResponse(ProcessResponse::Builder &b,
-                         const Vamp::HostExt::ProcessResponse &pr,
+    buildProcessResponse(piper::ProcessResponse::Builder &b,
+                         const ProcessResponse &pr,
                          const PluginHandleMapper &pmapper) {
 
         b.setHandle(pmapper.pluginToHandle(pr.plugin));
@@ -694,8 +697,8 @@ public:
     }
     
     static void
-    readProcessResponse(Vamp::HostExt::ProcessResponse &pr,
-                        const ProcessResponse::Reader &r,
+    readProcessResponse(ProcessResponse &pr,
+                        const piper::ProcessResponse::Reader &r,
                         const PluginHandleMapper &pmapper) {
 
         auto h = r.getHandle();
@@ -705,8 +708,8 @@ public:
     }
 
     static void
-    buildFinishResponse(FinishResponse::Builder &b,
-                        const Vamp::HostExt::ProcessResponse &pr,
+    buildFinishResponse(piper::FinishResponse::Builder &b,
+                        const FinishResponse &pr,
                         const PluginHandleMapper &pmapper) {
 
         b.setHandle(pmapper.pluginToHandle(pr.plugin));
@@ -716,8 +719,8 @@ public:
     }
     
     static void
-    readFinishResponse(Vamp::HostExt::ProcessResponse &pr,
-                       const FinishResponse::Reader &r,
+    readFinishResponse(FinishResponse &pr,
+                       const piper::FinishResponse::Reader &r,
                        const PluginHandleMapper &pmapper) {
 
         auto h = r.getHandle();
@@ -727,13 +730,13 @@ public:
     }
 
     static void
-    buildRpcRequest_List(RpcRequest::Builder &b) {
+    buildRpcRequest_List(piper::RpcRequest::Builder &b) {
         b.getRequest().initList();
     }
 
     static void
-    buildRpcResponse_List(RpcResponse::Builder &b,
-                          const Vamp::HostExt::ListResponse &resp) {
+    buildRpcResponse_List(piper::RpcResponse::Builder &b,
+                          const ListResponse &resp) {
 
         auto r = b.getResponse().initList();
         auto p = r.initAvailable(resp.available.size());
@@ -744,15 +747,15 @@ public:
     }
     
     static void
-    buildRpcRequest_Load(RpcRequest::Builder &b,
-                         const Vamp::HostExt::LoadRequest &req) {
+    buildRpcRequest_Load(piper::RpcRequest::Builder &b,
+                         const LoadRequest &req) {
         auto u = b.getRequest().initLoad();
         buildLoadRequest(u, req);
     }
 
     static void
-    buildRpcResponse_Load(RpcResponse::Builder &b,
-                          const Vamp::HostExt::LoadResponse &resp,
+    buildRpcResponse_Load(piper::RpcResponse::Builder &b,
+                          const LoadResponse &resp,
                           const PluginHandleMapper &pmapper) {
 
         if (resp.plugin) {
@@ -764,16 +767,16 @@ public:
     }
 
     static void
-    buildRpcRequest_Configure(RpcRequest::Builder &b,
-                              const Vamp::HostExt::ConfigurationRequest &cr,
+    buildRpcRequest_Configure(piper::RpcRequest::Builder &b,
+                              const ConfigurationRequest &cr,
                               const PluginHandleMapper &pmapper) {
         auto u = b.getRequest().initConfigure();
         buildConfigurationRequest(u, cr, pmapper);
     }
 
     static void
-    buildRpcResponse_Configure(RpcResponse::Builder &b,
-                               const Vamp::HostExt::ConfigurationResponse &cr,
+    buildRpcResponse_Configure(piper::RpcResponse::Builder &b,
+                               const ConfigurationResponse &cr,
                                const PluginHandleMapper &pmapper) {
 
         if (!cr.outputs.empty()) {
@@ -786,16 +789,16 @@ public:
     }
     
     static void
-    buildRpcRequest_Process(RpcRequest::Builder &b,
-                            const Vamp::HostExt::ProcessRequest &pr,
+    buildRpcRequest_Process(piper::RpcRequest::Builder &b,
+                            const ProcessRequest &pr,
                             const PluginHandleMapper &pmapper) {
         auto u = b.getRequest().initProcess();
         buildProcessRequest(u, pr, pmapper);
     }
     
     static void
-    buildRpcResponse_Process(RpcResponse::Builder &b,
-                             const Vamp::HostExt::ProcessResponse &pr,
+    buildRpcResponse_Process(piper::RpcResponse::Builder &b,
+                             const ProcessResponse &pr,
                              const PluginHandleMapper &pmapper) {
 
         auto u = b.getResponse().initProcess();
@@ -803,8 +806,8 @@ public:
     }
     
     static void
-    buildRpcRequest_Finish(RpcRequest::Builder &b,
-                           const Vamp::HostExt::FinishRequest &req,
+    buildRpcRequest_Finish(piper::RpcRequest::Builder &b,
+                           const FinishRequest &req,
                            const PluginHandleMapper &pmapper) {
 
         auto u = b.getRequest().initFinish();
@@ -812,8 +815,8 @@ public:
     }
     
     static void
-    buildRpcResponse_Finish(RpcResponse::Builder &b,
-                            const Vamp::HostExt::ProcessResponse &pr,
+    buildRpcResponse_Finish(piper::RpcResponse::Builder &b,
+                            const FinishResponse &pr,
                             const PluginHandleMapper &pmapper) {
 
         auto u = b.getResponse().initFinish();
@@ -821,7 +824,7 @@ public:
     }
 
     static void
-    buildRpcResponse_Error(RpcResponse::Builder &b,
+    buildRpcResponse_Error(piper::RpcResponse::Builder &b,
                            const std::string &errorText,
                            RRType responseType)
     {
@@ -848,7 +851,7 @@ public:
     }
 
     static void
-    buildRpcResponse_Exception(RpcResponse::Builder &b,
+    buildRpcResponse_Exception(piper::RpcResponse::Builder &b,
                                const std::exception &e,
                                RRType responseType)
     {
@@ -856,36 +859,36 @@ public:
     }
     
     static RRType
-    getRequestResponseType(const RpcRequest::Reader &r) {
+    getRequestResponseType(const piper::RpcRequest::Reader &r) {
         switch (r.getRequest().which()) {
-        case RpcRequest::Request::Which::LIST:
+        case piper::RpcRequest::Request::Which::LIST:
             return RRType::List;
-        case RpcRequest::Request::Which::LOAD:
+        case piper::RpcRequest::Request::Which::LOAD:
             return RRType::Load;
-        case RpcRequest::Request::Which::CONFIGURE:
+        case piper::RpcRequest::Request::Which::CONFIGURE:
             return RRType::Configure;
-        case RpcRequest::Request::Which::PROCESS:
+        case piper::RpcRequest::Request::Which::PROCESS:
             return RRType::Process;
-        case RpcRequest::Request::Which::FINISH:
+        case piper::RpcRequest::Request::Which::FINISH:
             return RRType::Finish;
         }
         return RRType::NotValid;
     }
 
     static RRType
-    getRequestResponseType(const RpcResponse::Reader &r) {
+    getRequestResponseType(const piper::RpcResponse::Reader &r) {
         switch (r.getResponse().which()) {
-        case RpcResponse::Response::Which::ERROR:
+        case piper::RpcResponse::Response::Which::ERROR:
             return RRType::NotValid; //!!! or error type? test this
-        case RpcResponse::Response::Which::LIST:
+        case piper::RpcResponse::Response::Which::LIST:
             return RRType::List;
-        case RpcResponse::Response::Which::LOAD:
+        case piper::RpcResponse::Response::Which::LOAD:
             return RRType::Load;
-        case RpcResponse::Response::Which::CONFIGURE:
+        case piper::RpcResponse::Response::Which::CONFIGURE:
             return RRType::Configure;
-        case RpcResponse::Response::Which::PROCESS:
+        case piper::RpcResponse::Response::Which::PROCESS:
             return RRType::Process;
-        case RpcResponse::Response::Which::FINISH:
+        case piper::RpcResponse::Response::Which::FINISH:
             return RRType::Finish;
         }
         return RRType::NotValid;
@@ -894,7 +897,7 @@ public:
     static void
     readRpcResponse_Error(int &code,
                           std::string &message,
-                          const RpcResponse::Reader &r) {
+                          const piper::RpcResponse::Reader &r) {
         if (getRequestResponseType(r) != RRType::NotValid) {
             throw std::logic_error("not an error response");
         }
@@ -903,15 +906,15 @@ public:
     }
         
     static void
-    readRpcRequest_List(const RpcRequest::Reader &r) {
+    readRpcRequest_List(const piper::RpcRequest::Reader &r) {
         if (getRequestResponseType(r) != RRType::List) {
             throw std::logic_error("not a list request");
         }
     }
 
     static void
-    readRpcResponse_List(Vamp::HostExt::ListResponse &resp,
-                         const RpcResponse::Reader &r) {
+    readRpcResponse_List(ListResponse &resp,
+                         const piper::RpcResponse::Reader &r) {
         if (getRequestResponseType(r) != RRType::List) {
             throw std::logic_error("not a list response");
         }
@@ -919,8 +922,8 @@ public:
     }
     
     static void
-    readRpcRequest_Load(Vamp::HostExt::LoadRequest &req,
-                        const RpcRequest::Reader &r) {
+    readRpcRequest_Load(LoadRequest &req,
+                        const piper::RpcRequest::Reader &r) {
         if (getRequestResponseType(r) != RRType::Load) {
             throw std::logic_error("not a load request");
         }
@@ -928,8 +931,8 @@ public:
     }
 
     static void
-    readRpcResponse_Load(Vamp::HostExt::LoadResponse &resp,
-                         const RpcResponse::Reader &r,
+    readRpcResponse_Load(LoadResponse &resp,
+                         const piper::RpcResponse::Reader &r,
                          const PluginHandleMapper &pmapper) {
         if (getRequestResponseType(r) != RRType::Load) {
             throw std::logic_error("not a load response");
@@ -939,8 +942,8 @@ public:
     }
     
     static void
-    readRpcRequest_Configure(Vamp::HostExt::ConfigurationRequest &req,
-                             const RpcRequest::Reader &r,
+    readRpcRequest_Configure(ConfigurationRequest &req,
+                             const piper::RpcRequest::Reader &r,
                              const PluginHandleMapper &pmapper) {
         if (getRequestResponseType(r) != RRType::Configure) {
             throw std::logic_error("not a configuration request");
@@ -949,8 +952,8 @@ public:
     }
 
     static void
-    readRpcResponse_Configure(Vamp::HostExt::ConfigurationResponse &resp,
-                              const RpcResponse::Reader &r,
+    readRpcResponse_Configure(ConfigurationResponse &resp,
+                              const piper::RpcResponse::Reader &r,
                               const PluginHandleMapper &pmapper) {
         if (getRequestResponseType(r) != RRType::Configure) {
             throw std::logic_error("not a configuration response");
@@ -962,8 +965,8 @@ public:
     }
     
     static void
-    readRpcRequest_Process(Vamp::HostExt::ProcessRequest &req,
-                           const RpcRequest::Reader &r,
+    readRpcRequest_Process(ProcessRequest &req,
+                           const piper::RpcRequest::Reader &r,
                            const PluginHandleMapper &pmapper) {
         if (getRequestResponseType(r) != RRType::Process) {
             throw std::logic_error("not a process request");
@@ -972,8 +975,8 @@ public:
     }
 
     static void
-    readRpcResponse_Process(Vamp::HostExt::ProcessResponse &resp,
-                            const RpcResponse::Reader &r,
+    readRpcResponse_Process(ProcessResponse &resp,
+                            const piper::RpcResponse::Reader &r,
                             const PluginHandleMapper &pmapper) {
         if (getRequestResponseType(r) != RRType::Process) {
             throw std::logic_error("not a process response");
@@ -983,8 +986,8 @@ public:
     }
     
     static void
-    readRpcRequest_Finish(Vamp::HostExt::FinishRequest &req,
-                          const RpcRequest::Reader &r,
+    readRpcRequest_Finish(FinishRequest &req,
+                          const piper::RpcRequest::Reader &r,
                           const PluginHandleMapper &pmapper) {
         if (getRequestResponseType(r) != RRType::Finish) {
             throw std::logic_error("not a finish request");
@@ -994,8 +997,8 @@ public:
     }
 
     static void
-    readRpcResponse_Finish(Vamp::HostExt::ProcessResponse &resp,
-                           const RpcResponse::Reader &r,
+    readRpcResponse_Finish(FinishResponse &resp,
+                           const piper::RpcResponse::Reader &r,
                            const PluginHandleMapper &pmapper) {
         if (getRequestResponseType(r) != RRType::Finish) {
             throw std::logic_error("not a finish response");

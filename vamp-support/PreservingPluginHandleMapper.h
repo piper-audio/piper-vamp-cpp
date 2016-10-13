@@ -40,7 +40,7 @@
 
 #include <iostream>
 
-namespace piper {
+namespace piper_vamp {
 
 //!!! document -- this is a passthrough thing for a single plugin
 //!!! handle only, it does not use actually valid Plugin pointers at

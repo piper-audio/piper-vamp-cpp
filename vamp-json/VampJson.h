@@ -44,15 +44,16 @@
 
 #include <vamp-hostsdk/Plugin.h>
 #include <vamp-hostsdk/PluginLoader.h>
-#include <vamp-hostsdk/PluginStaticData.h>
-#include <vamp-hostsdk/PluginConfiguration.h>
-#include <vamp-hostsdk/RequestResponse.h>
+
+#include "vamp-support/PluginStaticData.h"
+#include "vamp-support/PluginConfiguration.h"
+#include "vamp-support/RequestResponse.h"
 
 #include "vamp-support/PluginHandleMapper.h"
 #include "vamp-support/PluginOutputIdMapper.h"
 #include "vamp-support/RequestResponseType.h"
 
-namespace piper {
+namespace piper_vamp {
 
 /**
  * Convert the structures laid out in the Vamp SDK classes into JSON
@@ -534,7 +535,7 @@ public:
     }
 
     static json11::Json
-    fromPluginStaticData(const Vamp::HostExt::PluginStaticData &d) {
+    fromPluginStaticData(const PluginStaticData &d) {
 
         json11::Json::object jo;
         jo["key"] = d.pluginKey;
@@ -570,7 +571,7 @@ public:
         return json11::Json(jo);
     }
 
-    static Vamp::HostExt::PluginStaticData
+    static PluginStaticData
     toPluginStaticData(json11::Json j, std::string &err) {
 
         if (!j.has_shape({
@@ -622,7 +623,7 @@ public:
 
         } else {
 
-            Vamp::HostExt::PluginStaticData psd;
+            PluginStaticData psd;
 
             psd.pluginKey = j["key"].string_value();
 
@@ -662,7 +663,7 @@ public:
             if (failed(err)) return {};
 
             for (const auto &bo : j["basicOutputInfo"].array_items()) {
-                Vamp::HostExt::PluginStaticData::Basic b;
+                PluginStaticData::Basic b;
                 toBasicDescriptor(bo, b, err);
                 if (failed(err)) return {};
                 psd.basicOutputInfo.push_back(b);
@@ -676,7 +677,7 @@ public:
     }
 
     static json11::Json
-    fromPluginConfiguration(const Vamp::HostExt::PluginConfiguration &c) {
+    fromPluginConfiguration(const PluginConfiguration &c) {
 
         json11::Json::object jo;
 
@@ -697,7 +698,7 @@ public:
         return json11::Json(jo);
     }
 
-    static Vamp::HostExt::PluginConfiguration
+    static PluginConfiguration
     toPluginConfiguration(json11::Json j, std::string &err) {
         
         if (!j.has_shape({
@@ -727,7 +728,7 @@ public:
             return {};
         }
 
-        Vamp::HostExt::PluginConfiguration config;
+        PluginConfiguration config;
 
         config.channelCount = j["channelCount"].number_value();
         config.stepSize = j["stepSize"].number_value();
@@ -800,7 +801,7 @@ public:
     }
 
     static json11::Json
-    fromLoadRequest(const Vamp::HostExt::LoadRequest &req) {
+    fromLoadRequest(const LoadRequest &req) {
 
         json11::Json::object jo;
         jo["key"] = req.pluginKey;
@@ -809,7 +810,7 @@ public:
         return json11::Json(jo);
     }
 
-    static Vamp::HostExt::LoadRequest
+    static LoadRequest
     toLoadRequest(json11::Json j, std::string &err) {
         
         if (!j.has_shape({
@@ -819,7 +820,7 @@ public:
             return {};
         }
     
-        Vamp::HostExt::LoadRequest req;
+        LoadRequest req;
         req.pluginKey = j["key"].string_value();
         req.inputSampleRate = j["inputSampleRate"].number_value();
         if (!j["adapterFlags"].is_null()) {
@@ -830,7 +831,7 @@ public:
     }
 
     static json11::Json
-    fromLoadResponse(const Vamp::HostExt::LoadResponse &resp,
+    fromLoadResponse(const LoadResponse &resp,
                      const PluginHandleMapper &pmapper) {
 
         json11::Json::object jo;
@@ -841,7 +842,7 @@ public:
         return json11::Json(jo);
     }
 
-    static Vamp::HostExt::LoadResponse
+    static LoadResponse
     toLoadResponse(json11::Json j,
                    const PluginHandleMapper &pmapper, std::string &err) {
 
@@ -853,7 +854,7 @@ public:
             return {};
         }
 
-        Vamp::HostExt::LoadResponse resp;
+        LoadResponse resp;
         resp.plugin = pmapper.handleToPlugin(j["handle"].int_value());
         resp.staticData = toPluginStaticData(j["staticData"], err);
         if (failed(err)) return {};
@@ -864,7 +865,7 @@ public:
     }
 
     static json11::Json
-    fromConfigurationRequest(const Vamp::HostExt::ConfigurationRequest &cr,
+    fromConfigurationRequest(const ConfigurationRequest &cr,
                              const PluginHandleMapper &pmapper) {
 
         json11::Json::object jo;
@@ -875,7 +876,7 @@ public:
         return json11::Json(jo);
     }
 
-    static Vamp::HostExt::ConfigurationRequest
+    static ConfigurationRequest
     toConfigurationRequest(json11::Json j,
                            const PluginHandleMapper &pmapper, std::string &err) {
 
@@ -886,7 +887,7 @@ public:
             return {};
         }
 
-        Vamp::HostExt::ConfigurationRequest cr;
+        ConfigurationRequest cr;
         cr.plugin = pmapper.handleToPlugin(j["handle"].int_value());
         cr.configuration = toPluginConfiguration(j["configuration"], err);
         if (failed(err)) return {};
@@ -894,7 +895,7 @@ public:
     }
 
     static json11::Json
-    fromConfigurationResponse(const Vamp::HostExt::ConfigurationResponse &cr,
+    fromConfigurationResponse(const ConfigurationResponse &cr,
                               const PluginHandleMapper &pmapper) {
 
         json11::Json::object jo;
@@ -910,11 +911,11 @@ public:
         return json11::Json(jo);
     }
 
-    static Vamp::HostExt::ConfigurationResponse
+    static ConfigurationResponse
     toConfigurationResponse(json11::Json j,
                             const PluginHandleMapper &pmapper, std::string &err) {
         
-        Vamp::HostExt::ConfigurationResponse cr;
+        ConfigurationResponse cr;
 
         cr.plugin = pmapper.handleToPlugin(j["handle"].int_value());
         
@@ -932,7 +933,7 @@ public:
     }
 
     static json11::Json
-    fromProcessRequest(const Vamp::HostExt::ProcessRequest &r,
+    fromProcessRequest(const ProcessRequest &r,
                        const PluginHandleMapper &pmapper,
                        BufferSerialisation serialisation) {
 
@@ -958,7 +959,7 @@ public:
         return json11::Json(jo);
     }
 
-    static Vamp::HostExt::ProcessRequest
+    static ProcessRequest
     toProcessRequest(json11::Json j,
                      const PluginHandleMapper &pmapper,
                      BufferSerialisation &serialisation, std::string &err) {
@@ -979,7 +980,7 @@ public:
             return {};
         }
 
-        Vamp::HostExt::ProcessRequest r;
+        ProcessRequest r;
         r.plugin = pmapper.handleToPlugin(j["handle"].int_value());
 
         r.timestamp = toRealTime(input["timestamp"], err);
@@ -1060,7 +1061,7 @@ public:
     }
 
     static json11::Json
-    fromRpcResponse_List(const Vamp::HostExt::ListResponse &resp,
+    fromRpcResponse_List(const ListResponse &resp,
                          const json11::Json &id) {
 
         json11::Json::object jo;
@@ -1080,7 +1081,7 @@ public:
     }
     
     static json11::Json
-    fromRpcRequest_Load(const Vamp::HostExt::LoadRequest &req,
+    fromRpcRequest_Load(const LoadRequest &req,
                         const json11::Json &id) {
 
         json11::Json::object jo;
@@ -1093,7 +1094,7 @@ public:
     }    
 
     static json11::Json
-    fromRpcResponse_Load(const Vamp::HostExt::LoadResponse &resp,
+    fromRpcResponse_Load(const LoadResponse &resp,
                          const PluginHandleMapper &pmapper,
                          const json11::Json &id) {
 
@@ -1113,7 +1114,7 @@ public:
     }
 
     static json11::Json
-    fromRpcRequest_Configure(const Vamp::HostExt::ConfigurationRequest &req,
+    fromRpcRequest_Configure(const ConfigurationRequest &req,
                              const PluginHandleMapper &pmapper,
                              const json11::Json &id) {
 
@@ -1127,7 +1128,7 @@ public:
     }    
 
     static json11::Json
-    fromRpcResponse_Configure(const Vamp::HostExt::ConfigurationResponse &resp,
+    fromRpcResponse_Configure(const ConfigurationResponse &resp,
                               const PluginHandleMapper &pmapper,
                               const json11::Json &id) {
 
@@ -1147,7 +1148,7 @@ public:
     }
     
     static json11::Json
-    fromRpcRequest_Process(const Vamp::HostExt::ProcessRequest &req,
+    fromRpcRequest_Process(const ProcessRequest &req,
                            const PluginHandleMapper &pmapper,
                            BufferSerialisation serialisation,
                            const json11::Json &id) {
@@ -1162,7 +1163,7 @@ public:
     }    
 
     static json11::Json
-    fromRpcResponse_Process(const Vamp::HostExt::ProcessResponse &resp,
+    fromRpcResponse_Process(const ProcessResponse &resp,
                             const PluginHandleMapper &pmapper,
                             BufferSerialisation serialisation,
                             const json11::Json &id) {
@@ -1182,7 +1183,7 @@ public:
     }
     
     static json11::Json
-    fromRpcRequest_Finish(const Vamp::HostExt::FinishRequest &req,
+    fromRpcRequest_Finish(const FinishRequest &req,
                           const PluginHandleMapper &pmapper,
                           const json11::Json &id) {
 
@@ -1199,7 +1200,7 @@ public:
     }    
     
     static json11::Json
-    fromRpcResponse_Finish(const Vamp::HostExt::ProcessResponse &resp,
+    fromRpcResponse_Finish(const FinishResponse &resp,
                            const PluginHandleMapper &pmapper,
                            BufferSerialisation serialisation,
                            const json11::Json &id) {
@@ -1273,10 +1274,10 @@ public:
         checkTypeField(j, "list", err);
     }
 
-    static Vamp::HostExt::ListResponse
+    static ListResponse
     toRpcResponse_List(json11::Json j, std::string &err) {
 
-        Vamp::HostExt::ListResponse resp;
+        ListResponse resp;
         if (successful(j, err) && !failed(err)) {
             for (const auto &a: j["result"]["available"].array_items()) {
                 resp.available.push_back(toPluginStaticData(a, err));
@@ -1287,7 +1288,7 @@ public:
         return resp;
     }
 
-    static Vamp::HostExt::LoadRequest
+    static LoadRequest
     toRpcRequest_Load(json11::Json j, std::string &err) {
         
         checkTypeField(j, "load", err);
@@ -1295,19 +1296,19 @@ public:
         return toLoadRequest(j["params"], err);
     }
     
-    static Vamp::HostExt::LoadResponse
+    static LoadResponse
     toRpcResponse_Load(json11::Json j,
                         const PluginHandleMapper &pmapper,
                         std::string &err) {
         
-        Vamp::HostExt::LoadResponse resp;
+        LoadResponse resp;
         if (successful(j, err) && !failed(err)) {
             resp = toLoadResponse(j["result"], pmapper, err);
         }
         return resp;
     }
     
-    static Vamp::HostExt::ConfigurationRequest
+    static ConfigurationRequest
     toRpcRequest_Configure(json11::Json j,
                             const PluginHandleMapper &pmapper,
                             std::string &err) {
@@ -1317,19 +1318,19 @@ public:
         return toConfigurationRequest(j["params"], pmapper, err);
     }
     
-    static Vamp::HostExt::ConfigurationResponse
+    static ConfigurationResponse
     toRpcResponse_Configure(json11::Json j,
                              const PluginHandleMapper &pmapper,
                              std::string &err) {
         
-        Vamp::HostExt::ConfigurationResponse resp;
+        ConfigurationResponse resp;
         if (successful(j, err) && !failed(err)) {
             resp = toConfigurationResponse(j["result"], pmapper, err);
         }
         return resp;
     }
     
-    static Vamp::HostExt::ProcessRequest
+    static ProcessRequest
     toRpcRequest_Process(json11::Json j, const PluginHandleMapper &pmapper,
                           BufferSerialisation &serialisation, std::string &err) {
         
@@ -1338,12 +1339,12 @@ public:
         return toProcessRequest(j["params"], pmapper, serialisation, err);
     }
     
-    static Vamp::HostExt::ProcessResponse
+    static ProcessResponse
     toRpcResponse_Process(json11::Json j,
                            const PluginHandleMapper &pmapper,
                            BufferSerialisation &serialisation, std::string &err) {
         
-        Vamp::HostExt::ProcessResponse resp;
+        ProcessResponse resp;
         if (successful(j, err) && !failed(err)) {
             auto jc = j["result"];
             auto h = jc["handle"].int_value();
@@ -1355,24 +1356,24 @@ public:
         return resp;
     }
     
-    static Vamp::HostExt::FinishRequest
+    static FinishRequest
     toRpcRequest_Finish(json11::Json j, const PluginHandleMapper &pmapper,
                          std::string &err) {
         
         checkTypeField(j, "finish", err);
         if (failed(err)) return {};
-        Vamp::HostExt::FinishRequest req;
+        FinishRequest req;
         req.plugin = pmapper.handleToPlugin
             (j["params"]["handle"].int_value());
         return req;
     }
     
-    static Vamp::HostExt::ProcessResponse
+    static FinishResponse
     toRpcResponse_Finish(json11::Json j,
-                          const PluginHandleMapper &pmapper,
-                          BufferSerialisation &serialisation, std::string &err) {
+                         const PluginHandleMapper &pmapper,
+                         BufferSerialisation &serialisation, std::string &err) {
         
-        Vamp::HostExt::ProcessResponse resp;
+        FinishResponse resp;
         if (successful(j, err) && !failed(err)) {
             auto jc = j["result"];
             auto h = jc["handle"].int_value();

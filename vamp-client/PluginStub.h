@@ -4,15 +4,16 @@
 
 #include <vamp-hostsdk/Plugin.h>
 #include <vamp-hostsdk/PluginLoader.h>
-#include <vamp-hostsdk/PluginStaticData.h>
-#include <vamp-hostsdk/PluginConfiguration.h>
+
+#include "vamp-support/PluginStaticData.h"
+#include "vamp-support/PluginConfiguration.h"
 
 #include <cstdint>
 
 #include "PluginClient.h"
 
-namespace piper {
-namespace vampclient {
+namespace piper_vamp {
+namespace client {
 
 class PluginStub : public Vamp::Plugin
 {
@@ -25,8 +26,8 @@ public:
                std::string pluginKey,
                float inputSampleRate,
                int adapterFlags,
-               Vamp::HostExt::PluginStaticData psd,
-               Vamp::HostExt::PluginConfiguration defaultConfig) :
+               PluginStaticData psd,
+               PluginConfiguration defaultConfig) :
         Plugin(inputSampleRate),
         m_client(client),
         m_key(pluginKey),
@@ -230,10 +231,10 @@ private:
     std::string m_key;
     int m_adapterFlags;
     State m_state;
-    Vamp::HostExt::PluginStaticData m_psd;
+    PluginStaticData m_psd;
     OutputList m_outputs;
-    Vamp::HostExt::PluginConfiguration m_defaultConfig;
-    Vamp::HostExt::PluginConfiguration m_config;
+    PluginConfiguration m_defaultConfig;
+    PluginConfiguration m_config;
 };
 
 }

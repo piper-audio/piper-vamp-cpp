@@ -43,7 +43,7 @@
 #include <map>
 #include <iostream>
 
-namespace piper {
+namespace piper_vamp {
 
 class AssignedPluginHandleMapper : public PluginHandleMapper
 {

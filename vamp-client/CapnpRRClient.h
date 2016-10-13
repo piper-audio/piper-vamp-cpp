@@ -12,11 +12,11 @@
 
 #include <capnp/serialize.h>
 
-namespace piper {
-namespace vampclient {
+namespace piper_vamp {
+namespace client {
 
 class CapnpRRClient : public PluginClient,
-                    public Loader
+		      public Loader
 {
     // unsigned to avoid undefined behaviour on possible wrap
     typedef uint32_t ReqId;
@@ -56,7 +56,7 @@ public:
 
     // Loader methods:
 
-    Vamp::HostExt::ListResponse
+    ListResponse
     listPluginData() override {
 
         if (!m_transport->isOK()) {
@@ -64,7 +64,7 @@ public:
         }
 
         capnp::MallocMessageBuilder message;
-        RpcRequest::Builder builder = message.initRoot<RpcRequest>();
+	piper::RpcRequest::Builder builder = message.initRoot<piper::RpcRequest>();
         VampnProto::buildRpcRequest_List(builder);
         ReqId id = getId();
         builder.getId().setNumber(id);
@@ -72,23 +72,23 @@ public:
 	auto karr = call(message);
 
         capnp::FlatArrayMessageReader responseMessage(karr);
-        RpcResponse::Reader reader = responseMessage.getRoot<RpcResponse>();
+        piper::RpcResponse::Reader reader = responseMessage.getRoot<piper::RpcResponse>();
 
-        checkResponseType(reader, RpcResponse::Response::Which::LIST, id);
+        checkResponseType(reader, piper::RpcResponse::Response::Which::LIST, id);
 
-        Vamp::HostExt::ListResponse lr;
+        ListResponse lr;
         VampnProto::readListResponse(lr, reader.getResponse().getList());
         return lr;
     }
     
-    Vamp::HostExt::LoadResponse
-    loadPlugin(const Vamp::HostExt::LoadRequest &req) override {
+    LoadResponse
+    loadPlugin(const LoadRequest &req) override {
 
         if (!m_transport->isOK()) {
             throw std::runtime_error("Piper server failed to start");
         }
 
-        Vamp::HostExt::LoadResponse resp;
+        LoadResponse resp;
         PluginHandleMapper::Handle handle = serverLoad(req.pluginKey,
                                                        req.inputSampleRate,
                                                        req.adapterFlags,
@@ -113,18 +113,18 @@ public:
     virtual
     Vamp::Plugin::OutputList
     configure(PluginStub *plugin,
-              Vamp::HostExt::PluginConfiguration config) override {
+              PluginConfiguration config) override {
 
         if (!m_transport->isOK()) {
             throw std::runtime_error("Piper server failed to start");
         }
 
-        Vamp::HostExt::ConfigurationRequest request;
+        ConfigurationRequest request;
         request.plugin = plugin;
         request.configuration = config;
 
         capnp::MallocMessageBuilder message;
-        RpcRequest::Builder builder = message.initRoot<RpcRequest>();
+        piper::RpcRequest::Builder builder = message.initRoot<piper::RpcRequest>();
 
         VampnProto::buildRpcRequest_Configure(builder, request, m_mapper);
         ReqId id = getId();
@@ -133,13 +133,13 @@ public:
 	auto karr = call(message);
 
         capnp::FlatArrayMessageReader responseMessage(karr);
-        RpcResponse::Reader reader = responseMessage.getRoot<RpcResponse>();
+        piper::RpcResponse::Reader reader = responseMessage.getRoot<piper::RpcResponse>();
 
         //!!! handle (explicit) error case
 
-        checkResponseType(reader, RpcResponse::Response::Which::CONFIGURE, id);
+        checkResponseType(reader, piper::RpcResponse::Response::Which::CONFIGURE, id);
 
-        Vamp::HostExt::ConfigurationResponse cr;
+        ConfigurationResponse cr;
         VampnProto::readConfigurationResponse(cr,
                                               reader.getResponse().getConfigure(),
                                               m_mapper);
@@ -157,13 +157,13 @@ public:
             throw std::runtime_error("Piper server failed to start");
         }
 
-        Vamp::HostExt::ProcessRequest request;
+        ProcessRequest request;
         request.plugin = plugin;
         request.inputBuffers = inputBuffers;
         request.timestamp = timestamp;
         
         capnp::MallocMessageBuilder message;
-        RpcRequest::Builder builder = message.initRoot<RpcRequest>();
+        piper::RpcRequest::Builder builder = message.initRoot<piper::RpcRequest>();
         VampnProto::buildRpcRequest_Process(builder, request, m_mapper);
 	ReqId id = getId();
         builder.getId().setNumber(id);
@@ -171,13 +171,13 @@ public:
 	auto karr = call(message);
 
         capnp::FlatArrayMessageReader responseMessage(karr);
-        RpcResponse::Reader reader = responseMessage.getRoot<RpcResponse>();
+        piper::RpcResponse::Reader reader = responseMessage.getRoot<piper::RpcResponse>();
 
         //!!! handle (explicit) error case
 
-        checkResponseType(reader, RpcResponse::Response::Which::PROCESS, id);
+        checkResponseType(reader, piper::RpcResponse::Response::Which::PROCESS, id);
 
-        Vamp::HostExt::ProcessResponse pr;
+        ProcessResponse pr;
         VampnProto::readProcessResponse(pr,
                                         reader.getResponse().getProcess(),
                                         m_mapper);
@@ -192,11 +192,11 @@ public:
             throw std::runtime_error("Piper server failed to start");
         }
 
-        Vamp::HostExt::FinishRequest request;
+        FinishRequest request;
         request.plugin = plugin;
         
         capnp::MallocMessageBuilder message;
-        RpcRequest::Builder builder = message.initRoot<RpcRequest>();
+        piper::RpcRequest::Builder builder = message.initRoot<piper::RpcRequest>();
 
         VampnProto::buildRpcRequest_Finish(builder, request, m_mapper);
         ReqId id = getId();
@@ -205,13 +205,13 @@ public:
 	auto karr = call(message);
 
         capnp::FlatArrayMessageReader responseMessage(karr);
-        RpcResponse::Reader reader = responseMessage.getRoot<RpcResponse>();
+        piper::RpcResponse::Reader reader = responseMessage.getRoot<piper::RpcResponse>();
 
         //!!! handle (explicit) error case
 
-        checkResponseType(reader, RpcResponse::Response::Which::FINISH, id);
+        checkResponseType(reader, piper::RpcResponse::Response::Which::FINISH, id);
 
-        Vamp::HostExt::ProcessResponse pr;
+        FinishResponse pr;
         VampnProto::readFinishResponse(pr,
                                        reader.getResponse().getFinish(),
                                        m_mapper);
@@ -226,7 +226,7 @@ public:
 
     virtual void
     reset(PluginStub *plugin,
-          Vamp::HostExt::PluginConfiguration config) override {
+          PluginConfiguration config) override {
 
         // Reload the plugin on the server side, and configure it as requested
         
@@ -238,8 +238,8 @@ public:
             (void)finish(plugin); // server-side unload
         }
 
-        Vamp::HostExt::PluginStaticData psd;
-        Vamp::HostExt::PluginConfiguration defaultConfig;
+        PluginStaticData psd;
+        PluginConfiguration defaultConfig;
         PluginHandleMapper::Handle handle =
             serverLoad(plugin->getPluginKey(),
                        plugin->getInputSampleRate(),
@@ -272,8 +272,8 @@ private:
     }
 
     void
-    checkResponseType(const RpcResponse::Reader &r,
-                      RpcResponse::Response::Which type,
+    checkResponseType(const piper::RpcResponse::Reader &r,
+                      piper::RpcResponse::Response::Which type,
                       ReqId id) {
         
         if (r.getResponse().which() != type) {
@@ -294,16 +294,16 @@ private:
     
     PluginHandleMapper::Handle
     serverLoad(std::string key, float inputSampleRate, int adapterFlags,
-               Vamp::HostExt::PluginStaticData &psd,
-               Vamp::HostExt::PluginConfiguration &defaultConfig) {
+               PluginStaticData &psd,
+               PluginConfiguration &defaultConfig) {
 
-        Vamp::HostExt::LoadRequest request;
+        LoadRequest request;
         request.pluginKey = key;
         request.inputSampleRate = inputSampleRate;
         request.adapterFlags = adapterFlags;
 
         capnp::MallocMessageBuilder message;
-        RpcRequest::Builder builder = message.initRoot<RpcRequest>();
+        piper::RpcRequest::Builder builder = message.initRoot<piper::RpcRequest>();
 
         VampnProto::buildRpcRequest_Load(builder, request);
         ReqId id = getId();
@@ -315,13 +315,13 @@ private:
         //!!! (from another thread)
 
         capnp::FlatArrayMessageReader responseMessage(karr);
-        RpcResponse::Reader reader = responseMessage.getRoot<RpcResponse>();
+        piper::RpcResponse::Reader reader = responseMessage.getRoot<piper::RpcResponse>();
 
         //!!! handle (explicit) error case
 
-        checkResponseType(reader, RpcResponse::Response::Which::LOAD, id);
+        checkResponseType(reader, piper::RpcResponse::Response::Which::LOAD, id);
         
-        const LoadResponse::Reader &lr = reader.getResponse().getLoad();
+        const piper::LoadResponse::Reader &lr = reader.getResponse().getLoad();
         VampnProto::readExtractorStaticData(psd, lr.getStaticData());
         VampnProto::readConfiguration(defaultConfig, lr.getDefaultConfiguration());
         return lr.getHandle();

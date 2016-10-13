@@ -39,7 +39,7 @@
 
 #include <iostream>
 
-namespace piper {
+namespace piper_vamp {
 
 //!!! document -- this is a passthrough thing that invents its
 //!!! numerical ids, they have no correspondence with any real plugin
