@@ -15,7 +15,7 @@
 namespace piper {
 namespace vampclient {
 
-class CapnpClient : public PluginClient,
+class CapnpRRClient : public PluginClient,
                     public Loader
 {
     // unsigned to avoid undefined behaviour on possible wrap
@@ -38,13 +38,13 @@ class CapnpClient : public PluginClient,
     };
     
 public:
-    CapnpClient(SynchronousTransport *transport) : //!!! ownership? shared ptr?
+    CapnpRRClient(SynchronousTransport *transport) : //!!! ownership? shared ptr?
         m_transport(transport),
         m_completenessChecker(new CompletenessChecker) {
         transport->setCompletenessChecker(m_completenessChecker);
     }
 
-    ~CapnpClient() {
+    ~CapnpRRClient() {
         delete m_completenessChecker;
     }
 
@@ -69,11 +69,8 @@ public:
         ReqId id = getId();
         builder.getId().setNumber(id);
 
-        //!!! pure boilerplate:
-        auto arr = capnp::messageToFlatArray(message);
-        auto responseBuffer = m_transport->call(arr.asChars().begin(),
-                                                arr.asChars().size());
-	auto karr = toKJArray(responseBuffer);
+	auto karr = call(message);
+
         capnp::FlatArrayMessageReader responseMessage(karr);
         RpcResponse::Reader reader = responseMessage.getRoot<RpcResponse>();
 
@@ -132,11 +129,9 @@ public:
         VampnProto::buildRpcRequest_Configure(builder, request, m_mapper);
         ReqId id = getId();
         builder.getId().setNumber(id);
-        
-        auto arr = capnp::messageToFlatArray(message);
-        auto responseBuffer = m_transport->call(arr.asChars().begin(),
-                                                arr.asChars().size());
-	auto karr = toKJArray(responseBuffer);
+
+	auto karr = call(message);
+
         capnp::FlatArrayMessageReader responseMessage(karr);
         RpcResponse::Reader reader = responseMessage.getRoot<RpcResponse>();
 
@@ -169,15 +164,12 @@ public:
         
         capnp::MallocMessageBuilder message;
         RpcRequest::Builder builder = message.initRoot<RpcRequest>();
-
         VampnProto::buildRpcRequest_Process(builder, request, m_mapper);
-        ReqId id = getId();
+	ReqId id = getId();
         builder.getId().setNumber(id);
-        
-        auto arr = capnp::messageToFlatArray(message);
-        auto responseBuffer = m_transport->call(arr.asChars().begin(),
-                                                arr.asChars().size());
-	auto karr = toKJArray(responseBuffer);
+
+	auto karr = call(message);
+
         capnp::FlatArrayMessageReader responseMessage(karr);
         RpcResponse::Reader reader = responseMessage.getRoot<RpcResponse>();
 
@@ -210,10 +202,8 @@ public:
         ReqId id = getId();
         builder.getId().setNumber(id);
         
-        auto arr = capnp::messageToFlatArray(message);
-        auto responseBuffer = m_transport->call(arr.asChars().begin(),
-                                                arr.asChars().size());
-	auto karr = toKJArray(responseBuffer);
+	auto karr = call(message);
+
         capnp::FlatArrayMessageReader responseMessage(karr);
         RpcResponse::Reader reader = responseMessage.getRoot<RpcResponse>();
 
@@ -293,6 +283,14 @@ private:
             throw std::runtime_error("Wrong response id");
         }
     }
+
+    kj::Array<capnp::word>
+    call(capnp::MallocMessageBuilder &message) {
+        auto arr = capnp::messageToFlatArray(message);
+        auto responseBuffer = m_transport->call(arr.asChars().begin(),
+                                                arr.asChars().size());
+	return toKJArray(responseBuffer);
+    }
     
     PluginHandleMapper::Handle
     serverLoad(std::string key, float inputSampleRate, int adapterFlags,
@@ -311,15 +309,11 @@ private:
         ReqId id = getId();
         builder.getId().setNumber(id);
 
-        auto arr = capnp::messageToFlatArray(message);
+	auto karr = call(message);
 
-        auto responseBuffer = m_transport->call(arr.asChars().begin(),
-                                                arr.asChars().size());
-        
         //!!! ... --> will also need some way to kill this process
         //!!! (from another thread)
 
-	auto karr = toKJArray(responseBuffer);
         capnp::FlatArrayMessageReader responseMessage(karr);
         RpcResponse::Reader reader = responseMessage.getRoot<RpcResponse>();
 

@@ -1,6 +1,6 @@
 
 #include "ProcessQtTransport.h"
-#include "CapnpClient.h"
+#include "CapnpRRClient.h"
 
 #include <stdexcept>
 
@@ -10,7 +10,7 @@ using std::endl;
 int main(int, char **)
 {
     piper::vampclient::ProcessQtTransport transport("../bin/piper-vamp-server");
-    piper::vampclient::CapnpClient client(&transport);
+    piper::vampclient::CapnpRRClient client(&transport);
 
     Vamp::HostExt::ListResponse lr = client.listPluginData();
     cerr << "Plugins available:" << endl;
@@ -58,6 +58,5 @@ int main(int, char **)
     (void)plugin->getRemainingFeatures();
 
     delete plugin;
-    //!!! -- and also implement reset(), which will need to reconstruct internally
 }
 

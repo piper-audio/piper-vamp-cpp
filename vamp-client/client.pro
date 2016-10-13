@@ -30,7 +30,7 @@ SOURCES += \
         
 HEADERS += \
         ProcessQtTransport.h \
-        CapnpClient.h \
+        CapnpRRClient.h \
         Loader.h \
         PluginClient.h \
         PluginStub.h \
