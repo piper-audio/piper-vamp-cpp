@@ -205,11 +205,10 @@ DIST          = /usr/lib/qt/mkspecs/features/spec_pre.prf \
 		/usr/lib/qt/mkspecs/features/testcase_targets.prf \
 		/usr/lib/qt/mkspecs/features/yacc.prf \
 		/usr/lib/qt/mkspecs/features/lex.prf \
-		client.pro CapnpMessageCompletenessChecker.h \
-		PipedQProcessTransport.h \
+		client.pro PipedQProcessTransport.h \
 		PiperCapnpClient.h \
 		PiperClient.h \
-		PiperStubPlugin.h \
+		PiperPluginStub.h \
 		SynchronousTransport.h client.cpp \
 		../vamp-capnp/piper.capnp.c++
 QMAKE_TARGET  = client
@@ -548,7 +547,7 @@ dist: distdir FORCE
 distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
-	$(COPY_FILE) --parents CapnpMessageCompletenessChecker.h PipedQProcessTransport.h PiperCapnpClient.h PiperClient.h PiperStubPlugin.h SynchronousTransport.h $(DISTDIR)/
+	$(COPY_FILE) --parents PipedQProcessTransport.h PiperCapnpClient.h PiperClient.h PiperPluginStub.h SynchronousTransport.h $(DISTDIR)/
 	$(COPY_FILE) --parents client.cpp ../vamp-capnp/piper.capnp.c++ $(DISTDIR)/
 
 
@@ -589,11 +588,11 @@ compiler_clean:
 
 ####### Compile
 
-../o/client.o: client.cpp PiperClient.h \
-		PiperStubPlugin.h \
-		CapnpMessageCompletenessChecker.h \
+../o/client.o: client.cpp PipedQProcessTransport.h \
 		SynchronousTransport.h \
-		PipedQProcessTransport.h
+		PiperCapnpClient.h \
+		PiperClient.h \
+		PiperPluginStub.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../o/client.o client.cpp
 
 ../o/piper.capnp.o: ../vamp-capnp/piper.capnp.c++ ../vamp-capnp/piper.capnp.h

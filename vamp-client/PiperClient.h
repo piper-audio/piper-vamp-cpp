@@ -6,30 +6,38 @@
 
 namespace piper { //!!! change
 
-class PiperStubPlugin;
+class PiperPluginStub;
 
-class PiperStubPluginClientInterface
+class PiperLoaderInterface
 {
-    friend class PiperStubPlugin;
+public:
+    virtual
+    Vamp::Plugin *
+    load(std::string key, float inputSampleRate, int adapterFlags) = 0;
+};
+
+class PiperPluginClientInterface
+{
+    friend class PiperPluginStub;
     
 protected:
     virtual
     Vamp::Plugin::OutputList
-    configure(PiperStubPlugin *plugin,
+    configure(PiperPluginStub *plugin,
               Vamp::HostExt::PluginConfiguration config) = 0;
     
     virtual
     Vamp::Plugin::FeatureSet
-    process(PiperStubPlugin *plugin,
+    process(PiperPluginStub *plugin,
             std::vector<std::vector<float> > inputBuffers,
             Vamp::RealTime timestamp) = 0;
 
     virtual Vamp::Plugin::FeatureSet
-    finish(PiperStubPlugin *plugin) = 0;
+    finish(PiperPluginStub *plugin) = 0;
 
     virtual
     void
-    reset(PiperStubPlugin *plugin,
+    reset(PiperPluginStub *plugin,
           Vamp::HostExt::PluginConfiguration config) = 0;
 };
 

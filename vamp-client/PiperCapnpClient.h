@@ -3,24 +3,47 @@
 #define PIPER_CAPNP_CLIENT_H
 
 #include "PiperClient.h"
+#include "PiperPluginStub.h"
 #include "SynchronousTransport.h"
 
 #include "vamp-support/AssignedPluginHandleMapper.h"
 #include "vamp-capnp/VampnProto.h"
 
+#include <capnp/serialize.h>
+
 namespace piper { //!!! change
 
-class PiperCapnpClient : public PiperStubPluginClientInterface
+class PiperCapnpClient : public PiperPluginClientInterface,
+                         public PiperLoaderInterface
 {
     // unsigned to avoid undefined behaviour on possible wrap
     typedef uint32_t ReqId;
+
+    class CompletenessChecker : public MessageCompletenessChecker {
+    public:
+        bool isComplete(const std::vector<char> &message) const override {
+            auto karr = toKJArray(message);
+            size_t words = karr.size();
+            size_t expected = capnp::expectedSizeInWordsFromPrefix(karr);
+            if (words > expected) {
+                std::cerr << "WARNING: obtained more data than expected ("
+                          << words << " " << sizeof(capnp::word)
+                          << "-byte words, expected "
+                          << expected << ")" << std::endl;
+            }
+            return words >= expected;
+        }
+    };
     
 public:
     PiperCapnpClient(SynchronousTransport *transport) : //!!! ownership? shared ptr?
-        m_transport(transport) {
+        m_transport(transport),
+        m_completenessChecker(new CompletenessChecker) {
+        transport->setCompletenessChecker(m_completenessChecker);
     }
 
     ~PiperCapnpClient() {
+        delete m_completenessChecker;
     }
 
     //!!! obviously, factor out all repetitive guff
@@ -41,7 +64,7 @@ public:
         PluginHandleMapper::Handle handle =
             serverLoad(key, inputSampleRate, adapterFlags, psd, defaultConfig);
 
-        Vamp::Plugin *plugin = new PiperStubPlugin(this,
+        Vamp::Plugin *plugin = new PiperPluginStub(this,
                                                    key,
                                                    inputSampleRate,
                                                    adapterFlags,
@@ -95,7 +118,7 @@ public:
 protected:
     virtual
     Vamp::Plugin::OutputList
-    configure(PiperStubPlugin *plugin,
+    configure(PiperPluginStub *plugin,
               Vamp::HostExt::PluginConfiguration config) override {
 
         if (!m_transport->isOK()) {
@@ -134,7 +157,7 @@ protected:
     
     virtual
     Vamp::Plugin::FeatureSet
-    process(PiperStubPlugin *plugin,
+    process(PiperPluginStub *plugin,
             std::vector<std::vector<float> > inputBuffers,
             Vamp::RealTime timestamp) override {
 
@@ -174,7 +197,7 @@ protected:
     }
 
     virtual Vamp::Plugin::FeatureSet
-    finish(PiperStubPlugin *plugin) override {
+    finish(PiperPluginStub *plugin) override {
 
         if (!m_transport->isOK()) {
             throw std::runtime_error("Piper server failed to start");
@@ -215,7 +238,7 @@ protected:
     }
 
     virtual void
-    reset(PiperStubPlugin *plugin,
+    reset(PiperPluginStub *plugin,
           Vamp::HostExt::PluginConfiguration config) override {
 
         // Reload the plugin on the server side, and configure it as requested
@@ -249,6 +272,7 @@ private:
         return m_nextId++;
     }
 
+    static
     kj::Array<capnp::word>
     toKJArray(const std::vector<char> &buffer) {
 	// We could do this whole thing with fewer copies, but let's
@@ -275,6 +299,7 @@ private:
 
 private:
     SynchronousTransport *m_transport; //!!! I don't own this, but should I?
+    CompletenessChecker *m_completenessChecker; // I own this
 };
 
 }

@@ -13,14 +13,14 @@
 
 namespace piper { //!!! should be something else
 
-class PiperStubPlugin : public Vamp::Plugin
+class PiperPluginStub : public Vamp::Plugin
 {
     enum State {
         Loaded, Configured, Finished
     };
     
 public:
-    PiperStubPlugin(PiperStubPluginClientInterface *client,
+    PiperPluginStub(PiperPluginClientInterface *client,
                     std::string pluginKey,
                     float inputSampleRate,
                     int adapterFlags,
@@ -36,7 +36,7 @@ public:
         m_config(defaultConfig)
     { }
 
-    virtual ~PiperStubPlugin() {
+    virtual ~PiperPluginStub() {
         if (m_state != Finished) {
 	    (void)m_client->finish(this);
         }
@@ -225,7 +225,7 @@ public:
     }
     
 private:
-    PiperStubPluginClientInterface *m_client;
+    PiperPluginClientInterface *m_client;
     std::string m_key;
     int m_adapterFlags;
     State m_state;

@@ -1,6 +1,4 @@
 
-#include "PiperStubPlugin.h"
-#include "CapnpMessageCompletenessChecker.h"
 #include "PipedQProcessTransport.h"
 #include "PiperCapnpClient.h"
 
@@ -11,8 +9,7 @@ using std::endl;
 
 int main(int, char **)
 {
-    piper::CapnpMessageCompletenessChecker checker;
-    piper::PipedQProcessTransport transport("../bin/piper-vamp-server", &checker);
+    piper::PipedQProcessTransport transport("../bin/piper-vamp-server");
     piper::PiperCapnpClient client(&transport);
     
     Vamp::Plugin *plugin = client.load("vamp-example-plugins:zerocrossing", 16, 0);

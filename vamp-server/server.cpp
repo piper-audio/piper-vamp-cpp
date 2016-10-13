@@ -295,6 +295,7 @@ int main(int argc, char **argv)
 
 	    if (request.type == RRType::Finish) {
 		auto h = mapper.pluginToHandle(request.finishRequest.plugin);
+                cerr << "deleting the plugin with handle " << h << endl;
 		mapper.removePlugin(h);
 		delete request.finishRequest.plugin;
 	    }
