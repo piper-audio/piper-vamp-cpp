@@ -1,6 +1,6 @@
 
-#ifndef PIPER_QPROCESS_TRANSPORT_H
-#define PIPER_QPROCESS_TRANSPORT_H
+#ifndef PIPER_PROCESS_QT_TRANSPORT_H
+#define PIPER_PROCESS_QT_TRANSPORT_H
 
 #include "SynchronousTransport.h"
 
@@ -9,12 +9,13 @@
 
 #include <iostream>
 
-namespace piper { //!!! change
+namespace piper {
+namespace vampclient {
 
-class PiperQProcessTransport : public SynchronousTransport
+class ProcessQtTransport : public SynchronousTransport
 {
 public:
-    PiperQProcessTransport(QString processName) :
+    ProcessQtTransport(QString processName) :
         m_completenessChecker(0) {
         m_process = new QProcess();
         m_process->setReadChannel(QProcess::StandardOutput);
@@ -27,7 +28,7 @@ public:
         }
     }
 
-    ~PiperQProcessTransport() {
+    ~ProcessQtTransport() {
         if (m_process) {
             if (m_process->state() != QProcess::NotRunning) {
 		m_process->closeWriteChannel();
@@ -89,6 +90,7 @@ private:
     QProcess *m_process; // I own this
 };
 
+}
 }
 
 #endif

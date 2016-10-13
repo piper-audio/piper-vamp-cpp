@@ -2,8 +2,9 @@
 #ifndef PIPER_CAPNP_CLIENT_H
 #define PIPER_CAPNP_CLIENT_H
 
-#include "PiperClient.h"
-#include "PiperPluginStub.h"
+#include "Loader.h"
+#include "PluginClient.h"
+#include "PluginStub.h"
 #include "SynchronousTransport.h"
 
 #include "vamp-support/AssignedPluginHandleMapper.h"
@@ -11,10 +12,11 @@
 
 #include <capnp/serialize.h>
 
-namespace piper { //!!! change
+namespace piper {
+namespace vampclient {
 
-class PiperCapnpClient : public PiperPluginClientInterface,
-                         public PiperLoaderInterface
+class CapnpClient : public PluginClient,
+                    public Loader
 {
     // unsigned to avoid undefined behaviour on possible wrap
     typedef uint32_t ReqId;
@@ -36,13 +38,13 @@ class PiperCapnpClient : public PiperPluginClientInterface,
     };
     
 public:
-    PiperCapnpClient(SynchronousTransport *transport) : //!!! ownership? shared ptr?
+    CapnpClient(SynchronousTransport *transport) : //!!! ownership? shared ptr?
         m_transport(transport),
         m_completenessChecker(new CompletenessChecker) {
         transport->setCompletenessChecker(m_completenessChecker);
     }
 
-    ~PiperCapnpClient() {
+    ~CapnpClient() {
         delete m_completenessChecker;
     }
 
@@ -64,7 +66,7 @@ public:
         PluginHandleMapper::Handle handle =
             serverLoad(key, inputSampleRate, adapterFlags, psd, defaultConfig);
 
-        Vamp::Plugin *plugin = new PiperPluginStub(this,
+        Vamp::Plugin *plugin = new PluginStub(this,
                                                    key,
                                                    inputSampleRate,
                                                    adapterFlags,
@@ -118,7 +120,7 @@ public:
 protected:
     virtual
     Vamp::Plugin::OutputList
-    configure(PiperPluginStub *plugin,
+    configure(PluginStub *plugin,
               Vamp::HostExt::PluginConfiguration config) override {
 
         if (!m_transport->isOK()) {
@@ -157,7 +159,7 @@ protected:
     
     virtual
     Vamp::Plugin::FeatureSet
-    process(PiperPluginStub *plugin,
+    process(PluginStub *plugin,
             std::vector<std::vector<float> > inputBuffers,
             Vamp::RealTime timestamp) override {
 
@@ -197,7 +199,7 @@ protected:
     }
 
     virtual Vamp::Plugin::FeatureSet
-    finish(PiperPluginStub *plugin) override {
+    finish(PluginStub *plugin) override {
 
         if (!m_transport->isOK()) {
             throw std::runtime_error("Piper server failed to start");
@@ -238,7 +240,7 @@ protected:
     }
 
     virtual void
-    reset(PiperPluginStub *plugin,
+    reset(PluginStub *plugin,
           Vamp::HostExt::PluginConfiguration config) override {
 
         // Reload the plugin on the server side, and configure it as requested
@@ -302,6 +304,7 @@ private:
     CompletenessChecker *m_completenessChecker; // I own this
 };
 
+}
 }
 
 #endif

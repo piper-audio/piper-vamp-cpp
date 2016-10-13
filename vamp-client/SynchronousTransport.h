@@ -6,6 +6,7 @@
 #include <cstdlib>
 
 namespace piper {
+namespace vampclient {
 
 class MessageCompletenessChecker // interface
 {
@@ -31,6 +32,7 @@ public:
     virtual bool isOK() const = 0;
 };
 
+}
 }
 
 #endif

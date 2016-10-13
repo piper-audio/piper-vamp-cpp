@@ -205,10 +205,11 @@ DIST          = /usr/lib/qt/mkspecs/features/spec_pre.prf \
 		/usr/lib/qt/mkspecs/features/testcase_targets.prf \
 		/usr/lib/qt/mkspecs/features/yacc.prf \
 		/usr/lib/qt/mkspecs/features/lex.prf \
-		client.pro PiperQProcessTransport.h \
-		PiperCapnpClient.h \
-		PiperClient.h \
-		PiperPluginStub.h \
+		client.pro ProcessQtTransport.h \
+		CapnpClient.h \
+		Loader.h \
+		PluginClient.h \
+		PluginStub.h \
 		SynchronousTransport.h client.cpp \
 		../vamp-capnp/piper.capnp.c++
 QMAKE_TARGET  = client
@@ -547,7 +548,7 @@ dist: distdir FORCE
 distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
-	$(COPY_FILE) --parents PiperQProcessTransport.h PiperCapnpClient.h PiperClient.h PiperPluginStub.h SynchronousTransport.h $(DISTDIR)/
+	$(COPY_FILE) --parents ProcessQtTransport.h CapnpClient.h Loader.h PluginClient.h PluginStub.h SynchronousTransport.h $(DISTDIR)/
 	$(COPY_FILE) --parents client.cpp ../vamp-capnp/piper.capnp.c++ $(DISTDIR)/
 
 
@@ -588,11 +589,7 @@ compiler_clean:
 
 ####### Compile
 
-../o/client.o: client.cpp PiperQProcessTransport.h \
-		SynchronousTransport.h \
-		PiperCapnpClient.h \
-		PiperClient.h \
-		PiperPluginStub.h
+../o/client.o: client.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o ../o/client.o client.cpp
 
 ../o/piper.capnp.o: ../vamp-capnp/piper.capnp.c++ ../vamp-capnp/piper.capnp.h

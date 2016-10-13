@@ -1,6 +1,6 @@
 
-#include "PiperQProcessTransport.h"
-#include "PiperCapnpClient.h"
+#include "ProcessQtTransport.h"
+#include "CapnpClient.h"
 
 #include <stdexcept>
 
@@ -9,9 +9,9 @@ using std::endl;
 
 int main(int, char **)
 {
-    piper::PiperQProcessTransport transport("../bin/piper-vamp-server");
-    piper::PiperCapnpClient client(&transport);
-    
+    piper::vampclient::ProcessQtTransport transport("../bin/piper-vamp-server");
+    piper::vampclient::CapnpClient client(&transport);
+
     Vamp::Plugin *plugin = client.load("vamp-example-plugins:zerocrossing", 16, 0);
     if (!plugin->initialise(1, 4, 4)) {
         cerr << "initialisation failed" << endl;

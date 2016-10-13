@@ -1,6 +1,6 @@
 
-#ifndef PIPER_STUB_PLUGIN_H
-#define PIPER_STUB_PLUGIN_H
+#ifndef PIPER_PLUGIN_STUB_H
+#define PIPER_PLUGIN_STUB_H
 
 #include <vamp-hostsdk/Plugin.h>
 #include <vamp-hostsdk/PluginLoader.h>
@@ -9,23 +9,24 @@
 
 #include <cstdint>
 
-#include "PiperClient.h"
+#include "PluginClient.h"
 
-namespace piper { //!!! should be something else
+namespace piper {
+namespace vampclient {
 
-class PiperPluginStub : public Vamp::Plugin
+class PluginStub : public Vamp::Plugin
 {
     enum State {
         Loaded, Configured, Finished
     };
     
 public:
-    PiperPluginStub(PiperPluginClientInterface *client,
-                    std::string pluginKey,
-                    float inputSampleRate,
-                    int adapterFlags,
-                    Vamp::HostExt::PluginStaticData psd,
-                    Vamp::HostExt::PluginConfiguration defaultConfig) :
+    PluginStub(PluginClient *client,
+               std::string pluginKey,
+               float inputSampleRate,
+               int adapterFlags,
+               Vamp::HostExt::PluginStaticData psd,
+               Vamp::HostExt::PluginConfiguration defaultConfig) :
         Plugin(inputSampleRate),
         m_client(client),
         m_key(pluginKey),
@@ -36,7 +37,7 @@ public:
         m_config(defaultConfig)
     { }
 
-    virtual ~PiperPluginStub() {
+    virtual ~PluginStub() {
         if (m_state != Finished) {
 	    (void)m_client->finish(this);
         }
@@ -210,7 +211,7 @@ public:
         return m_client->finish(this);
     }
 
-    // Not Plugin methods, but needed by the PiperClient to support reloads:
+    // Not Plugin methods, but needed by the PluginClient to support reloads:
     
     virtual float getInputSampleRate() const {
         return m_inputSampleRate;
@@ -225,7 +226,7 @@ public:
     }
     
 private:
-    PiperPluginClientInterface *m_client;
+    PluginClient *m_client;
     std::string m_key;
     int m_adapterFlags;
     State m_state;
@@ -235,6 +236,7 @@ private:
     Vamp::HostExt::PluginConfiguration m_config;
 };
 
+}
 }
 
 #endif
