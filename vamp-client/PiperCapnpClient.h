@@ -36,6 +36,28 @@ public:
             throw std::runtime_error("Piper server failed to start");
         }
 
+        Vamp::HostExt::PluginStaticData psd;
+        Vamp::HostExt::PluginConfiguration defaultConfig;
+        PluginHandleMapper::Handle handle =
+            serverLoad(key, inputSampleRate, adapterFlags, psd, defaultConfig);
+
+        Vamp::Plugin *plugin = new PiperStubPlugin(this,
+                                                   key,
+                                                   inputSampleRate,
+                                                   adapterFlags,
+                                                   psd,
+                                                   defaultConfig);
+
+        m_mapper.addPlugin(handle, plugin);
+
+        return plugin;
+    }
+    
+    PluginHandleMapper::Handle
+    serverLoad(std::string key, float inputSampleRate, int adapterFlags,
+               Vamp::HostExt::PluginStaticData &psd,
+               Vamp::HostExt::PluginConfiguration &defaultConfig) {
+
         Vamp::HostExt::LoadRequest request;
         request.pluginKey = key;
         request.inputSampleRate = inputSampleRate;
@@ -48,7 +70,7 @@ public:
         ReqId id = getId();
         builder.getId().setNumber(id);
 
-        auto arr = messageToFlatArray(message);
+        auto arr = capnp::messageToFlatArray(message);
 
         auto responseBuffer = m_transport->call(arr.asChars().begin(),
                                                 arr.asChars().size());
@@ -65,20 +87,9 @@ public:
         checkResponseType(reader, RpcResponse::Response::Which::LOAD, id);
         
         const LoadResponse::Reader &lr = reader.getResponse().getLoad();
-
-        Vamp::HostExt::PluginStaticData psd;
-        Vamp::HostExt::PluginConfiguration defaultConfig;
         VampnProto::readExtractorStaticData(psd, lr.getStaticData());
         VampnProto::readConfiguration(defaultConfig, lr.getDefaultConfiguration());
-        
-        Vamp::Plugin *plugin = new PiperStubPlugin(this,
-                                                   inputSampleRate,
-                                                   psd,
-                                                   defaultConfig);
-
-        m_mapper.addPlugin(lr.getHandle(), plugin);
-
-        return plugin;
+        return lr.getHandle();
     };     
 
 protected:
@@ -102,7 +113,7 @@ protected:
         ReqId id = getId();
         builder.getId().setNumber(id);
         
-        auto arr = messageToFlatArray(message);
+        auto arr = capnp::messageToFlatArray(message);
         auto responseBuffer = m_transport->call(arr.asChars().begin(),
                                                 arr.asChars().size());
 	auto karr = toKJArray(responseBuffer);
@@ -143,7 +154,7 @@ protected:
         ReqId id = getId();
         builder.getId().setNumber(id);
         
-        auto arr = messageToFlatArray(message);
+        auto arr = capnp::messageToFlatArray(message);
         auto responseBuffer = m_transport->call(arr.asChars().begin(),
                                                 arr.asChars().size());
 	auto karr = toKJArray(responseBuffer);
@@ -179,7 +190,7 @@ protected:
         ReqId id = getId();
         builder.getId().setNumber(id);
         
-        auto arr = messageToFlatArray(message);
+        auto arr = capnp::messageToFlatArray(message);
         auto responseBuffer = m_transport->call(arr.asChars().begin(),
                                                 arr.asChars().size());
 	auto karr = toKJArray(responseBuffer);
@@ -203,6 +214,33 @@ protected:
         return pr.features;
     }
 
+    virtual void
+    reset(PiperStubPlugin *plugin,
+          Vamp::HostExt::PluginConfiguration config) override {
+
+        // Reload the plugin on the server side, and configure it as requested
+        
+        if (!m_transport->isOK()) {
+            throw std::runtime_error("Piper server failed to start");
+        }
+
+        if (m_mapper.havePlugin(plugin)) {
+            (void)finish(plugin); // server-side unload
+        }
+
+        Vamp::HostExt::PluginStaticData psd;
+        Vamp::HostExt::PluginConfiguration defaultConfig;
+        PluginHandleMapper::Handle handle =
+            serverLoad(plugin->getPluginKey(),
+                       plugin->getInputSampleRate(),
+                       plugin->getAdapterFlags(),
+                       psd, defaultConfig);
+
+        m_mapper.addPlugin(handle, plugin);
+
+        (void)configure(plugin, config);
+    }
+    
 private:
     AssignedPluginHandleMapper m_mapper;
     ReqId getId() {

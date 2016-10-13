@@ -7,6 +7,8 @@
 #include <sstream>
 #include <stdexcept>
 
+#include <capnp/serialize.h>
+
 #include <map>
 #include <set>
 
@@ -175,6 +177,7 @@ handleRequest(const RequestOrResponse &request)
 	response.loadResponse = loader->loadPlugin(request.loadRequest);
 	if (response.loadResponse.plugin != nullptr) {
 	    mapper.addPlugin(response.loadResponse.plugin);
+            cerr << "loaded plugin, handle = " << mapper.pluginToHandle(response.loadResponse.plugin) << endl;
 	    response.success = true;
 	}
 	break;

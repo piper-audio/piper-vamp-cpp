@@ -8,6 +8,8 @@
 #include <sstream>
 #include <stdexcept>
 
+#include <capnp/serialize.h>
+
 using namespace std;
 using namespace json11;
 using namespace piper;

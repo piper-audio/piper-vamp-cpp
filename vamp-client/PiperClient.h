@@ -26,6 +26,11 @@ protected:
 
     virtual Vamp::Plugin::FeatureSet
     finish(PiperStubPlugin *plugin) = 0;
+
+    virtual
+    void
+    reset(PiperStubPlugin *plugin,
+          Vamp::HostExt::PluginConfiguration config) = 0;
 };
 
 }

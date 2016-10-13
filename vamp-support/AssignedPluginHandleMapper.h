@@ -77,6 +77,10 @@ public:
 	}
 	m_rplugins.erase(p);
     }
+
+    bool havePlugin(Vamp::Plugin *p) {
+        return (m_rplugins.find(p) != m_rplugins.end());
+    }
     
     Handle pluginToHandle(Vamp::Plugin *p) const noexcept {
 	if (m_rplugins.find(p) == m_rplugins.end()) {

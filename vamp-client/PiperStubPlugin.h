@@ -21,11 +21,15 @@ class PiperStubPlugin : public Vamp::Plugin
     
 public:
     PiperStubPlugin(PiperStubPluginClientInterface *client,
+                    std::string pluginKey,
                     float inputSampleRate,
+                    int adapterFlags,
                     Vamp::HostExt::PluginStaticData psd,
                     Vamp::HostExt::PluginConfiguration defaultConfig) :
         Plugin(inputSampleRate),
         m_client(client),
+        m_key(pluginKey),
+        m_adapterFlags(adapterFlags),
         m_state(Loaded),
         m_psd(psd),
         m_defaultConfig(defaultConfig),
@@ -37,7 +41,7 @@ public:
 	    (void)m_client->finish(this);
         }
     }
-
+    
     virtual std::string getIdentifier() const {
         return m_psd.basic.identifier;
     }
@@ -119,8 +123,15 @@ public:
     }
 
     virtual void reset() {
-        //!!! hm, how to deal with this? there is no reset() in Piper!
-        throw "Please do not call this function again.";
+        
+        if (m_state == Loaded) {
+            // reset is a no-op if the plugin hasn't been initialised yet
+            return;
+        }
+        
+        m_client->reset(this, m_config);
+
+        m_state = Configured;
     }
 
     virtual InputDomain getInputDomain() const {
@@ -198,9 +209,25 @@ public:
 
         return m_client->finish(this);
     }
+
+    // Not Plugin methods, but needed by the PiperClient to support reloads:
+    
+    virtual float getInputSampleRate() const {
+        return m_inputSampleRate;
+    }
+
+    virtual std::string getPluginKey() const {
+        return m_key;
+    }
+
+    virtual int getAdapterFlags() const {
+        return m_adapterFlags;
+    }
     
 private:
     PiperStubPluginClientInterface *m_client;
+    std::string m_key;
+    int m_adapterFlags;
     State m_state;
     Vamp::HostExt::PluginStaticData m_psd;
     OutputList m_outputs;
