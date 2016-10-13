@@ -12,7 +12,19 @@ int main(int, char **)
     piper::vampclient::ProcessQtTransport transport("../bin/piper-vamp-server");
     piper::vampclient::CapnpClient client(&transport);
 
-    Vamp::Plugin *plugin = client.load("vamp-example-plugins:zerocrossing", 16, 0);
+    Vamp::HostExt::ListResponse lr = client.listPluginData();
+    cerr << "Plugins available:" << endl;
+    int i = 1;
+    for (const auto &p: lr.available) {
+        cerr << i++ << ". [" << p.pluginKey << "] " << p.basic.name << endl;
+    }
+    
+    Vamp::HostExt::LoadRequest req;
+    req.pluginKey = "vamp-example-plugins:zerocrossing";
+    req.inputSampleRate = 16;
+    Vamp::HostExt::LoadResponse resp = client.loadPlugin(req);
+    Vamp::Plugin *plugin = resp.plugin;
+    
     if (!plugin->initialise(1, 4, 4)) {
         cerr << "initialisation failed" << endl;
     } else {

@@ -496,6 +496,19 @@ public:
     }
 
     static void
+    readListResponse(Vamp::HostExt::ListResponse &lr,
+                     const ListResponse::Reader &r) {
+
+        lr.available.clear();
+        auto pp = r.getAvailable();
+        for (const auto &p: pp) {
+            Vamp::HostExt::PluginStaticData psd;
+            readExtractorStaticData(psd, p);
+            lr.available.push_back(psd);
+        }
+    }
+
+    static void
     buildLoadRequest(LoadRequest::Builder &r,
                      const Vamp::HostExt::LoadRequest &req) {
 
@@ -902,13 +915,7 @@ public:
         if (getRequestResponseType(r) != RRType::List) {
             throw std::logic_error("not a list response");
         }
-        resp.available.clear();
-        auto pp = r.getResponse().getList().getAvailable();
-        for (const auto &p: pp) {
-            Vamp::HostExt::PluginStaticData psd;
-            readExtractorStaticData(psd, p);
-            resp.available.push_back(psd);
-        }
+        readListResponse(resp, r.getResponse().getList());
     }
     
     static void

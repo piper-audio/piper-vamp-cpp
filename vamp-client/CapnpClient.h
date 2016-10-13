@@ -53,71 +53,66 @@ public:
     //!!! list and load are supposed to be called by application code,
     //!!! but the rest are only supposed to be called by the plugin --
     //!!! sort out the api here
-    
-    Vamp::Plugin *
-    load(std::string key, float inputSampleRate, int adapterFlags) {
+
+    // Loader methods:
+
+    Vamp::HostExt::ListResponse
+    listPluginData() override {
 
         if (!m_transport->isOK()) {
             throw std::runtime_error("Piper server failed to start");
         }
 
-        Vamp::HostExt::PluginStaticData psd;
-        Vamp::HostExt::PluginConfiguration defaultConfig;
-        PluginHandleMapper::Handle handle =
-            serverLoad(key, inputSampleRate, adapterFlags, psd, defaultConfig);
-
-        Vamp::Plugin *plugin = new PluginStub(this,
-                                                   key,
-                                                   inputSampleRate,
-                                                   adapterFlags,
-                                                   psd,
-                                                   defaultConfig);
-
-        m_mapper.addPlugin(handle, plugin);
-
-        return plugin;
-    }
-    
-    PluginHandleMapper::Handle
-    serverLoad(std::string key, float inputSampleRate, int adapterFlags,
-               Vamp::HostExt::PluginStaticData &psd,
-               Vamp::HostExt::PluginConfiguration &defaultConfig) {
-
-        Vamp::HostExt::LoadRequest request;
-        request.pluginKey = key;
-        request.inputSampleRate = inputSampleRate;
-        request.adapterFlags = adapterFlags;
-
         capnp::MallocMessageBuilder message;
         RpcRequest::Builder builder = message.initRoot<RpcRequest>();
-
-        VampnProto::buildRpcRequest_Load(builder, request);
+        VampnProto::buildRpcRequest_List(builder);
         ReqId id = getId();
         builder.getId().setNumber(id);
 
+        //!!! pure boilerplate:
         auto arr = capnp::messageToFlatArray(message);
-
         auto responseBuffer = m_transport->call(arr.asChars().begin(),
                                                 arr.asChars().size());
-        
-        //!!! ... --> will also need some way to kill this process
-        //!!! (from another thread)
-
 	auto karr = toKJArray(responseBuffer);
         capnp::FlatArrayMessageReader responseMessage(karr);
         RpcResponse::Reader reader = responseMessage.getRoot<RpcResponse>();
 
-        //!!! handle (explicit) error case
+        checkResponseType(reader, RpcResponse::Response::Which::LIST, id);
 
-        checkResponseType(reader, RpcResponse::Response::Which::LOAD, id);
-        
-        const LoadResponse::Reader &lr = reader.getResponse().getLoad();
-        VampnProto::readExtractorStaticData(psd, lr.getStaticData());
-        VampnProto::readConfiguration(defaultConfig, lr.getDefaultConfiguration());
-        return lr.getHandle();
-    };     
+        Vamp::HostExt::ListResponse lr;
+        VampnProto::readListResponse(lr, reader.getResponse().getList());
+        return lr;
+    }
+    
+    Vamp::HostExt::LoadResponse
+    loadPlugin(const Vamp::HostExt::LoadRequest &req) override {
 
-protected:
+        if (!m_transport->isOK()) {
+            throw std::runtime_error("Piper server failed to start");
+        }
+
+        Vamp::HostExt::LoadResponse resp;
+        PluginHandleMapper::Handle handle = serverLoad(req.pluginKey,
+                                                       req.inputSampleRate,
+                                                       req.adapterFlags,
+                                                       resp.staticData,
+                                                       resp.defaultConfiguration);
+
+        Vamp::Plugin *plugin = new PluginStub(this,
+                                              req.pluginKey,
+                                              req.inputSampleRate,
+                                              req.adapterFlags,
+                                              resp.staticData,
+                                              resp.defaultConfiguration);
+
+        m_mapper.addPlugin(handle, plugin);
+
+        resp.plugin = plugin;
+        return resp;
+    }
+
+    // PluginClient methods:
+    
     virtual
     Vamp::Plugin::OutputList
     configure(PluginStub *plugin,
@@ -298,6 +293,45 @@ private:
             throw std::runtime_error("Wrong response id");
         }
     }
+    
+    PluginHandleMapper::Handle
+    serverLoad(std::string key, float inputSampleRate, int adapterFlags,
+               Vamp::HostExt::PluginStaticData &psd,
+               Vamp::HostExt::PluginConfiguration &defaultConfig) {
+
+        Vamp::HostExt::LoadRequest request;
+        request.pluginKey = key;
+        request.inputSampleRate = inputSampleRate;
+        request.adapterFlags = adapterFlags;
+
+        capnp::MallocMessageBuilder message;
+        RpcRequest::Builder builder = message.initRoot<RpcRequest>();
+
+        VampnProto::buildRpcRequest_Load(builder, request);
+        ReqId id = getId();
+        builder.getId().setNumber(id);
+
+        auto arr = capnp::messageToFlatArray(message);
+
+        auto responseBuffer = m_transport->call(arr.asChars().begin(),
+                                                arr.asChars().size());
+        
+        //!!! ... --> will also need some way to kill this process
+        //!!! (from another thread)
+
+	auto karr = toKJArray(responseBuffer);
+        capnp::FlatArrayMessageReader responseMessage(karr);
+        RpcResponse::Reader reader = responseMessage.getRoot<RpcResponse>();
+
+        //!!! handle (explicit) error case
+
+        checkResponseType(reader, RpcResponse::Response::Which::LOAD, id);
+        
+        const LoadResponse::Reader &lr = reader.getResponse().getLoad();
+        VampnProto::readExtractorStaticData(psd, lr.getStaticData());
+        VampnProto::readConfiguration(defaultConfig, lr.getDefaultConfiguration());
+        return lr.getHandle();
+    };     
 
 private:
     SynchronousTransport *m_transport; //!!! I don't own this, but should I?
