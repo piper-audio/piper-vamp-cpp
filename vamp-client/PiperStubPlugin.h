@@ -1,4 +1,7 @@
 
+#ifndef PIPER_STUB_PLUGIN_H
+#define PIPER_STUB_PLUGIN_H
+
 #include <vamp-hostsdk/Plugin.h>
 #include <vamp-hostsdk/PluginLoader.h>
 #include <vamp-hostsdk/PluginStaticData.h>
@@ -6,27 +9,9 @@
 
 #include <cstdint>
 
+#include "PiperClient.h"
+
 namespace piper { //!!! should be something else
-
-class PiperStubPlugin;
-
-class PiperClientStubRequirements
-{
-public:
-    virtual
-    Vamp::Plugin::OutputList
-    configure(PiperStubPlugin *plugin,
-              Vamp::HostExt::PluginConfiguration config) = 0;
-    
-    virtual
-    Vamp::Plugin::FeatureSet
-    process(PiperStubPlugin *plugin,
-            std::vector<std::vector<float> > inputBuffers,
-            Vamp::RealTime timestamp) = 0;
-
-    virtual Vamp::Plugin::FeatureSet
-    finish(PiperStubPlugin *plugin) = 0;
-};
 
 class PiperStubPlugin : public Vamp::Plugin
 {
@@ -35,7 +20,7 @@ class PiperStubPlugin : public Vamp::Plugin
     };
     
 public:
-    PiperStubPlugin(PiperClientStubRequirements *client,
+    PiperStubPlugin(PiperStubPluginClientInterface *client,
                     float inputSampleRate,
                     Vamp::HostExt::PluginStaticData psd,
                     Vamp::HostExt::PluginConfiguration defaultConfig) :
@@ -215,7 +200,7 @@ public:
     }
     
 private:
-    PiperClientStubRequirements *m_client;
+    PiperStubPluginClientInterface *m_client;
     State m_state;
     Vamp::HostExt::PluginStaticData m_psd;
     OutputList m_outputs;
@@ -223,6 +208,6 @@ private:
     Vamp::HostExt::PluginConfiguration m_config;
 };
 
-
 }
 
+#endif

@@ -25,5 +25,15 @@ win32-x-g++:QMAKE_LFLAGS += -Wl,-subsystem,console
 TARGET = client
 
 SOURCES += \
-	client.cpp ../vamp-capnp/piper.capnp.c++
+        client.cpp \
+        ../vamp-capnp/piper.capnp.c++
+        
+HEADERS += \
+        CapnpMessageCompletenessChecker.h \
+        PipedQProcessTransport.h \
+        PiperCapnpClient.h \
+        PiperClient.h \
+        PiperStubPlugin.h \
+        SynchronousTransport.h
+        
 

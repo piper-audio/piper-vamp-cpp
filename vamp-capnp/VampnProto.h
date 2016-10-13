@@ -35,7 +35,7 @@
 #include "piper.capnp.h"
 
 #include <capnp/message.h>
-#include <capnp/serialize-packed.h>
+//#include <capnp/serialize-packed.h>
 
 #include <vamp-hostsdk/Plugin.h>
 #include <vamp-hostsdk/PluginLoader.h>
