@@ -15,6 +15,14 @@
 namespace piper_vamp {
 namespace client {
 
+/**
+ * Client for a request-response Piper server, i.e. using the
+ * RpcRequest/RpcResponse structures with a single process call rather
+ * than having individual RPC methods, with a synchronous transport
+ * such as a subprocess pipe arrangement. Only one request can be
+ * handled at a time. This class is thread-safe if and only if it is
+ * constructed with a thread-safe SynchronousTransport implementation.
+ */
 class CapnpRRClient : public PluginClient,
 		      public Loader
 {

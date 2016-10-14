@@ -6,12 +6,21 @@
 
 #include <QProcess>
 #include <QString>
+#include <QMutex>
 
 #include <iostream>
 
 namespace piper_vamp {
 namespace client {
 
+/**
+ * A SynchronousTransport implementation that spawns a sub-process
+ * using Qt's QProcess abstraction and talks to it via stdin/stdout
+ * channels. Calls are completely serialized; the protocol only
+ * supports one call in process at a time, and therefore the transport
+ * only allows one at a time. This class is thread-safe because it
+ * serializes explicitly using a mutex.
+ */
 class ProcessQtTransport : public SynchronousTransport
 {
 public:
@@ -55,6 +64,8 @@ public:
     std::vector<char>
     call(const char *ptr, size_t size) override {
 
+	QMutexLocker locker(&m_mutex);
+	
         if (!m_completenessChecker) {
             throw std::logic_error("No completeness checker set on transport");
         }
@@ -88,6 +99,7 @@ public:
 private:
     MessageCompletenessChecker *m_completenessChecker; //!!! I don't own this (currently)
     QProcess *m_process; // I own this
+    QMutex m_mutex;
 };
 
 }
