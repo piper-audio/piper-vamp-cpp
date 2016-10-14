@@ -13,11 +13,12 @@ namespace client {
 class AutoPlugin : public Vamp::Plugin
 {
 public:
-    AutoPlugin(std::string pluginKey,
+    AutoPlugin(std::string serverName,
+	       std::string pluginKey,
 	       float inputSampleRate,
 	       int adapterFlags) :
 	Vamp::Plugin(inputSampleRate),
-	m_transport("../bin/piper-vamp-server"), //!!!*£*$&"$*"
+	m_transport(serverName),
 	m_client(&m_transport)
     {
 	LoadRequest req;

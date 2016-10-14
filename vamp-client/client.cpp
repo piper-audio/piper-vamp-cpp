@@ -62,7 +62,8 @@ int main(int, char **)
 
     // Let's try a crazy AutoPlugin
 
-    piper_vamp::client::AutoPlugin ap("vamp-example-plugins:zerocrossing", 16, 0);
+    piper_vamp::client::AutoPlugin ap("../bin/piper-vamp-server",
+				      "vamp-example-plugins:zerocrossing", 16, 0);
     if (!ap.isOK()) {
 	cerr << "AutoPlugin creation failed" << endl;
     } else {
