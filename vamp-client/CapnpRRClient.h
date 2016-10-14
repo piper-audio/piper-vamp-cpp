@@ -285,9 +285,15 @@ private:
                       ReqId id) {
         
         if (r.getResponse().which() != type) {
+	    std::cerr << "checkResponseType: wrong response type (received "
+		      << r.getResponse().which() << ", expected " << type << ")"
+		      << std::endl;
             throw std::runtime_error("Wrong response type");
         }
         if (ReqId(r.getId().getNumber()) != id) {
+	    std::cerr << "checkResponseType: wrong response id (received "
+		      << r.getId().getNumber() << ", expected " << id << ")"
+		      << std::endl;
             throw std::runtime_error("Wrong response id");
         }
     }

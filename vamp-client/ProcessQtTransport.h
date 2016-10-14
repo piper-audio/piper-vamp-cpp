@@ -24,12 +24,12 @@ namespace client {
 class ProcessQtTransport : public SynchronousTransport
 {
 public:
-    ProcessQtTransport(QString processName) :
+    ProcessQtTransport(std::string processName) :
         m_completenessChecker(0) {
         m_process = new QProcess();
         m_process->setReadChannel(QProcess::StandardOutput);
         m_process->setProcessChannelMode(QProcess::ForwardedErrorChannel);
-        m_process->start(processName);
+        m_process->start(QString::fromStdString(processName));
         if (!m_process->waitForStarted()) {
             std::cerr << "server failed to start" << std::endl;
             delete m_process;
@@ -77,10 +77,11 @@ public:
         
         while (!complete) {
 
-            m_process->waitForReadyRead(1000);
             qint64 byteCount = m_process->bytesAvailable();
 
-            if (!byteCount) {
+	    if (!byteCount) {
+		std::cerr << "waiting for data from server..." << endl;
+		m_process->waitForReadyRead(1000);
                 if (m_process->state() == QProcess::NotRunning) {
                     std::cerr << "ERROR: Subprocess exited: Load failed" << std::endl;
                     throw std::runtime_error("Piper server exited unexpectedly");
