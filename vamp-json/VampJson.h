@@ -548,8 +548,8 @@ public:
         for (const std::string &c: d.category) cat.push_back(c);
         jo["category"] = cat;
 
-        jo["minChannelCount"] = d.minChannelCount;
-        jo["maxChannelCount"] = d.maxChannelCount;
+        jo["minChannelCount"] = int(d.minChannelCount);
+        jo["maxChannelCount"] = int(d.maxChannelCount);
 
         json11::Json::array params;
         Vamp::PluginBase::ParameterList vparams = d.parameters;

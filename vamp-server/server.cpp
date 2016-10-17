@@ -13,6 +13,8 @@
 #include <map>
 #include <set>
 
+#include <unistd.h> // getpid for logging
+
 using namespace std;
 using namespace piper_vamp;
 using namespace Vamp;
@@ -22,6 +24,8 @@ using namespace Vamp;
 //  - Use Vamp C API (vamp.h) directly rather than converting to C++
 //!!! Doing the above for process() and finish() alone would be a good start
 
+static int pid = getpid();
+    
 void usage()
 {
     string myname = "piper-vamp-server";
@@ -180,7 +184,7 @@ handleRequest(const RequestOrResponse &request)
 	response.loadResponse = LoaderRequests().loadPlugin(request.loadRequest);
 	if (response.loadResponse.plugin != nullptr) {
 	    mapper.addPlugin(response.loadResponse.plugin);
-            cerr << "loaded plugin, handle = " << mapper.pluginToHandle(response.loadResponse.plugin) << endl;
+            cerr << "piper-vamp-server " << pid << ": loaded plugin, handle = " << mapper.pluginToHandle(response.loadResponse.plugin) << endl;
 	    response.success = true;
 	}
 	break;
@@ -262,7 +266,7 @@ handleRequest(const RequestOrResponse &request)
     return response;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char **)
 {
     if (argc != 1) {
 	usage();
@@ -276,36 +280,36 @@ int main(int argc, char **argv)
 
 	    request = readRequestCapnp();
 
-	    cerr << "piper-vamp-server: request received, of type "
+	    cerr << "piper-vamp-server " << pid << ": request received, of type "
 		 << int(request.type)
 		 << endl;
 	    
 	    // NotValid without an exception indicates EOF:
 	    if (request.type == RRType::NotValid) {
-		cerr << "piper-vamp-server: eof reached, exiting" << endl;
+		cerr << "piper-vamp-server " << pid << ": eof reached, exiting" << endl;
 		break;
 	    }
 
 	    RequestOrResponse response = handleRequest(request);
             response.id = request.id;
 
-	    cerr << "piper-vamp-server: request handled, writing response"
+	    cerr << "piper-vamp-server " << pid << ": request handled, writing response"
 		 << endl;
 	    
 	    writeResponseCapnp(response);
 
-	    cerr << "piper-vamp-server: response written" << endl;
+	    cerr << "piper-vamp-server " << pid << ": response written" << endl;
 
 	    if (request.type == RRType::Finish) {
 		auto h = mapper.pluginToHandle(request.finishRequest.plugin);
-                cerr << "deleting the plugin with handle " << h << endl;
+                cerr << "piper-vamp-server " << pid << ": deleting the plugin with handle " << h << endl;
 		mapper.removePlugin(h);
 		delete request.finishRequest.plugin;
 	    }
 	    
 	} catch (std::exception &e) {
 
-	    cerr << "piper-vamp-server: error: " << e.what() << endl;
+	    cerr << "piper-vamp-server " << pid << ": error: " << e.what() << endl;
 
 	    writeExceptionCapnp(e, request.type);
 	    

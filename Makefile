@@ -2,7 +2,7 @@
 VAMPSDK_DIR	:= ../vamp-plugin-sdk
 PIPER_DIR	:= ../piper
 
-CXXFLAGS	:= -Wall -Werror -g3 -std=c++11
+CXXFLAGS	:= -Wall -Wextra -Werror -g3 -std=c++11
 INCFLAGS	:= -I$(VAMPSDK_DIR) -I. -I/usr/local/include
 
 LDFLAGS		:= $(VAMPSDK_DIR)/libvamp-hostsdk.a -L/usr/local/lib -lcapnp -lkj -ldl
