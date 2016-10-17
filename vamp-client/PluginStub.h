@@ -110,9 +110,9 @@ public:
             throw std::logic_error("Plugin has already been initialised");
         }
         
-        m_config.channelCount = inputChannels;
-        m_config.stepSize = stepSize;
-        m_config.blockSize = blockSize;
+        m_config.channelCount = int(inputChannels);
+        m_config.stepSize = int(stepSize);
+        m_config.blockSize = int(blockSize);
 
         m_outputs = m_client->configure(this, m_config);
 

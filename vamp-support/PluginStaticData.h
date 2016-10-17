@@ -73,8 +73,8 @@ public:
     std::string copyright;
     int pluginVersion;
     std::vector<std::string> category;
-    int minChannelCount;
-    int maxChannelCount;
+    size_t minChannelCount;
+    size_t maxChannelCount;
     Vamp::PluginBase::ParameterList parameters;
     Vamp::PluginBase::ProgramList programs;
     Vamp::Plugin::InputDomain inputDomain;

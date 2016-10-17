@@ -17,6 +17,11 @@ using namespace std;
 using namespace piper_vamp;
 using namespace Vamp;
 
+//!!! This could be faster and lighter:
+//  - Use Capnp structures directly rather than converting to vamp-support ones
+//  - Use Vamp C API (vamp.h) directly rather than converting to C++
+//!!! Doing the above for process() and finish() alone would be a good start
+
 void usage()
 {
     string myname = "piper-vamp-server";

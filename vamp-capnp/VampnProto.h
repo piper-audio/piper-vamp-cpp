@@ -143,10 +143,10 @@ public:
 
         b.setHasFixedBinCount(od.hasFixedBinCount);
         if (od.hasFixedBinCount) {
-            b.setBinCount(od.binCount);
+            b.setBinCount(int(od.binCount));
             if (od.binNames.size() > 0) {
-                auto binNames = b.initBinNames(od.binNames.size());
-                for (size_t i = 0; i < od.binNames.size(); ++i) {
+                auto binNames = b.initBinNames(unsigned(od.binNames.size()));
+                for (int i = 0; i < int(od.binNames.size()); ++i) {
                     binNames.set(i, od.binNames[i]);
                 }
             }
@@ -232,8 +232,8 @@ public:
         }
         
         if (pd.valueNames.size() > 0) {
-            auto valueNames = b.initValueNames(pd.valueNames.size());
-            for (size_t i = 0; i < pd.valueNames.size(); ++i) {
+            auto valueNames = b.initValueNames(unsigned(pd.valueNames.size()));
+            for (int i = 0; i < int(pd.valueNames.size()); ++i) {
                 valueNames.set(i, pd.valueNames[i]);
             }
         }
@@ -282,8 +282,8 @@ public:
         b.setLabel(f.label);
 
         if (f.values.size() > 0) {
-            auto values = b.initFeatureValues(f.values.size());
-            for (size_t i = 0; i < f.values.size(); ++i) {
+            auto values = b.initFeatureValues(unsigned(f.values.size()));
+            for (int i = 0; i < int(f.values.size()); ++i) {
                 values.set(i, f.values[i]);
             }
         }
@@ -317,13 +317,13 @@ public:
                     const Vamp::Plugin::FeatureSet &fs,
                     const PluginOutputIdMapper &omapper) {
 
-        auto featureset = b.initFeaturePairs(fs.size());
+        auto featureset = b.initFeaturePairs(unsigned(fs.size()));
         int ix = 0;
         for (const auto &fsi : fs) {
             auto fspair = featureset[ix];
             fspair.setOutput(omapper.indexToId(fsi.first));
-            auto featurelist = fspair.initFeatures(fsi.second.size());
-            for (size_t j = 0; j < fsi.second.size(); ++j) {
+            auto featurelist = fspair.initFeatures(unsigned(fsi.second.size()));
+            for (int j = 0; j < int(fsi.second.size()); ++j) {
                 auto feature = featurelist[j];
                 buildFeature(feature, fsi.second[j]);
             }
@@ -387,32 +387,32 @@ public:
         b.setCopyright(d.copyright);
         b.setVersion(d.pluginVersion);
 
-        auto clist = b.initCategory(d.category.size());
-        for (size_t i = 0; i < d.category.size(); ++i) {
+        auto clist = b.initCategory(unsigned(d.category.size()));
+        for (int i = 0; i < int(d.category.size()); ++i) {
             clist.set(i, d.category[i]);
         }
 
-        b.setMinChannelCount(d.minChannelCount);
-        b.setMaxChannelCount(d.maxChannelCount);
+        b.setMinChannelCount(int(d.minChannelCount));
+        b.setMaxChannelCount(int(d.maxChannelCount));
 
         const auto &vparams = d.parameters;
-        auto plist = b.initParameters(vparams.size());
-        for (size_t i = 0; i < vparams.size(); ++i) {
+        auto plist = b.initParameters(unsigned(vparams.size()));
+        for (int i = 0; i < int(vparams.size()); ++i) {
             auto pd = plist[i];
             buildParameterDescriptor(pd, vparams[i]);
         }
         
         const auto &vprogs = d.programs;
-        auto pglist = b.initPrograms(vprogs.size());
-        for (size_t i = 0; i < vprogs.size(); ++i) {
+        auto pglist = b.initPrograms(unsigned(vprogs.size()));
+        for (int i = 0; i < int(vprogs.size()); ++i) {
             pglist.set(i, vprogs[i]);
         }
 
         b.setInputDomain(fromInputDomain(d.inputDomain));
 
         const auto &vouts = d.basicOutputInfo;
-        auto olist = b.initBasicOutputInfo(vouts.size());
-        for (size_t i = 0; i < vouts.size(); ++i) {
+        auto olist = b.initBasicOutputInfo(unsigned(vouts.size()));
+        for (int i = 0; i < int(vouts.size()); ++i) {
             auto od = olist[i];
             buildBasicDescriptor(od, vouts[i]);
         }
@@ -469,7 +469,7 @@ public:
                        const PluginConfiguration &c) {
 
         const auto &vparams = c.parameterValues;
-        auto params = b.initParameterValues(vparams.size());
+        auto params = b.initParameterValues(unsigned(vparams.size()));
         int i = 0;
         for (const auto &pp : vparams) {
             auto param = params[i++];
@@ -529,8 +529,8 @@ public:
             flags.push_back(piper::AdapterFlag::ADAPT_BUFFER_SIZE);
         }
 
-        auto f = r.initAdapterFlags(flags.size());
-        for (size_t i = 0; i < flags.size(); ++i) {
+        auto f = r.initAdapterFlags(unsigned(flags.size()));
+        for (int i = 0; i < int(flags.size()); ++i) {
             f.set(i, flags[i]);
         }
     }
@@ -608,8 +608,8 @@ public:
                                const PluginHandleMapper &pmapper) {
 
         b.setHandle(pmapper.pluginToHandle(cr.plugin));
-        auto olist = b.initOutputs(cr.outputs.size());
-        for (size_t i = 0; i < cr.outputs.size(); ++i) {
+        auto olist = b.initOutputs(unsigned(cr.outputs.size()));
+        for (int i = 0; i < int(cr.outputs.size()); ++i) {
             auto od = olist[i];
             buildOutputDescriptor(od, cr.outputs[i]);
         }
@@ -637,8 +637,8 @@ public:
 
         auto t = b.initTimestamp();
         buildRealTime(t, timestamp);
-        auto vv = b.initInputBuffers(buffers.size());
-        for (size_t ch = 0; ch < buffers.size(); ++ch) {
+        auto vv = b.initInputBuffers(unsigned(buffers.size()));
+        for (int ch = 0; ch < int(buffers.size()); ++ch) {
             const int n = int(buffers[ch].size());
             vv.init(ch, n);
             auto v = vv[ch];
@@ -739,8 +739,8 @@ public:
                           const ListResponse &resp) {
 
         auto r = b.getResponse().initList();
-        auto p = r.initAvailable(resp.available.size());
-        for (size_t i = 0; i < resp.available.size(); ++i) {
+        auto p = r.initAvailable(unsigned(resp.available.size()));
+        for (int i = 0; i < int(resp.available.size()); ++i) {
             auto pd = p[i];
             buildExtractorStaticData(pd, resp.available[i]);
         }
