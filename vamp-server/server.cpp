@@ -13,7 +13,14 @@
 #include <map>
 #include <set>
 
-#include <unistd.h> // getpid for logging
+// pid for logging
+#ifdef _WIN32
+#include <process.h>
+static int pid = _getpid();
+#else
+#include <unistd.h>
+static int pid = getpid();
+#endif
 
 using namespace std;
 using namespace piper_vamp;
@@ -24,8 +31,6 @@ using namespace Vamp;
 //  - Use Vamp C API (vamp.h) directly rather than converting to C++
 //!!! Doing the above for process() and finish() alone would be a good start
 
-static int pid = getpid();
-    
 void usage()
 {
     string myname = "piper-vamp-server";
