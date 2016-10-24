@@ -90,14 +90,14 @@ public:
 
 	int defaultChannels = 0;
 	if (plugin->getMinChannelCount() == plugin->getMaxChannelCount()) {
-	    defaultChannels = plugin->getMinChannelCount();
+	    defaultChannels = int(plugin->getMinChannelCount());
 	}
 	
 	response.defaultConfiguration = PluginConfiguration::fromPlugin
 	    (plugin,
 	     defaultChannels,
-	     plugin->getPreferredStepSize(),
-	     plugin->getPreferredBlockSize());
+	     int(plugin->getPreferredStepSize()),
+	     int(plugin->getPreferredBlockSize()));
 	
 	return response;
     }

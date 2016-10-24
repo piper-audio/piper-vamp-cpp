@@ -80,7 +80,7 @@ public:
             qint64 byteCount = m_process->bytesAvailable();
 
 	    if (!byteCount) {
-		std::cerr << "waiting for data from server..." << endl;
+		std::cerr << "waiting for data from server..." << std::endl;
 		m_process->waitForReadyRead(1000);
                 if (m_process->state() == QProcess::NotRunning) {
                     std::cerr << "ERROR: Subprocess exited: Load failed" << std::endl;

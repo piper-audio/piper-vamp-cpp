@@ -26,7 +26,7 @@ TARGET = client
 
 SOURCES += \
         client.cpp \
-        ../vamp-capnp/piper.capnp.c++
+        ../vamp-capnp/piper-capnp.cpp
         
 HEADERS += \
         ProcessQtTransport.h \
