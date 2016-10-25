@@ -30,22 +30,24 @@ public:
         m_process = new QProcess();
         m_process->setReadChannel(QProcess::StandardOutput);
         m_process->setProcessChannelMode(QProcess::ForwardedErrorChannel);
-        m_process->start(QString::fromStdString(processName));
+        m_process->start(processName.c_str());
         if (!m_process->waitForStarted()) {
-            QProcess::ProcessError err = m_process->error();
-	    if (err == QProcess::FailedToStart) {
-                std::cerr << "Unable to start server process " << processName
-                          << std::endl;
-            } else if (err == QProcess::Crashed) {
-                std::cerr << "Server process " << processName
-                          << " crashed on startup" << std::endl;
-            } else {
-                std::cerr << "Server process " << processName
-                          << " failed on startup with error code "
-                          << err << std::endl;
+            if (m_process->state() == QProcess::NotRunning) {
+                QProcess::ProcessError err = m_process->error();
+                if (err == QProcess::FailedToStart) {
+                    std::cerr << "Unable to start server process "
+                              << processName << std::endl;
+                } else if (err == QProcess::Crashed) {
+                    std::cerr << "Server process " << processName
+                              << " crashed on startup" << std::endl;
+                } else {
+                    std::cerr << "Server process " << processName
+                              << " failed on startup with error code "
+                              << err << std::endl;
+                }
+                delete m_process;
+                m_process = nullptr;
             }
-            delete m_process;
-            m_process = nullptr;
         }
     }
 
