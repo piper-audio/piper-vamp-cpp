@@ -1,3 +1,4 @@
+/* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 
 #ifndef PIPER_CAPNP_CLIENT_H
 #define PIPER_CAPNP_CLIENT_H
@@ -286,7 +287,8 @@ private:
         
         if (r.getResponse().which() != type) {
 	    std::cerr << "checkResponseType: wrong response type (received "
-		      << r.getResponse().which() << ", expected " << type << ")"
+		      << int(r.getResponse().which()) << ", expected "
+		      << int(type) << ")"
 		      << std::endl;
             throw std::runtime_error("Wrong response type");
         }

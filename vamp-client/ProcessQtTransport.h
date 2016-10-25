@@ -1,4 +1,5 @@
-
+/* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
+ 
 #ifndef PIPER_PROCESS_QT_TRANSPORT_H
 #define PIPER_PROCESS_QT_TRANSPORT_H
 
@@ -31,7 +32,18 @@ public:
         m_process->setProcessChannelMode(QProcess::ForwardedErrorChannel);
         m_process->start(QString::fromStdString(processName));
         if (!m_process->waitForStarted()) {
-            std::cerr << "server failed to start" << std::endl;
+            QProcess::ProcessError err = m_process->error();
+	    if (err == QProcess::FailedToStart) {
+                std::cerr << "Unable to start server process " << processName
+                          << std::endl;
+            } else if (err == QProcess::Crashed) {
+                std::cerr << "Server process " << processName
+                          << " crashed on startup" << std::endl;
+            } else {
+                std::cerr << "Server process " << processName
+                          << " failed on startup with error code "
+                          << err << std::endl;
+            }
             delete m_process;
             m_process = nullptr;
         }
@@ -51,7 +63,7 @@ public:
     }
 
     void
-    setCompletenessChecker(MessageCompletenessChecker *checker) {
+    setCompletenessChecker(MessageCompletenessChecker *checker) override {
         //!!! ownership?
         m_completenessChecker = checker;
     }
