@@ -277,6 +277,8 @@ int main(int argc, char **)
 	usage();
     }
 
+    cerr << "piper-vamp-server: ready" << endl;
+    
     while (true) {
 
 	RequestOrResponse request;
