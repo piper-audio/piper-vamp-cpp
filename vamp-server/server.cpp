@@ -605,8 +605,10 @@ int main(int argc, char **argv)
             }
 
             writeException(format, e, request.type);
-            
-            exit(1);
+
+            //!!! some exceptions should not be continued after,
+            //!  but json/capnp parser ones should
+            //exit(1);
         }
     }
 
