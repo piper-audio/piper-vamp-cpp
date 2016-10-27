@@ -59,8 +59,13 @@ public:
         req.pluginKey = pluginKey;
         req.inputSampleRate = inputSampleRate;
         req.adapterFlags = adapterFlags;
-        LoadResponse resp = m_client.loadPlugin(req);
-        m_plugin = resp.plugin;
+        try {
+            LoadResponse resp = m_client.loadPlugin(req);
+            m_plugin = resp.plugin;
+        } catch (ServerCrashed c) {
+            std::cerr << c.what() << std::endl;
+            m_plugin = 0;
+        }
     }
 
     virtual ~AutoPlugin() {

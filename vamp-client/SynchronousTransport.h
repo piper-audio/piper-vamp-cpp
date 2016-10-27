@@ -38,6 +38,7 @@
 
 #include <vector>
 #include <cstdlib>
+#include <stdexcept>
 
 namespace piper_vamp {
 namespace client {
@@ -48,6 +49,12 @@ public:
     virtual ~MessageCompletenessChecker() = default;
     
     virtual bool isComplete(const std::vector<char> &message) const = 0;
+};
+
+class ServerCrashed : public std::runtime_error
+{
+public:
+    ServerCrashed() : std::runtime_error("Piper server exited unexpectedly") {}
 };
 
 class SynchronousTransport // interface

@@ -142,8 +142,7 @@ public:
                         std::cerr << "Server failed during request with error code "
                                   << err << std::endl;
                     }
-                    //!!! + catch
-                    throw std::runtime_error("Piper server exited unexpectedly");
+                    throw ServerCrashed();
                 }
             } else {
                 size_t formerSize = buffer.size();
