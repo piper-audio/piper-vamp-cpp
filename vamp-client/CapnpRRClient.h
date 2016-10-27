@@ -1,4 +1,37 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
+/*
+  Piper C++
+
+  An API for audio analysis and feature extraction plugins.
+
+  Centre for Digital Music, Queen Mary, University of London.
+  Copyright 2006-2016 Chris Cannam and QMUL.
+  
+  Permission is hereby granted, free of charge, to any person
+  obtaining a copy of this software and associated documentation
+  files (the "Software"), to deal in the Software without
+  restriction, including without limitation the rights to use, copy,
+  modify, merge, publish, distribute, sublicense, and/or sell copies
+  of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be
+  included in all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR
+  ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+  Except as contained in this notice, the names of the Centre for
+  Digital Music; Queen Mary, University of London; and Chris Cannam
+  shall not be used in advertising or otherwise to promote the sale,
+  use or other dealings in this Software without prior written
+  authorization.
+*/
 
 #ifndef PIPER_CAPNP_CLIENT_H
 #define PIPER_CAPNP_CLIENT_H
@@ -25,7 +58,7 @@ namespace client {
  * constructed with a thread-safe SynchronousTransport implementation.
  */
 class CapnpRRClient : public PluginClient,
-		      public Loader
+                      public Loader
 {
     // unsigned to avoid undefined behaviour on possible wrap
     typedef uint32_t ReqId;
@@ -73,12 +106,12 @@ public:
         }
 
         capnp::MallocMessageBuilder message;
-	piper::RpcRequest::Builder builder = message.initRoot<piper::RpcRequest>();
+        piper::RpcRequest::Builder builder = message.initRoot<piper::RpcRequest>();
         VampnProto::buildRpcRequest_List(builder);
         ReqId id = getId();
         builder.getId().setNumber(id);
 
-	auto karr = call(message);
+        auto karr = call(message);
 
         capnp::FlatArrayMessageReader responseMessage(karr);
         piper::RpcResponse::Reader reader = responseMessage.getRoot<piper::RpcResponse>();
@@ -139,7 +172,7 @@ public:
         ReqId id = getId();
         builder.getId().setNumber(id);
 
-	auto karr = call(message);
+        auto karr = call(message);
 
         capnp::FlatArrayMessageReader responseMessage(karr);
         piper::RpcResponse::Reader reader = responseMessage.getRoot<piper::RpcResponse>();
@@ -174,10 +207,10 @@ public:
         capnp::MallocMessageBuilder message;
         piper::RpcRequest::Builder builder = message.initRoot<piper::RpcRequest>();
         VampnProto::buildRpcRequest_Process(builder, request, m_mapper);
-	ReqId id = getId();
+        ReqId id = getId();
         builder.getId().setNumber(id);
 
-	auto karr = call(message);
+        auto karr = call(message);
 
         capnp::FlatArrayMessageReader responseMessage(karr);
         piper::RpcResponse::Reader reader = responseMessage.getRoot<piper::RpcResponse>();
@@ -211,7 +244,7 @@ public:
         ReqId id = getId();
         builder.getId().setNumber(id);
         
-	auto karr = call(message);
+        auto karr = call(message);
 
         capnp::FlatArrayMessageReader responseMessage(karr);
         piper::RpcResponse::Reader reader = responseMessage.getRoot<piper::RpcResponse>();
@@ -227,8 +260,8 @@ public:
 
         m_mapper.removePlugin(m_mapper.pluginToHandle(plugin));
 
-	// Don't delete the plugin. It's the plugin that is supposed
-	// to be calling us here
+        // Don't delete the plugin. It's the plugin that is supposed
+        // to be calling us here
         
         return pr.features;
     }
@@ -271,13 +304,13 @@ private:
     static
     kj::Array<capnp::word>
     toKJArray(const std::vector<char> &buffer) {
-	// We could do this whole thing with fewer copies, but let's
-	// see whether it matters first
+        // We could do this whole thing with fewer copies, but let's
+        // see whether it matters first
         size_t wordSize = sizeof(capnp::word);
-	size_t words = buffer.size() / wordSize;
-	kj::Array<capnp::word> karr(kj::heapArray<capnp::word>(words));
-	memcpy(karr.begin(), buffer.data(), words * wordSize);
-	return karr;
+        size_t words = buffer.size() / wordSize;
+        kj::Array<capnp::word> karr(kj::heapArray<capnp::word>(words));
+        memcpy(karr.begin(), buffer.data(), words * wordSize);
+        return karr;
     }
 
     void
@@ -286,16 +319,16 @@ private:
                       ReqId id) {
         
         if (r.getResponse().which() != type) {
-	    std::cerr << "checkResponseType: wrong response type (received "
-		      << int(r.getResponse().which()) << ", expected "
-		      << int(type) << ")"
-		      << std::endl;
+            std::cerr << "checkResponseType: wrong response type (received "
+                      << int(r.getResponse().which()) << ", expected "
+                      << int(type) << ")"
+                      << std::endl;
             throw std::runtime_error("Wrong response type");
         }
         if (ReqId(r.getId().getNumber()) != id) {
-	    std::cerr << "checkResponseType: wrong response id (received "
-		      << r.getId().getNumber() << ", expected " << id << ")"
-		      << std::endl;
+            std::cerr << "checkResponseType: wrong response id (received "
+                      << r.getId().getNumber() << ", expected " << id << ")"
+                      << std::endl;
             throw std::runtime_error("Wrong response id");
         }
     }
@@ -305,7 +338,7 @@ private:
         auto arr = capnp::messageToFlatArray(message);
         auto responseBuffer = m_transport->call(arr.asChars().begin(),
                                                 arr.asChars().size());
-	return toKJArray(responseBuffer);
+        return toKJArray(responseBuffer);
     }
     
     PluginHandleMapper::Handle
@@ -325,7 +358,7 @@ private:
         ReqId id = getId();
         builder.getId().setNumber(id);
 
-	auto karr = call(message);
+        auto karr = call(message);
 
         //!!! ... --> will also need some way to kill this process
         //!!! (from another thread)

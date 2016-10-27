@@ -5,7 +5,8 @@ PIPER_DIR	:= ../piper
 CXXFLAGS	:= -Wall -Wextra -Werror -g3 -std=c++11
 INCFLAGS	:= -I$(VAMPSDK_DIR) -I. -I/usr/local/include
 
-LDFLAGS		:= -L$(VAMPSDK_DIR) -L/usr/local/lib -lvamp-hostsdk -lcapnp -lkj 
+#LDFLAGS		:= -L$(VAMPSDK_DIR) -L/usr/local/lib -lvamp-hostsdk -lcapnp -lkj 
+LDFLAGS		:= $(VAMPSDK_DIR)/libvamp-hostsdk.a -lcapnp -lkj 
 
 LDFLAGS		+= -ldl
 
@@ -42,7 +43,7 @@ test:	all
 	test/test-server.sh
 
 clean:
-	rm -f */*.o vamp-capnp/piper.capnp.h vamp-capnp/piper.capnp.c++
+	rm -f */*.o
 
 distclean:	clean
 	rm -f bin/*
