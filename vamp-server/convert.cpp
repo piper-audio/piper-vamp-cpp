@@ -1,3 +1,4 @@
+/* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 
 #include "vamp-json/VampJson.h"
 #include "vamp-capnp/VampnProto.h"
@@ -18,21 +19,21 @@ void usage()
 {
     string myname = "piper-convert";
     cerr << "\n" << myname <<
-	": Validate and convert Piper request and response messages\n\n"
-	"    Usage: " << myname << " [-i <informat>] [-o <outformat>] request\n"
-	"           " << myname << " [-i <informat>] [-o <outformat>] response\n\n"
-	"    where\n"
-	"       <informat>: the format to read from stdin\n"
-	"           (\"json\" or \"capnp\", default is \"json\")\n"
-	"       <outformat>: the format to convert to and write to stdout\n"
-	"           (\"json\", \"json-b64\" or \"capnp\", default is \"json\")\n"
-	"       request|response: whether messages are Vamp request or response type\n\n"
-	"If <informat> and <outformat> differ, convert from <informat> to <outformat>.\n"
-	"If <informat> and <outformat> are the same, just check validity of incoming\n"
-	"messages and pass them to output.\n\n"
-	"Specifying \"json-b64\" as output format forces base64 encoding for process and\n"
-	"feature blocks, unlike the \"json\" output format which uses text encoding.\n"
-	"The \"json\" input format accepts either.\n\n";
+        ": Validate and convert Piper request and response messages\n\n"
+        "    Usage: " << myname << " [-i <informat>] [-o <outformat>] request\n"
+        "           " << myname << " [-i <informat>] [-o <outformat>] response\n\n"
+        "    where\n"
+        "       <informat>: the format to read from stdin\n"
+        "           (\"json\" or \"capnp\", default is \"json\")\n"
+        "       <outformat>: the format to convert to and write to stdout\n"
+        "           (\"json\", \"json-b64\" or \"capnp\", default is \"json\")\n"
+        "       request|response: whether messages are Vamp request or response type\n\n"
+        "If <informat> and <outformat> differ, convert from <informat> to <outformat>.\n"
+        "If <informat> and <outformat> are the same, just check validity of incoming\n"
+        "messages and pass them to output.\n\n"
+        "Specifying \"json-b64\" as output format forces base64 encoding for process and\n"
+        "feature blocks, unlike the \"json\" output format which uses text encoding.\n"
+        "The \"json\" input format accepts either.\n\n";
 
     exit(2);
 }
@@ -42,15 +43,15 @@ convertRequestJson(string input, string &err)
 {
     Json j = Json::parse(input, err);
     if (err != "") {
-	err = "invalid json: " + err;
-	return {};
+        err = "invalid json: " + err;
+        return {};
     }
     if (!j.is_object()) {
-	err = "object expected at top level";
+        err = "object expected at top level";
     } else if (!j["method"].is_string()) {
-	err = "string expected for method field";
+        err = "string expected for method field";
     } else if (!j["params"].is_null() && !j["params"].is_object()) {
-	err = "object expected for params field";
+        err = "object expected for params field";
     }
     return j;
 }
@@ -60,11 +61,11 @@ convertResponseJson(string input, string &err)
 {
     Json j = Json::parse(input, err);
     if (err != "") {
-	err = "invalid json: " + err;
-	return {};
+        err = "invalid json: " + err;
+        return {};
     }
     if (!j.is_object()) {
-	err = "object expected at top level";
+        err = "object expected at top level";
     } else {
         if (!j["result"].is_object()) {
             if (!j["error"].is_object()) {
@@ -154,9 +155,9 @@ readRequestJson(string &err)
 
     string input;
     if (!getline(cin, input)) {
-	// the EOF case, not actually an error
-	rr.type = RRType::NotValid;
-	return rr;
+        // the EOF case, not actually an error
+        rr.type = RRType::NotValid;
+        return rr;
     }
     
     Json j = convertRequestJson(input, err);
@@ -173,22 +174,22 @@ readRequestJson(string &err)
     switch (rr.type) {
 
     case RRType::List:
-	VampJson::toRpcRequest_List(j, err); // type check only
-	break;
+        VampJson::toRpcRequest_List(j, err); // type check only
+        break;
     case RRType::Load:
-	rr.loadRequest = VampJson::toRpcRequest_Load(j, err);
-	break;
+        rr.loadRequest = VampJson::toRpcRequest_Load(j, err);
+        break;
     case RRType::Configure:
-	rr.configurationRequest = VampJson::toRpcRequest_Configure(j, mapper, err);
-	break;
+        rr.configurationRequest = VampJson::toRpcRequest_Configure(j, mapper, err);
+        break;
     case RRType::Process:
-	rr.processRequest = VampJson::toRpcRequest_Process(j, mapper, serialisation, err);
-	break;
+        rr.processRequest = VampJson::toRpcRequest_Process(j, mapper, serialisation, err);
+        break;
     case RRType::Finish:
-	rr.finishRequest = VampJson::toRpcRequest_Finish(j, mapper, err);
-	break;
+        rr.finishRequest = VampJson::toRpcRequest_Finish(j, mapper, err);
+        break;
     case RRType::NotValid:
-	break;
+        break;
     }
 
     return rr;
@@ -209,23 +210,23 @@ writeRequestJson(RequestOrResponse &rr, bool useBase64)
     switch (rr.type) {
 
     case RRType::List:
-	j = VampJson::fromRpcRequest_List(id);
-	break;
+        j = VampJson::fromRpcRequest_List(id);
+        break;
     case RRType::Load:
-	j = VampJson::fromRpcRequest_Load(rr.loadRequest, id);
-	break;
+        j = VampJson::fromRpcRequest_Load(rr.loadRequest, id);
+        break;
     case RRType::Configure:
-	j = VampJson::fromRpcRequest_Configure(rr.configurationRequest, mapper, id);
-	break;
+        j = VampJson::fromRpcRequest_Configure(rr.configurationRequest, mapper, id);
+        break;
     case RRType::Process:
-	j = VampJson::fromRpcRequest_Process
-	    (rr.processRequest, mapper, serialisation, id);
-	break;
+        j = VampJson::fromRpcRequest_Process
+            (rr.processRequest, mapper, serialisation, id);
+        break;
     case RRType::Finish:
-	j = VampJson::fromRpcRequest_Finish(rr.finishRequest, mapper, id);
-	break;
+        j = VampJson::fromRpcRequest_Finish(rr.finishRequest, mapper, id);
+        break;
     case RRType::NotValid:
-	break;
+        break;
     }
 
     cout << j.dump() << endl;
@@ -239,9 +240,9 @@ readResponseJson(string &err)
 
     string input;
     if (!getline(cin, input)) {
-	// the EOF case, not actually an error
-	rr.type = RRType::NotValid;
-	return rr;
+        // the EOF case, not actually an error
+        rr.type = RRType::NotValid;
+        return rr;
     }
 
     Json j = convertResponseJson(input, err);
@@ -261,22 +262,22 @@ readResponseJson(string &err)
     switch (rr.type) {
 
     case RRType::List:
-	rr.listResponse = VampJson::toRpcResponse_List(j, err);
-	break;
+        rr.listResponse = VampJson::toRpcResponse_List(j, err);
+        break;
     case RRType::Load:
-	rr.loadResponse = VampJson::toRpcResponse_Load(j, mapper, err);
-	break;
+        rr.loadResponse = VampJson::toRpcResponse_Load(j, mapper, err);
+        break;
     case RRType::Configure:
-	rr.configurationResponse = VampJson::toRpcResponse_Configure(j, mapper, err);
-	break;
+        rr.configurationResponse = VampJson::toRpcResponse_Configure(j, mapper, err);
+        break;
     case RRType::Process: 
-	rr.processResponse = VampJson::toRpcResponse_Process(j, mapper, serialisation, err);
-	break;
+        rr.processResponse = VampJson::toRpcResponse_Process(j, mapper, serialisation, err);
+        break;
     case RRType::Finish:
-	rr.finishResponse = VampJson::toRpcResponse_Finish(j, mapper, serialisation, err);
-	break;
+        rr.finishResponse = VampJson::toRpcResponse_Finish(j, mapper, serialisation, err);
+        break;
     case RRType::NotValid:
-	break;
+        break;
     }
 
     return rr;
@@ -296,33 +297,33 @@ writeResponseJson(RequestOrResponse &rr, bool useBase64)
 
     if (!rr.success) {
 
-	j = VampJson::fromError(rr.errorText, rr.type, id);
+        j = VampJson::fromError(rr.errorText, rr.type, id);
 
     } else {
     
-	switch (rr.type) {
+        switch (rr.type) {
 
-	case RRType::List:
-	    j = VampJson::fromRpcResponse_List(rr.listResponse, id);
-	    break;
-	case RRType::Load:
-	    j = VampJson::fromRpcResponse_Load(rr.loadResponse, mapper, id);
-	    break;
-	case RRType::Configure:
-	    j = VampJson::fromRpcResponse_Configure(rr.configurationResponse,
+        case RRType::List:
+            j = VampJson::fromRpcResponse_List(rr.listResponse, id);
+            break;
+        case RRType::Load:
+            j = VampJson::fromRpcResponse_Load(rr.loadResponse, mapper, id);
+            break;
+        case RRType::Configure:
+            j = VampJson::fromRpcResponse_Configure(rr.configurationResponse,
                                                     mapper, id);
-	    break;
-	case RRType::Process:
-	    j = VampJson::fromRpcResponse_Process
-		(rr.processResponse, mapper, serialisation, id);
-	    break;
-	case RRType::Finish:
-	    j = VampJson::fromRpcResponse_Finish
-		(rr.finishResponse, mapper, serialisation, id);
-	    break;
-	case RRType::NotValid:
-	    break;
-	}
+            break;
+        case RRType::Process:
+            j = VampJson::fromRpcResponse_Process
+                (rr.processResponse, mapper, serialisation, id);
+            break;
+        case RRType::Finish:
+            j = VampJson::fromRpcResponse_Finish
+                (rr.finishResponse, mapper, serialisation, id);
+            break;
+        case RRType::NotValid:
+            break;
+        }
     }
     
     cout << j.dump() << endl;
@@ -343,23 +344,23 @@ readRequestCapnp(kj::BufferedInputStreamWrapper &buffered)
     switch (rr.type) {
 
     case RRType::List:
-	VampnProto::readRpcRequest_List(reader); // type check only
-	break;
+        VampnProto::readRpcRequest_List(reader); // type check only
+        break;
     case RRType::Load:
-	VampnProto::readRpcRequest_Load(rr.loadRequest, reader);
-	break;
+        VampnProto::readRpcRequest_Load(rr.loadRequest, reader);
+        break;
     case RRType::Configure:
-	VampnProto::readRpcRequest_Configure(rr.configurationRequest,
-					      reader, mapper);
-	break;
+        VampnProto::readRpcRequest_Configure(rr.configurationRequest,
+                                             reader, mapper);
+        break;
     case RRType::Process:
-	VampnProto::readRpcRequest_Process(rr.processRequest, reader, mapper);
-	break;
+        VampnProto::readRpcRequest_Process(rr.processRequest, reader, mapper);
+        break;
     case RRType::Finish:
-	VampnProto::readRpcRequest_Finish(rr.finishRequest, reader, mapper);
-	break;
+        VampnProto::readRpcRequest_Finish(rr.finishRequest, reader, mapper);
+        break;
     case RRType::NotValid:
-	break;
+        break;
     }
 
     return rr;
@@ -376,23 +377,23 @@ writeRequestCapnp(RequestOrResponse &rr)
     switch (rr.type) {
 
     case RRType::List:
-	VampnProto::buildRpcRequest_List(builder);
-	break;
+        VampnProto::buildRpcRequest_List(builder);
+        break;
     case RRType::Load:
-	VampnProto::buildRpcRequest_Load(builder, rr.loadRequest);
-	break;
+        VampnProto::buildRpcRequest_Load(builder, rr.loadRequest);
+        break;
     case RRType::Configure:
-	VampnProto::buildRpcRequest_Configure(builder,
+        VampnProto::buildRpcRequest_Configure(builder,
                                               rr.configurationRequest, mapper);
-	break;
+        break;
     case RRType::Process:
-	VampnProto::buildRpcRequest_Process(builder, rr.processRequest, mapper);
-	break;
+        VampnProto::buildRpcRequest_Process(builder, rr.processRequest, mapper);
+        break;
     case RRType::Finish:
-	VampnProto::buildRpcRequest_Finish(builder, rr.finishRequest, mapper);
-	break;
+        VampnProto::buildRpcRequest_Finish(builder, rr.finishRequest, mapper);
+        break;
     case RRType::NotValid:
-	break;
+        break;
     }
 
     writeMessageToFd(1, message);
@@ -416,26 +417,26 @@ readResponseCapnp(kj::BufferedInputStreamWrapper &buffered)
     switch (rr.type) {
 
     case RRType::List:
-	VampnProto::readRpcResponse_List(rr.listResponse, reader);
-	break;
+        VampnProto::readRpcResponse_List(rr.listResponse, reader);
+        break;
     case RRType::Load:
-	VampnProto::readRpcResponse_Load(rr.loadResponse, reader, mapper);
-	break;
+        VampnProto::readRpcResponse_Load(rr.loadResponse, reader, mapper);
+        break;
     case RRType::Configure:
-	VampnProto::readRpcResponse_Configure(rr.configurationResponse,
-					       reader, mapper);
-	break;
+        VampnProto::readRpcResponse_Configure(rr.configurationResponse,
+                                              reader, mapper);
+        break;
     case RRType::Process:
-	VampnProto::readRpcResponse_Process(rr.processResponse, reader, mapper);
-	break;
+        VampnProto::readRpcResponse_Process(rr.processResponse, reader, mapper);
+        break;
     case RRType::Finish:
-	VampnProto::readRpcResponse_Finish(rr.finishResponse, reader, mapper);
-	break;
+        VampnProto::readRpcResponse_Finish(rr.finishResponse, reader, mapper);
+        break;
     case RRType::NotValid:
         // error
         rr.success = false;
         VampnProto::readRpcResponse_Error(errorCode, rr.errorText, reader);
-	break;
+        break;
     }
 
     return rr;
@@ -451,30 +452,30 @@ writeResponseCapnp(RequestOrResponse &rr)
 
     if (!rr.success) {
 
-	VampnProto::buildRpcResponse_Error(builder, rr.errorText, rr.type);
+        VampnProto::buildRpcResponse_Error(builder, rr.errorText, rr.type);
 
     } else {
-	
-	switch (rr.type) {
+        
+        switch (rr.type) {
 
-	case RRType::List:
-	    VampnProto::buildRpcResponse_List(builder, rr.listResponse);
-	    break;
-	case RRType::Load:
-	    VampnProto::buildRpcResponse_Load(builder, rr.loadResponse, mapper);
-	    break;
-	case RRType::Configure:
-	    VampnProto::buildRpcResponse_Configure(builder, rr.configurationResponse, mapper);
-	    break;
-	case RRType::Process:
-	    VampnProto::buildRpcResponse_Process(builder, rr.processResponse, mapper);
-	    break;
-	case RRType::Finish:
-	    VampnProto::buildRpcResponse_Finish(builder, rr.finishResponse, mapper);
-	    break;
-	case RRType::NotValid:
-	    break;
-	}
+        case RRType::List:
+            VampnProto::buildRpcResponse_List(builder, rr.listResponse);
+            break;
+        case RRType::Load:
+            VampnProto::buildRpcResponse_Load(builder, rr.loadResponse, mapper);
+            break;
+        case RRType::Configure:
+            VampnProto::buildRpcResponse_Configure(builder, rr.configurationResponse, mapper);
+            break;
+        case RRType::Process:
+            VampnProto::buildRpcResponse_Process(builder, rr.processResponse, mapper);
+            break;
+        case RRType::Finish:
+            VampnProto::buildRpcResponse_Finish(builder, rr.finishResponse, mapper);
+            break;
+        case RRType::NotValid:
+            break;
+        }
     }
     
     writeMessageToFd(1, message);
@@ -484,9 +485,9 @@ RequestOrResponse
 readInputJson(RequestOrResponse::Direction direction, string &err)
 {
     if (direction == RequestOrResponse::Request) {
-	return readRequestJson(err);
+        return readRequestJson(err);
     } else {
-	return readResponseJson(err);
+        return readResponseJson(err);
     }
 }
 
@@ -497,13 +498,13 @@ readInputCapnp(RequestOrResponse::Direction direction)
     static kj::BufferedInputStreamWrapper buffered(stream);
 
     if (buffered.tryGetReadBuffer() == nullptr) {
-	return {};
+        return {};
     }
     
     if (direction == RequestOrResponse::Request) {
-	return readRequestCapnp(buffered);
+        return readRequestCapnp(buffered);
     } else {
-	return readResponseCapnp(buffered);
+        return readResponseCapnp(buffered);
     }
 }
 
@@ -511,14 +512,14 @@ RequestOrResponse
 readInput(string format, RequestOrResponse::Direction direction)
 {
     if (format == "json") {
-	string err;
-	auto result = readInputJson(direction, err);
-	if (err != "") throw runtime_error(err);
-	else return result;
+        string err;
+        auto result = readInputJson(direction, err);
+        if (err != "") throw runtime_error(err);
+        else return result;
     } else if (format == "capnp") {
-	return readInputCapnp(direction);
+        return readInputCapnp(direction);
     } else {
-	throw runtime_error("unknown input format \"" + format + "\"");
+        throw runtime_error("unknown input format \"" + format + "\"");
     }
 }
 
@@ -526,32 +527,32 @@ void
 writeOutput(string format, RequestOrResponse &rr)
 {
     if (format == "json") {
-	if (rr.direction == RequestOrResponse::Request) {
-	    writeRequestJson(rr, false);
-	} else {
-	    writeResponseJson(rr, false);
-	}
+        if (rr.direction == RequestOrResponse::Request) {
+            writeRequestJson(rr, false);
+        } else {
+            writeResponseJson(rr, false);
+        }
     } else if (format == "json-b64") {
-	if (rr.direction == RequestOrResponse::Request) {
-	    writeRequestJson(rr, true);
-	} else {
-	    writeResponseJson(rr, true);
-	}
+        if (rr.direction == RequestOrResponse::Request) {
+            writeRequestJson(rr, true);
+        } else {
+            writeResponseJson(rr, true);
+        }
     } else if (format == "capnp") {
-	if (rr.direction == RequestOrResponse::Request) {
-	    writeRequestCapnp(rr);
-	} else {
-	    writeResponseCapnp(rr);
-	}
+        if (rr.direction == RequestOrResponse::Request) {
+            writeRequestCapnp(rr);
+        } else {
+            writeResponseCapnp(rr);
+        }
     } else {
-	throw runtime_error("unknown output format \"" + format + "\"");
+        throw runtime_error("unknown output format \"" + format + "\"");
     }
 }
 
 int main(int argc, char **argv)
 {
     if (argc < 2) {
-	usage();
+        usage();
     }
 
     string informat = "json", outformat = "json";
@@ -560,50 +561,50 @@ int main(int argc, char **argv)
     
     for (int i = 1; i < argc; ++i) {
 
-	string arg = argv[i];
-	bool final = (i + 1 == argc);
-	
-	if (arg == "-i") {
-	    if (final) usage();
-	    else informat = argv[++i];
+        string arg = argv[i];
+        bool final = (i + 1 == argc);
+        
+        if (arg == "-i") {
+            if (final) usage();
+            else informat = argv[++i];
 
-	} else if (arg == "-o") {
-	    if (final) usage();
-	    else outformat = argv[++i];
+        } else if (arg == "-o") {
+            if (final) usage();
+            else outformat = argv[++i];
 
-	} else if (arg == "request") {
-	    direction = RequestOrResponse::Request;
-	    haveDirection = true;
+        } else if (arg == "request") {
+            direction = RequestOrResponse::Request;
+            haveDirection = true;
 
-	} else if (arg == "response") {
-	    direction = RequestOrResponse::Response;
-	    haveDirection = true;
-	    
-	} else {
-	    usage();
-	}
+        } else if (arg == "response") {
+            direction = RequestOrResponse::Response;
+            haveDirection = true;
+            
+        } else {
+            usage();
+        }
     }
 
     if (informat == "" || outformat == "" || !haveDirection) {
-	usage();
+        usage();
     }
 
     while (true) {
 
-	try {
+        try {
 
-	    RequestOrResponse rr = readInput(informat, direction);
+            RequestOrResponse rr = readInput(informat, direction);
 
-	    // NotValid without an exception indicates EOF:
-	    if (rr.type == RRType::NotValid) break;
+            // NotValid without an exception indicates EOF:
+            if (rr.type == RRType::NotValid) break;
 
-	    writeOutput(outformat, rr);
-	    
-	} catch (std::exception &e) {
+            writeOutput(outformat, rr);
+            
+        } catch (std::exception &e) {
 
-	    cerr << "Error: " << e.what() << endl;
-	    exit(1);
-	}
+            cerr << "Error: " << e.what() << endl;
+            exit(1);
+        }
     }
 
     exit(0);

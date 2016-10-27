@@ -35,7 +35,6 @@
 #include "piper.capnp.h"
 
 #include <capnp/message.h>
-//#include <capnp/serialize-packed.h>
 
 #include <vamp-hostsdk/Plugin.h>
 #include <vamp-hostsdk/PluginLoader.h>
@@ -136,7 +135,6 @@ public:
                                     const Vamp::Plugin::OutputDescriptor &od) {
 
         b.setUnit(od.unit);
-
         b.setSampleType(fromSampleType(od.sampleType));
         b.setSampleRate(od.sampleRate);
         b.setHasDuration(od.hasDuration);

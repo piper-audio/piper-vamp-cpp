@@ -6,12 +6,21 @@ piperdir=../piper
 vampsdkdir=../vamp-plugin-sdk
 schemadir="$piperdir"/json/schema
 
-reqfile="/tmp/$$.req.json"
-respfile="/tmp/$$.resp.json"
-allrespfile="/tmp/$$.resp.all"
-expected="/tmp/$$.expected"
-obtained="/tmp/$$.obtained"
-trap "rm -f $reqfile $respfile $allrespfile $obtained $expected" 0
+tmpdir=$(mktemp -d)
+
+if [ ! -d "$tmpdir" ]; then
+    echo "Temp directory creation failed" 1>&2
+    exit 1
+fi
+
+trap "rm -rf $tmpdir" 0
+
+reqfile="$tmpdir/req.json"
+respfile="$tmpdir/resp.json"
+allrespfile="$tmpdir/resp.all"
+input="$tmpdir/input"
+expected="$tmpdir/expected"
+obtained="$tmpdir/obtained"
 
 validate() {
     local file="$1"
@@ -33,18 +42,7 @@ validate_response() {
     validate "$respfile" "rpcresponse"
 }
 
-( while read request ; do
-      validate_request "$request"
-      echo "$request"
-  done |
-      bin/piper-convert request -i json -o capnp |
-      VAMP_PATH="$vampsdkdir"/examples bin/piper-vamp-server |
-      bin/piper-convert response -i capnp -o json |
-      while read response ; do
-          echo "$response" >> "$allrespfile"
-          validate_response "$response"
-      done
-) <<EOF
+cat > "$input" <<EOF
 {"method":"list"}
 {"method":"load","id":6,"params": {"key":"vamp-example-plugins:percussiononsets","inputSampleRate":44100,"adapterFlags":["AdaptInputDomain","AdaptBufferSize"]}}
 {"method":"configure","id":"weevil","params":{"handle":1,"configuration":{"blockSize": 8, "channelCount": 1, "parameterValues": {"sensitivity": 40, "threshold": 3}, "stepSize": 8}}}
@@ -61,13 +59,39 @@ cat > "$expected" <<EOF
 {"jsonrpc": "2.0", "method": "finish", "result": {"features": {"detectionfunction": [{"featureValues": [0], "timestamp": {"n": 11609977, "s": 0}}]}, "handle": 1}}
 EOF
 
-# Skip plugin list
-tail -n +2 "$allrespfile" > "$obtained"
+# We run the whole test twice, once with the server in Capnp mode
+# (converting to JSON using piper-convert) and once with it directly
+# in JSON mode
 
-echo "Checking response contents against expected contents..."
-if ! cmp "$obtained" "$expected"; then
-    diff -u1 "$obtained" "$expected"
-else
-    echo "OK"
-fi
+for format in capnp json ; do
 
+    ( while read request ; do
+          validate_request "$request"
+          echo "$request"
+      done |
+          if [ "$format" = "json" ]; then
+              VAMP_PATH="$vampsdkdir"/examples bin/piper-vamp-server -d json
+          else
+              bin/piper-convert request -i json -o capnp |
+                  VAMP_PATH="$vampsdkdir"/examples bin/piper-vamp-server -d capnp |
+                  bin/piper-convert response -i capnp -o json
+          fi |
+          while read response ; do
+              echo "$response" >> "$allrespfile"
+              validate_response "$response"
+          done
+    ) < "$input"
+
+    # Skip plugin list
+    tail -n +2 "$allrespfile" > "$obtained"
+
+    echo "Checking response contents against expected contents..."
+    if ! cmp "$obtained" "$expected"; then
+        diff -u1 "$obtained" "$expected"
+    else
+        echo "OK"
+    fi
+
+    rm "$allrespfile"
+
+done

@@ -3,9 +3,11 @@ VAMPSDK_DIR	:= ../vamp-plugin-sdk
 PIPER_DIR	:= ../piper
 
 CXXFLAGS	:= -Wall -Wextra -Werror -g3 -std=c++11
-INCFLAGS	:= -I$(VAMPSDK_DIR) -I. -I/usr/local/include -I../sv-dependency-builds/win32-mingw/include
- 
-LDFLAGS		:= -L../sv-dependency-builds/win32-mingw/lib -L../../vamp-plugin-sdk -L/usr/local/lib -lvamp-hostsdk -lcapnp -lkj 
+INCFLAGS	:= -I$(VAMPSDK_DIR) -I. -I/usr/local/include
+
+LDFLAGS		:= -L$(VAMPSDK_DIR) -L/usr/local/lib -lvamp-hostsdk -lcapnp -lkj 
+
+LDFLAGS		+= -ldl
 
 all:	o bin bin/piper-convert bin/piper-vamp-server
 
@@ -18,7 +20,7 @@ o:
 bin/piper-convert: o/convert.o o/json11.o o/piper.capnp.o
 	c++ $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-bin/piper-vamp-server: o/server.o o/piper.capnp.o
+bin/piper-vamp-server: o/server.o o/json11.o o/piper.capnp.o
 	c++ $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 #vamp-capnp/piper.capnp.h:	$(PIPER_DIR)/capnp/piper.capnp
@@ -33,7 +35,7 @@ o/json11.o:	json11/json11.cpp
 o/convert.o:	vamp-server/convert.cpp vamp-capnp/piper.capnp.h vamp-capnp/VampnProto.h vamp-json/VampJson.h
 	c++ $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
-o/server.o:	vamp-server/server.cpp vamp-capnp/piper.capnp.h vamp-capnp/VampnProto.h 
+o/server.o:	vamp-server/server.cpp vamp-capnp/piper.capnp.h vamp-capnp/VampnProto.h vamp-json/VampJson.h
 	c++ $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
 test:	all
