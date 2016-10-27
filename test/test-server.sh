@@ -65,15 +65,16 @@ EOF
 
 for format in capnp json ; do
 
-    ( while read request ; do
+    ( export VAMP_PATH="$vampsdkdir"/examples ;
+      while read request ; do
           validate_request "$request"
           echo "$request"
       done |
           if [ "$format" = "json" ]; then
-              VAMP_PATH="$vampsdkdir"/examples bin/piper-vamp-server -d json
+              bin/piper-vamp-server -d json
           else
               bin/piper-convert request -i json -o capnp |
-                  VAMP_PATH="$vampsdkdir"/examples bin/piper-vamp-server -d capnp |
+                  bin/piper-vamp-server -d capnp |
                   bin/piper-convert response -i capnp -o json
           fi |
           while read response ; do
