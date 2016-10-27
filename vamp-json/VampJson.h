@@ -38,6 +38,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <iterator>
 
 #include <json11/json11.hpp>
 #include <base-n/include/basen.hpp>

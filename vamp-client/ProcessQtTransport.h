@@ -66,7 +66,7 @@ public:
         m_process->setProcessChannelMode(QProcess::ForwardedErrorChannel);
 
         m_process->start(QString::fromStdString(processName),
-                         { QString::fromStdString(formatArg) });
+                         { "-d", QString::fromStdString(formatArg) });
         
         if (!m_process->waitForStarted()) {
             if (m_process->state() == QProcess::NotRunning) {
