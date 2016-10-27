@@ -57,6 +57,12 @@ static int pid = _getpid();
 static int pid = getpid();
 #endif
 
+// for _setmode stuff
+#ifdef _WIN32
+#include <io.h>
+#include <fcntl.h>
+#endif
+
 using namespace std;
 using namespace json11;
 using namespace piper_vamp;
@@ -548,6 +554,21 @@ int main(int argc, char **argv)
     if (format != "capnp" && format != "json") {
         usage();
     }
+
+#ifdef _WIN32
+    if (format == "capnp") {
+        int result = _setmode(_fileno(stdin), _O_BINARY);
+        if (result == -1) {
+            cerr << "Failed to set binary mode on stdin, necessary for capnp format" << endl;
+            exit(1);
+        }
+        result = _setmode(_fileno(stdout), _O_BINARY);
+        if (result == -1) {
+            cerr << "Failed to set binary mode on stdout, necessary for capnp format" << endl;
+            exit(1);
+        }
+    }
+#endif
 
     if (debug) {
         cerr << myname << " " << pid << ": waiting for format: " << format << endl;
