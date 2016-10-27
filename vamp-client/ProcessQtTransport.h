@@ -94,6 +94,7 @@ public:
             throw std::logic_error("No completeness checker set on transport");
         }
         
+        std::cerr << "writing " << size << " bytes to server" << std::endl;
         m_process->write(ptr, size);
         
         std::vector<char> buffer;
@@ -107,7 +108,14 @@ public:
 		std::cerr << "waiting for data from server..." << std::endl;
 		m_process->waitForReadyRead(1000);
                 if (m_process->state() == QProcess::NotRunning) {
-                    std::cerr << "ERROR: Subprocess exited: Load failed" << std::endl;
+                    QProcess::ProcessError err = m_process->error();
+                    if (err == QProcess::Crashed) {
+                        std::cerr << "Server crashed during request" << std::endl;
+                    } else {
+                        std::cerr << "Server failed during request with error code "
+                                  << err << std::endl;
+                    }
+                    //!!! + catch
                     throw std::runtime_error("Piper server exited unexpectedly");
                 }
             } else {
