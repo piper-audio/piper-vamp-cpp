@@ -44,6 +44,8 @@
 
 #include <iostream>
 
+//#define DEBUG_TRANSPORT 1
+
 namespace piper_vamp {
 namespace client {
 
@@ -66,7 +68,7 @@ public:
         m_process->setProcessChannelMode(QProcess::ForwardedErrorChannel);
 
         m_process->start(QString::fromStdString(processName),
-                         { "-d", QString::fromStdString(formatArg) });
+                         { QString::fromStdString(formatArg) });
         
         if (!m_process->waitForStarted()) {
             if (m_process->state() == QProcess::NotRunning) {
@@ -95,7 +97,9 @@ public:
                 m_process->waitForFinished(200);
                 m_process->close();
                 m_process->waitForFinished();
+#ifdef DEBUG_TRANSPORT
                 std::cerr << "server exited" << std::endl;
+#endif
             }
             delete m_process;
         }
@@ -121,7 +125,9 @@ public:
             throw std::logic_error("No completeness checker set on transport");
         }
         
+#ifdef DEBUG_TRANSPORT
         std::cerr << "writing " << size << " bytes to server" << std::endl;
+#endif
         m_process->write(ptr, size);
         
         std::vector<char> buffer;
@@ -132,7 +138,9 @@ public:
             qint64 byteCount = m_process->bytesAvailable();
 
             if (!byteCount) {
+#ifdef DEBUG_TRANSPORT
                 std::cerr << "waiting for data from server..." << std::endl;
+#endif
                 m_process->waitForReadyRead(1000);
                 if (m_process->state() == QProcess::NotRunning) {
                     QProcess::ProcessError err = m_process->error();
