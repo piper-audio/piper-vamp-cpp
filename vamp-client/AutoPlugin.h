@@ -52,7 +52,7 @@ public:
                float inputSampleRate,
                int adapterFlags) :
         Vamp::Plugin(inputSampleRate),
-        m_transport(serverName),
+        m_transport(serverName, "capnp"),
         m_client(&m_transport)
     {
         LoadRequest req;

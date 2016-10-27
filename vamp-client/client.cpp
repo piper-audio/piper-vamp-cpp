@@ -44,7 +44,8 @@ using std::endl;
 
 int main(int, char **)
 {
-    piper_vamp::client::ProcessQtTransport transport("../bin/piper-vamp-server");
+    piper_vamp::client::ProcessQtTransport transport("../bin/piper-vamp-server",
+                                                     "capnp");
     piper_vamp::client::CapnpRRClient client(&transport);
 
     piper_vamp::ListResponse lr = client.listPluginData();

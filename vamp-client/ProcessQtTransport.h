@@ -58,21 +58,15 @@ namespace client {
 class ProcessQtTransport : public SynchronousTransport
 {
 public:
-    ProcessQtTransport(std::string processName) :
+    ProcessQtTransport(std::string processName, std::string formatArg) :
         m_completenessChecker(0) {
+
         m_process = new QProcess();
         m_process->setReadChannel(QProcess::StandardOutput);
         m_process->setProcessChannelMode(QProcess::ForwardedErrorChannel);
-        QString name(QString::fromStdString(processName));
 
-        // The second argument here is vital, otherwise we get a
-        // different start() overload which parses all command args
-        // out of its first argument only and therefore fails when
-        // name has a space in it. This is such a gotcha that Qt5.6
-        // even introduced a QT_NO_PROCESS_COMBINED_ARGUMENT_START
-        // build flag to disable that overload. Unfortunately I only
-        // discovered that after wasting almost a day on it.
-        m_process->start(name, QStringList());
+        m_process->start(QString::fromStdString(processName),
+                         { QString::fromStdString(formatArg) });
         
         if (!m_process->waitForStarted()) {
             if (m_process->state() == QProcess::NotRunning) {
