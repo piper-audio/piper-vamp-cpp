@@ -102,7 +102,7 @@ public:
     listPluginData() override {
 
         if (!m_transport->isOK()) {
-            throw std::runtime_error("Piper server failed to start");
+            throw std::runtime_error("Piper server crashed or failed to start");
         }
 
         capnp::MallocMessageBuilder message;
@@ -111,7 +111,7 @@ public:
         ReqId id = getId();
         builder.getId().setNumber(id);
 
-        auto karr = call(message);
+        auto karr = call(message, true);
 
         capnp::FlatArrayMessageReader responseMessage(karr);
         piper::RpcResponse::Reader reader = responseMessage.getRoot<piper::RpcResponse>();
@@ -127,7 +127,7 @@ public:
     loadPlugin(const LoadRequest &req) override {
 
         if (!m_transport->isOK()) {
-            throw std::runtime_error("Piper server failed to start");
+            throw std::runtime_error("Piper server crashed or failed to start");
         }
 
         LoadResponse resp;
@@ -158,7 +158,7 @@ public:
               PluginConfiguration config) override {
 
         if (!m_transport->isOK()) {
-            throw std::runtime_error("Piper server failed to start");
+            throw std::runtime_error("Piper server crashed or failed to start");
         }
 
         ConfigurationRequest request;
@@ -172,7 +172,7 @@ public:
         ReqId id = getId();
         builder.getId().setNumber(id);
 
-        auto karr = call(message);
+        auto karr = call(message, true);
 
         capnp::FlatArrayMessageReader responseMessage(karr);
         piper::RpcResponse::Reader reader = responseMessage.getRoot<piper::RpcResponse>();
@@ -196,7 +196,7 @@ public:
             Vamp::RealTime timestamp) override {
 
         if (!m_transport->isOK()) {
-            throw std::runtime_error("Piper server failed to start");
+            throw std::runtime_error("Piper server crashed or failed to start");
         }
 
         ProcessRequest request;
@@ -210,7 +210,7 @@ public:
         ReqId id = getId();
         builder.getId().setNumber(id);
 
-        auto karr = call(message);
+        auto karr = call(message, false);
 
         capnp::FlatArrayMessageReader responseMessage(karr);
         piper::RpcResponse::Reader reader = responseMessage.getRoot<piper::RpcResponse>();
@@ -231,7 +231,7 @@ public:
     finish(PluginStub *plugin) override {
 
         if (!m_transport->isOK()) {
-            throw std::runtime_error("Piper server failed to start");
+            throw std::runtime_error("Piper server crashed or failed to start");
         }
 
         FinishRequest request;
@@ -244,7 +244,7 @@ public:
         ReqId id = getId();
         builder.getId().setNumber(id);
         
-        auto karr = call(message);
+        auto karr = call(message, true);
 
         capnp::FlatArrayMessageReader responseMessage(karr);
         piper::RpcResponse::Reader reader = responseMessage.getRoot<piper::RpcResponse>();
@@ -273,7 +273,7 @@ public:
         // Reload the plugin on the server side, and configure it as requested
         
         if (!m_transport->isOK()) {
-            throw std::runtime_error("Piper server failed to start");
+            throw std::runtime_error("Piper server crashed or failed to start");
         }
 
         if (m_mapper.havePlugin(plugin)) {
@@ -334,10 +334,11 @@ private:
     }
 
     kj::Array<capnp::word>
-    call(capnp::MallocMessageBuilder &message) {
+    call(capnp::MallocMessageBuilder &message, bool slow) {
         auto arr = capnp::messageToFlatArray(message);
         auto responseBuffer = m_transport->call(arr.asChars().begin(),
-                                                arr.asChars().size());
+                                                arr.asChars().size(),
+                                                slow);
         return toKJArray(responseBuffer);
     }
     
@@ -358,7 +359,7 @@ private:
         ReqId id = getId();
         builder.getId().setNumber(id);
 
-        auto karr = call(message);
+        auto karr = call(message, false);
 
         //!!! ... --> will also need some way to kill this process
         //!!! (from another thread)

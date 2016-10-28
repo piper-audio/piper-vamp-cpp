@@ -62,14 +62,33 @@ class SynchronousTransport // interface
 public:
     virtual ~SynchronousTransport() = default;
     
-    //!!! I do not take ownership
+    /**
+     * Set a completeness checker object. The caller retains ownership
+     * of the checker and must ensure its lifespan outlives the transport.
+     */
     virtual void setCompletenessChecker(MessageCompletenessChecker *) = 0;
-    
-    //!!! how to handle errors -- exception or return value? often an
-    //!!! error (e.g. server has exited) may mean the transport can no
-    //!!! longer be used at all
-    virtual std::vector<char> call(const char *data, size_t bytes) = 0;
 
+    /**
+     * Make a synchronous call, passing a serialised request in the data array
+     * of length bytes, and return the result.
+     *
+     * The slow flag is a hint that the recipient may take longer than usual
+     * to process this request and so the caller may wish to be more relaxed
+     * about idling to wait for the reply. (This shouldn't make any difference
+     * with a sensible blocking network API, but you never know...)
+     *
+     * May throw ServerCrashed if the server endpoint disappeared during the
+     * call. Throws std::logic_error if isOK() is not true at the time of
+     * calling, so check that before you call.
+     */
+    virtual std::vector<char> call(const char *data, size_t bytes, bool slow) = 0;
+
+    /**
+     * Check whether the transport was initialised correctly and is working.
+     * This will return false if the endpoint could not be initialised or
+     * the endpoint service has crashed or become unavailable. Always check
+     * this before using call().
+     */
     virtual bool isOK() const = 0;
 };
 

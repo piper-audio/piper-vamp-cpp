@@ -64,7 +64,8 @@ class ProcessQtTransport : public SynchronousTransport
 {
 public:
     ProcessQtTransport(std::string processName, std::string formatArg) :
-        m_completenessChecker(0) {
+        m_completenessChecker(0),
+        m_crashed(false) {
 
         m_process = new QProcess();
         m_process->setReadChannel(QProcess::StandardOutput);
@@ -110,29 +111,31 @@ public:
 
     void
     setCompletenessChecker(MessageCompletenessChecker *checker) override {
-        //!!! ownership?
         m_completenessChecker = checker;
     }
     
     bool
     isOK() const override {
-        return m_process != nullptr;
+        return (m_process != nullptr) && !m_crashed;
     }
     
     std::vector<char>
-    call(const char *ptr, size_t size) override {
+    call(const char *ptr, size_t size, bool slow) override {
 
         QMutexLocker locker(&m_mutex);
         
         if (!m_completenessChecker) {
             throw std::logic_error("No completeness checker set on transport");
         }
+        if (!isOK()) {
+            throw std::logic_error("Transport is not OK");
+        }
         
 #ifdef DEBUG_TRANSPORT
         std::cerr << "writing " << size << " bytes to server" << std::endl;
 #endif
         m_process->write(ptr, size);
-        m_process->waitForBytesWritten(1000);
+        m_process->waitForBytesWritten();
         
         std::vector<char> buffer;
         bool complete = false;
@@ -145,9 +148,25 @@ public:
 #ifdef DEBUG_TRANSPORT
                 std::cerr << "waiting for data from server..." << std::endl;
 #endif
-                m_process->waitForReadyRead(1000);
-                
-                if (m_process->state() == QProcess::NotRunning) {
+                if (slow) {
+                    m_process->waitForReadyRead(1000);
+                } else {
+#ifdef _WIN32
+                    // This is most unsatisfactory -- if we give a non-zero
+                    // arg here, then we end up sleeping way beyond the arrival
+                    // of the data to read -- can end up using less than 10%
+                    // CPU during processing which is crazy. So for Windows
+                    // only, we busy-wait during "fast" calls. It works out
+                    // much faster in the end. Could do with a simpler native
+                    // blocking API really.
+                    m_process->waitForReadyRead(0);
+#else
+                    m_process->waitForReadyRead(100);
+#endif
+                }
+                if (m_process->state() == QProcess::NotRunning &&
+                    // don't give up until we've read all that's been buffered!
+                    !m_process->bytesAvailable()) {
                     QProcess::ProcessError err = m_process->error();
                     if (err == QProcess::Crashed) {
                         std::cerr << "Server crashed during request" << std::endl;
@@ -155,6 +174,7 @@ public:
                         std::cerr << "Server failed during request with error code "
                                   << err << std::endl;
                     }
+                    m_crashed = true;
                     throw ServerCrashed();
                 }
             } else {
@@ -172,6 +192,7 @@ private:
     MessageCompletenessChecker *m_completenessChecker; //!!! I don't own this (currently)
     QProcess *m_process; // I own this
     QMutex m_mutex;
+    bool m_crashed;
 };
 
 }
