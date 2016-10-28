@@ -73,7 +73,7 @@ using namespace Vamp;
 //  - Use Vamp C API (vamp.h) directly rather than converting to C++
 //!!! Doing the above for process() and finish() alone would be a good start
 
-static string myname = "piper-vamp-server";
+static string myname = "piper-vamp-simple-server";
 
 static void version()
 {
@@ -84,7 +84,7 @@ static void version()
 static void usage(bool successful = false)
 {
     cerr << "\n" << myname <<
-        ": Load and run Vamp plugins in response to Piper messages\n\n"
+        ": Load & run Vamp plugins in response to Piper messages\n\n"
         "    Usage: " << myname << " [-d] <format>\n"
         "           " << myname << " -v\n"
         "           " << myname << " -h\n\n"
@@ -94,7 +94,15 @@ static void usage(bool successful = false)
         "       -v: print version number to stdout and exit\n"
         "       -h: print this text to stderr and exit\n\n"
         "Expects Piper request messages in either Cap'n Proto or JSON format on stdin,\n"
-        "and writes response messages in the same format to stdout.\n\n";
+        "and writes response messages in the same format to stdout.\n\n"
+        "This server is intended for simple process separation. It's only suitable for\n"
+        "use with a single trusted client per server invocation.\n\n"
+        "The two formats behave differently in case of parser errors. JSON messages are\n"
+        "expected one per input line; because the JSON support is really intended for\n"
+        "interactive troubleshooting, any unparseable message is reported and discarded\n"
+        "and the server waits for another message. In contrast, because of the assumption\n"
+        "that the client is trusted and coupled to the server instance, a mangled\n"
+        "Cap'n Proto message causes the server to exit.\n\n";
     if (successful) exit(0);
     else exit(2);
 }
@@ -627,9 +635,16 @@ int main(int argc, char **argv)
 
             writeException(format, e, request.type);
 
-            //!!! some exceptions should not be continued after,
-            //!  but json/capnp parser ones should
-            //exit(1);
+            if (format == "capnp") {
+                // Don't try to continue; we can't recover from a
+                // mangled input stream. However, we can return a
+                // successful error code because we are reporting the
+                // status in our Capnp output stream instead
+                if (debug) {
+                    cerr << myname << " " << pid << ": not attempting to recover from capnp parse problems, exiting" << endl;
+                }
+                exit(0);
+            }
         }
     }
 

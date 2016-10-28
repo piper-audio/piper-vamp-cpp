@@ -71,10 +71,10 @@ for format in capnp json ; do
           echo "$request"
       done |
           if [ "$format" = "json" ]; then
-              bin/piper-vamp-server -d json
+              bin/piper-vamp-simple-server -d json
           else
               bin/piper-convert request -i json -o capnp |
-                  bin/piper-vamp-server -d capnp |
+                  bin/piper-vamp-simple-server -d capnp |
                   bin/piper-convert response -i capnp -o json
           fi |
           while read response ; do

@@ -10,7 +10,7 @@ LDFLAGS		:= $(VAMPSDK_DIR)/libvamp-hostsdk.a -lcapnp -lkj
 
 LDFLAGS		+= -ldl
 
-all:	o bin bin/piper-convert bin/piper-vamp-server
+all:	o bin bin/piper-convert bin/piper-vamp-simple-server
 
 bin:
 	mkdir bin
@@ -21,7 +21,7 @@ o:
 bin/piper-convert: o/convert.o o/json11.o o/piper.capnp.o
 	c++ $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-bin/piper-vamp-server: o/server.o o/json11.o o/piper.capnp.o
+bin/piper-vamp-simple-server: o/simple-server.o o/json11.o o/piper.capnp.o
 	c++ $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 #vamp-capnp/piper.capnp.h:	$(PIPER_DIR)/capnp/piper.capnp
@@ -36,7 +36,7 @@ o/json11.o:	json11/json11.cpp
 o/convert.o:	vamp-server/convert.cpp vamp-capnp/piper.capnp.h vamp-capnp/VampnProto.h vamp-json/VampJson.h
 	c++ $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
-o/server.o:	vamp-server/server.cpp vamp-capnp/piper.capnp.h vamp-capnp/VampnProto.h vamp-json/VampJson.h
+o/simple-server.o:	vamp-server/simple-server.cpp vamp-capnp/piper.capnp.h vamp-capnp/VampnProto.h vamp-json/VampJson.h
 	c++ $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
 test:	all

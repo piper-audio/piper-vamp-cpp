@@ -54,8 +54,11 @@ namespace client {
  * using Qt's QProcess abstraction and talks to it via stdin/stdout
  * channels. Calls are completely serialized; the protocol only
  * supports one call in process at a time, and therefore the transport
- * only allows one at a time. This class is thread-safe because it
- * serializes explicitly using a mutex.
+ * only allows one at a time.
+ *
+ * This class is thread-safe, but in practice you can only use it from
+ * within a single thread, because the underlying QProcess does not
+ * support switching threads.
  */
 class ProcessQtTransport : public SynchronousTransport
 {
@@ -129,6 +132,7 @@ public:
         std::cerr << "writing " << size << " bytes to server" << std::endl;
 #endif
         m_process->write(ptr, size);
+        m_process->waitForBytesWritten(1000);
         
         std::vector<char> buffer;
         bool complete = false;
@@ -142,6 +146,7 @@ public:
                 std::cerr << "waiting for data from server..." << std::endl;
 #endif
                 m_process->waitForReadyRead(1000);
+                
                 if (m_process->state() == QProcess::NotRunning) {
                     QProcess::ProcessError err = m_process->error();
                     if (err == QProcess::Crashed) {
