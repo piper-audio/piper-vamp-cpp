@@ -65,7 +65,7 @@ EOF
 # (converting to JSON using piper-convert) and once with it directly
 # in JSON mode
 
-for format in capnp json ; do
+for format in json capnp ; do
 
     ( export VAMP_PATH="$vampsdkdir"/examples ;
       while read request ; do
