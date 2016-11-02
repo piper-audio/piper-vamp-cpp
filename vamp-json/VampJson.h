@@ -1070,7 +1070,7 @@ public:
 private: // go private briefly for a couple of helper functions
     
     static void
-    checkTypeField(json11::Json j, std::string expected, std::string &err) {
+    checkRpcRequestType(json11::Json j, std::string expected, std::string &err) {
         if (!j["method"].is_string()) {
             err = "string expected for method";
             return;
@@ -1078,6 +1078,31 @@ private: // go private briefly for a couple of helper functions
         if (j["method"].string_value() != expected) {
             err = "expected value \"" + expected + "\" for type";
             return;
+        }
+        if (!j["params"].is_null() &&
+            !j["params"].is_object()) {
+            err = "object expected for params";
+            return;
+        }
+        if (!j["id"].is_null() &&
+            !j["id"].is_number() &&
+            !j["id"].is_string()) {
+            err = "number or string expected for id";
+            return;
+        }
+        if (!j["jsonrpc"].is_null() &&
+            !j["jsonrpc"].is_string()) {
+            err = "string expected for jsonrpc";
+            return;
+        }
+        for (const auto &kv: j.object_items()) {
+            if (kv.first != "method" &&
+                kv.first != "params" &&
+                kv.first != "id" &&
+                kv.first != "jsonrpc") {
+                err = "unexpected field \"" + kv.first + "\" in rpc request object";
+                return;
+            }
         }
     }
 
@@ -1322,7 +1347,7 @@ public:
     static ListRequest
     toRpcRequest_List(json11::Json j, std::string &err) {
 
-        checkTypeField(j, "list", err);
+        checkRpcRequestType(j, "list", err);
         if (failed(err)) return {};
         return toListRequest(j["params"], err);
     }
@@ -1340,7 +1365,7 @@ public:
     static LoadRequest
     toRpcRequest_Load(json11::Json j, std::string &err) {
         
-        checkTypeField(j, "load", err);
+        checkRpcRequestType(j, "load", err);
         if (failed(err)) return {};
         return toLoadRequest(j["params"], err);
     }
@@ -1362,7 +1387,7 @@ public:
                             const PluginHandleMapper &pmapper,
                             std::string &err) {
         
-        checkTypeField(j, "configure", err);
+        checkRpcRequestType(j, "configure", err);
         if (failed(err)) return {};
         return toConfigurationRequest(j["params"], pmapper, err);
     }
@@ -1383,7 +1408,7 @@ public:
     toRpcRequest_Process(json11::Json j, const PluginHandleMapper &pmapper,
                           BufferSerialisation &serialisation, std::string &err) {
         
-        checkTypeField(j, "process", err);
+        checkRpcRequestType(j, "process", err);
         if (failed(err)) return {};
         return toProcessRequest(j["params"], pmapper, serialisation, err);
     }
@@ -1409,7 +1434,7 @@ public:
     toRpcRequest_Finish(json11::Json j, const PluginHandleMapper &pmapper,
                          std::string &err) {
         
-        checkTypeField(j, "finish", err);
+        checkRpcRequestType(j, "finish", err);
         if (failed(err)) return {};
         FinishRequest req;
         req.plugin = pmapper.handleToPlugin
