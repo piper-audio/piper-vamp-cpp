@@ -249,7 +249,7 @@ writeRequestJson(RequestOrResponse &rr, bool useBase64)
     switch (rr.type) {
 
     case RRType::List:
-        j = VampJson::fromRpcRequest_List(id);
+        j = VampJson::fromRpcRequest_List(rr.listRequest, id);
         break;
     case RRType::Load:
         j = VampJson::fromRpcRequest_Load(rr.loadRequest, id);
@@ -383,7 +383,7 @@ readRequestCapnp(kj::BufferedInputStreamWrapper &buffered)
     switch (rr.type) {
 
     case RRType::List:
-        VampnProto::readRpcRequest_List(reader); // type check only
+        VampnProto::readRpcRequest_List(rr.listRequest, reader);
         break;
     case RRType::Load:
         VampnProto::readRpcRequest_Load(rr.loadRequest, reader);
@@ -416,7 +416,7 @@ writeRequestCapnp(RequestOrResponse &rr)
     switch (rr.type) {
 
     case RRType::List:
-        VampnProto::buildRpcRequest_List(builder);
+        VampnProto::buildRpcRequest_List(builder, rr.listRequest);
         break;
     case RRType::Load:
         VampnProto::buildRpcRequest_Load(builder, rr.loadRequest);

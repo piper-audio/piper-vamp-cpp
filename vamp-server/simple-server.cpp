@@ -315,7 +315,7 @@ readRequestCapnp()
     switch (rr.type) {
 
     case RRType::List:
-        VampnProto::readRpcRequest_List(reader); // type check only
+        VampnProto::readRpcRequest_List(rr.listRequest, reader);
         break;
     case RRType::Load:
         VampnProto::readRpcRequest_Load(rr.loadRequest, reader);
@@ -396,16 +396,21 @@ handleRequest(const RequestOrResponse &request, bool debug)
     switch (request.type) {
 
     case RRType::List:
-        response.listResponse = LoaderRequests().listPluginData();
+        response.listResponse =
+            LoaderRequests().listPluginData(request.listRequest);
         response.success = true;
         break;
 
     case RRType::Load:
-        response.loadResponse = LoaderRequests().loadPlugin(request.loadRequest);
+        response.loadResponse =
+            LoaderRequests().loadPlugin(request.loadRequest);
         if (response.loadResponse.plugin != nullptr) {
             mapper.addPlugin(response.loadResponse.plugin);
             if (debug) {
-                cerr << "piper-vamp-server " << pid << ": loaded plugin, handle = " << mapper.pluginToHandle(response.loadResponse.plugin) << endl;
+                cerr << "piper-vamp-server " << pid
+                     << ": loaded plugin, handle = "
+                     << mapper.pluginToHandle(response.loadResponse.plugin)
+                     << endl;
             }
             response.success = true;
         }

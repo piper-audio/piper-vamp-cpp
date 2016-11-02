@@ -802,6 +802,60 @@ public:
     }
 
     static json11::Json
+    fromListRequest(const ListRequest &req) {
+        json11::Json::object jo;
+        json11::Json::array arr;
+        for (const auto &f: req.from) {
+            arr.push_back(f);
+        }
+        jo["from"] = arr;
+        return json11::Json(jo);
+    }
+
+    static ListRequest
+    toListRequest(json11::Json j, std::string &err) {
+        
+        ListRequest req;
+        if (!j["from"].is_null() &&
+            !j["from"].is_array()) {
+            err = "array expected for from field";
+            return {};
+        }
+        for (const auto &a: j["from"].array_items()) {
+            if (!a.is_string()) {
+                err = "string expected for element in from array";
+                return {};
+            }
+            req.from.push_back(a.string_value());
+        }
+        return req;
+    }
+
+    static json11::Json
+    fromListResponse(const ListResponse &resp) {
+        
+        json11::Json::array arr;
+        for (const auto &a: resp.available) {
+            arr.push_back(fromPluginStaticData(a));
+        }
+        json11::Json::object jo;
+        jo["available"] = arr;
+
+        return json11::Json(jo);
+    }
+
+    static ListResponse
+    toListResponse(json11::Json j, std::string &err) {
+
+        ListResponse resp;
+        for (const auto &a: j["result"]["available"].array_items()) {
+            resp.available.push_back(toPluginStaticData(a, err));
+            if (failed(err)) return {};
+        }
+        return resp;
+    }
+    
+    static json11::Json
     fromLoadRequest(const LoadRequest &req) {
 
         json11::Json::object jo;
@@ -1051,12 +1105,14 @@ private: // go private briefly for a couple of helper functions
 public:
 
     static json11::Json
-    fromRpcRequest_List(const json11::Json &id) {
+    fromRpcRequest_List(const ListRequest &req,
+                        const json11::Json &id) {
 
         json11::Json::object jo;
         markRPC(jo);
 
         jo["method"] = "list";
+        jo["params"] = fromListRequest(req);
         addId(jo, id);
         return json11::Json(jo);
     }
@@ -1068,15 +1124,8 @@ public:
         json11::Json::object jo;
         markRPC(jo);
 
-        json11::Json::array arr;
-        for (const auto &a: resp.available) {
-            arr.push_back(fromPluginStaticData(a));
-        }
-        json11::Json::object po;
-        po["available"] = arr;
-
         jo["method"] = "list";
-        jo["result"] = po;
+        jo["result"] = fromListResponse(resp);
         addId(jo, id);
         return json11::Json(jo);
     }
@@ -1270,9 +1319,12 @@ public:
 	}
     }
 
-    static void
+    static ListRequest
     toRpcRequest_List(json11::Json j, std::string &err) {
+
         checkTypeField(j, "list", err);
+        if (failed(err)) return {};
+        return toListRequest(j["params"], err);
     }
 
     static ListResponse
@@ -1280,12 +1332,8 @@ public:
 
         ListResponse resp;
         if (successful(j, err) && !failed(err)) {
-            for (const auto &a: j["result"]["available"].array_items()) {
-                resp.available.push_back(toPluginStaticData(a, err));
-                if (failed(err)) return {};
-            }
+            resp = toListResponse(j["result"], err);
         }
-        
         return resp;
     }
 

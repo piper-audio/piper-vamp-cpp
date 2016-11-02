@@ -70,6 +70,7 @@ public:
     std::string errorText;
     RpcId id;
 
+    ListRequest listRequest;
     ListResponse listResponse;
     LoadRequest loadRequest;
     LoadResponse loadResponse;

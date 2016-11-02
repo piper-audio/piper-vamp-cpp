@@ -44,6 +44,8 @@ validate_response() {
 
 cat > "$input" <<EOF
 {"method":"list"}
+{"method":"list","params": {"from":["vamp-example-plugins","something-nonexistent"]}}
+{"method":"list","params": {"from":["something-nonexistent"]}}
 {"method":"load","id":6,"params": {"key":"vamp-example-plugins:percussiononsets","inputSampleRate":44100,"adapterFlags":["AdaptInputDomain","AdaptBufferSize"]}}
 {"method":"configure","id":"weevil","params":{"handle":1,"configuration":{"blockSize": 8, "channelCount": 1, "parameterValues": {"sensitivity": 40, "threshold": 3}, "stepSize": 8}}}
 {"method":"process","params": {"handle": 1, "processInput": { "timestamp": {"s": 0, "n": 0}, "inputBuffers": [ [1,2,3,4,5,6,7,8] ]}}}
@@ -83,8 +85,8 @@ for format in capnp json ; do
           done
     ) < "$input"
 
-    # Skip plugin list
-    tail -n +2 "$allrespfile" > "$obtained"
+    # Skip plugin lists
+    tail -n +4 "$allrespfile" > "$obtained"
 
     echo "Checking response contents against expected contents..."
     if ! cmp "$obtained" "$expected"; then
@@ -93,6 +95,41 @@ for format in capnp json ; do
         echo "OK"
     fi
 
+    echo "Checking plugin counts from list responses..."
+    
+    # Now check the plugin lists, but as the descriptions etc are
+    # probably a bit fragile, let's just count the number of plugins
+
+    # First, with no "from" arg to the list call
+    list_no_from=$(head -n +1 "$allrespfile" | fmt -1 | grep '"key"' | wc -l)
+
+    # Now with a "from" arg that includes the library that exists
+    list_with_good_from=$(tail -n +2 "$allrespfile" | head -n +1 | fmt -1 |
+                              grep '"key"' | wc -l)
+    
+    # Now with a "from" arg that doesn't include any real library
+    list_with_bad_from=$(tail -n +3 "$allrespfile" | head -n +1 | fmt -1 |
+                             grep '"key"' | wc -l)
+
+    if [ "$list_no_from" != "6" ]; then
+        echo "Wrong number of plugins from list response without \"from\" arg"
+        echo "Expected 6, obtained $list_no_from"
+        false
+    fi
+    if [ "$list_with_good_from" != "6" ]; then
+        echo "Wrong number of plugins from list response with good \"from\" arg"
+        echo "Expected 6, obtained $list_with_good_from"
+        false
+    fi
+    if [ "$list_with_bad_from" != "0" ]; then
+        echo "Wrong number of plugins from list response with bad \"from\" arg"
+        echo "Expected 0, obtained $list_with_bad_from"
+        false
+    fi
+    echo OK
+    
     rm "$allrespfile"
 
 done
+
+echo "Tests succeeded"  # set -e at top should ensure we don't get here otherwise

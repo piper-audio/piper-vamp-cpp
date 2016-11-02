@@ -495,7 +495,38 @@ public:
         c.stepSize = r.getStepSize();
         c.blockSize = r.getBlockSize();
     }
+    
+    static void
+    buildListRequest(piper::ListRequest::Builder &r,
+                     const ListRequest &resp) {
 
+        auto p = r.initFrom(unsigned(resp.from.size()));
+        for (int i = 0; i < int(resp.from.size()); ++i) {
+            p.set(i, resp.from[i]);
+        }
+    }
+    
+    static void
+    readListRequest(ListRequest &lr,
+                    const piper::ListRequest::Reader &r) {
+
+        lr.from.clear();
+        for (auto f: r.getFrom()) {
+            lr.from.push_back(f);
+        }
+    }
+
+    static void
+    buildListResponse(piper::ListResponse::Builder &r,
+                      const ListResponse &resp) {
+        
+        auto p = r.initAvailable(unsigned(resp.available.size()));
+        for (int i = 0; i < int(resp.available.size()); ++i) {
+            auto pd = p[i];
+            buildExtractorStaticData(pd, resp.available[i]);
+        }
+    }
+    
     static void
     readListResponse(ListResponse &lr,
                      const piper::ListResponse::Reader &r) {
@@ -728,8 +759,10 @@ public:
     }
 
     static void
-    buildRpcRequest_List(piper::RpcRequest::Builder &b) {
-        b.getRequest().initList();
+    buildRpcRequest_List(piper::RpcRequest::Builder &b,
+                         const ListRequest &req) {
+        auto r = b.getRequest().initList();
+        buildListRequest(r, req);
     }
 
     static void
@@ -737,11 +770,7 @@ public:
                           const ListResponse &resp) {
 
         auto r = b.getResponse().initList();
-        auto p = r.initAvailable(unsigned(resp.available.size()));
-        for (int i = 0; i < int(resp.available.size()); ++i) {
-            auto pd = p[i];
-            buildExtractorStaticData(pd, resp.available[i]);
-        }
+        buildListResponse(r, resp);
     }
     
     static void
@@ -904,10 +933,12 @@ public:
     }
         
     static void
-    readRpcRequest_List(const piper::RpcRequest::Reader &r) {
+    readRpcRequest_List(ListRequest &req,
+                        const piper::RpcRequest::Reader &r) {
         if (getRequestResponseType(r) != RRType::List) {
             throw std::logic_error("not a list request");
         }
+        readListRequest(req, r.getRequest().getList());
     }
 
     static void
