@@ -218,7 +218,7 @@ readRequestJson(string &err)
     switch (rr.type) {
 
     case RRType::List:
-        VampJson::toRpcRequest_List(j, err); // type check only
+        rr.listRequest = VampJson::toRpcRequest_List(j, err);
         break;
     case RRType::Load:
         rr.loadRequest = VampJson::toRpcRequest_Load(j, err);
