@@ -99,7 +99,7 @@ public:
     // Loader methods:
 
     ListResponse
-    listPluginData(std::vector<std::string> from) override {
+    listPluginData(const ListRequest &req) override {
 
         if (!m_transport->isOK()) {
             throw std::runtime_error("Piper server crashed or failed to start");
@@ -107,8 +107,6 @@ public:
 
         capnp::MallocMessageBuilder message;
         piper::RpcRequest::Builder builder = message.initRoot<piper::RpcRequest>();
-        ListRequest req;
-        req.from = from;
         VampnProto::buildRpcRequest_List(builder, req);
         ReqId id = getId();
         builder.getId().setNumber(id);
