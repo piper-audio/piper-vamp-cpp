@@ -51,12 +51,18 @@ class LoaderRequests
 {
 public:
     ListResponse
-    listPluginData() {
+    listPluginData(ListRequest req) {
 
 	auto loader = Vamp::HostExt::PluginLoader::getInstance();
-	auto keys = loader->listPlugins();
-	ListResponse response;
+        
+        std::vector<std::string> keys;
+        if (req.from.empty()) {
+            keys = loader->listPlugins();
+        } else {
+            keys = loader->listPluginsIn(req.from);
+        }
 
+	ListResponse response;
 	for (std::string key: keys) {
 	    Vamp::Plugin *p = loader->loadPlugin(key, 44100, 0);
 	    if (!p) continue;

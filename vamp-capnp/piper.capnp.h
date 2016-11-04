@@ -269,7 +269,7 @@ struct ListRequest {
   class Pipeline;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(b54ff18dabd0d4e1, 0, 0)
+    CAPNP_DECLARE_STRUCT_HEADER(b54ff18dabd0d4e1, 0, 1)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand = &schema->defaultBrand;
     #endif  // !CAPNP_LITE
@@ -1864,6 +1864,9 @@ public:
   }
 #endif  // !CAPNP_LITE
 
+  inline bool hasFrom() const;
+  inline  ::capnp::List< ::capnp::Text>::Reader getFrom() const;
+
 private:
   ::capnp::_::StructReader _reader;
   template <typename, ::capnp::Kind>
@@ -1891,6 +1894,14 @@ public:
 #if !CAPNP_LITE
   inline ::kj::StringTree toString() const { return asReader().toString(); }
 #endif  // !CAPNP_LITE
+
+  inline bool hasFrom();
+  inline  ::capnp::List< ::capnp::Text>::Builder getFrom();
+  inline void setFrom( ::capnp::List< ::capnp::Text>::Reader value);
+  inline void setFrom(::kj::ArrayPtr<const  ::capnp::Text::Reader> value);
+  inline  ::capnp::List< ::capnp::Text>::Builder initFrom(unsigned int size);
+  inline void adoptFrom(::capnp::Orphan< ::capnp::List< ::capnp::Text>>&& value);
+  inline ::capnp::Orphan< ::capnp::List< ::capnp::Text>> disownFrom();
 
 private:
   ::capnp::_::StructBuilder _builder;
@@ -4837,6 +4848,42 @@ inline float Configuration::PVPair::Builder::getValue() {
 inline void Configuration::PVPair::Builder::setValue(float value) {
   _builder.setDataField<float>(
       0 * ::capnp::ELEMENTS, value);
+}
+
+inline bool ListRequest::Reader::hasFrom() const {
+  return !_reader.getPointerField(0 * ::capnp::POINTERS).isNull();
+}
+inline bool ListRequest::Builder::hasFrom() {
+  return !_builder.getPointerField(0 * ::capnp::POINTERS).isNull();
+}
+inline  ::capnp::List< ::capnp::Text>::Reader ListRequest::Reader::getFrom() const {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::capnp::Text>>::get(
+      _reader.getPointerField(0 * ::capnp::POINTERS));
+}
+inline  ::capnp::List< ::capnp::Text>::Builder ListRequest::Builder::getFrom() {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::capnp::Text>>::get(
+      _builder.getPointerField(0 * ::capnp::POINTERS));
+}
+inline void ListRequest::Builder::setFrom( ::capnp::List< ::capnp::Text>::Reader value) {
+  ::capnp::_::PointerHelpers< ::capnp::List< ::capnp::Text>>::set(
+      _builder.getPointerField(0 * ::capnp::POINTERS), value);
+}
+inline void ListRequest::Builder::setFrom(::kj::ArrayPtr<const  ::capnp::Text::Reader> value) {
+  ::capnp::_::PointerHelpers< ::capnp::List< ::capnp::Text>>::set(
+      _builder.getPointerField(0 * ::capnp::POINTERS), value);
+}
+inline  ::capnp::List< ::capnp::Text>::Builder ListRequest::Builder::initFrom(unsigned int size) {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::capnp::Text>>::init(
+      _builder.getPointerField(0 * ::capnp::POINTERS), size);
+}
+inline void ListRequest::Builder::adoptFrom(
+    ::capnp::Orphan< ::capnp::List< ::capnp::Text>>&& value) {
+  ::capnp::_::PointerHelpers< ::capnp::List< ::capnp::Text>>::adopt(
+      _builder.getPointerField(0 * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::capnp::List< ::capnp::Text>> ListRequest::Builder::disownFrom() {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::capnp::Text>>::disown(
+      _builder.getPointerField(0 * ::capnp::POINTERS));
 }
 
 inline bool ListResponse::Reader::hasAvailable() const {

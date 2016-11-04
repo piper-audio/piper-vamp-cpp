@@ -49,12 +49,15 @@ namespace piper_vamp {
  * \class ListRequest
  * 
  * ListRequest is a structure containing the information needed to
- * list plugins. Currently empty.
+ * list plugins.
  *
  * \see ListResponse
  */
 struct ListRequest
 {
+    ListRequest() { } // no constraints by default
+
+    std::vector<std::string> from;
 };
 
 /**
