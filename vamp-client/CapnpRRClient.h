@@ -44,6 +44,8 @@
 #include "vamp-support/AssignedPluginHandleMapper.h"
 #include "vamp-capnp/VampnProto.h"
 
+#include <sstream>
+
 #include <capnp/serialize.h>
 
 namespace piper_vamp {
@@ -80,7 +82,9 @@ class CapnpRRClient : public PluginClient,
     };
     
 public:
-    CapnpRRClient(SynchronousTransport *transport) : //!!! ownership? shared ptr?
+    CapnpRRClient(SynchronousTransport *transport, //!!! ownership? shared ptr?
+                  LogCallback *logger) : // logger may be nullptr for cerr
+        m_logger(logger),
         m_transport(transport),
         m_completenessChecker(new CompletenessChecker) {
         transport->setCompletenessChecker(m_completenessChecker);
@@ -102,6 +106,7 @@ public:
     listPluginData(const ListRequest &req) override {
 
         if (!m_transport->isOK()) {
+            log("Piper server crashed or failed to start (caller should have checked this)");
             throw std::runtime_error("Piper server crashed or failed to start");
         }
 
@@ -111,7 +116,7 @@ public:
         ReqId id = getId();
         builder.getId().setNumber(id);
 
-        auto karr = call(message, true);
+        auto karr = call(message, "list", true);
 
         capnp::FlatArrayMessageReader responseMessage(karr);
         piper::RpcResponse::Reader reader = responseMessage.getRoot<piper::RpcResponse>();
@@ -127,6 +132,7 @@ public:
     loadPlugin(const LoadRequest &req) override {
 
         if (!m_transport->isOK()) {
+            log("Piper server crashed or failed to start (caller should have checked this)");
             throw std::runtime_error("Piper server crashed or failed to start");
         }
 
@@ -158,6 +164,7 @@ public:
               PluginConfiguration config) override {
 
         if (!m_transport->isOK()) {
+            log("Piper server crashed or failed to start (caller should have checked this)");
             throw std::runtime_error("Piper server crashed or failed to start");
         }
 
@@ -172,7 +179,7 @@ public:
         ReqId id = getId();
         builder.getId().setNumber(id);
 
-        auto karr = call(message, true);
+        auto karr = call(message, "configure", true);
 
         capnp::FlatArrayMessageReader responseMessage(karr);
         piper::RpcResponse::Reader reader = responseMessage.getRoot<piper::RpcResponse>();
@@ -196,6 +203,7 @@ public:
             Vamp::RealTime timestamp) override {
 
         if (!m_transport->isOK()) {
+            log("Piper server crashed or failed to start (caller should have checked this)");
             throw std::runtime_error("Piper server crashed or failed to start");
         }
 
@@ -210,7 +218,7 @@ public:
         ReqId id = getId();
         builder.getId().setNumber(id);
 
-        auto karr = call(message, false);
+        auto karr = call(message, "process", false);
 
         capnp::FlatArrayMessageReader responseMessage(karr);
         piper::RpcResponse::Reader reader = responseMessage.getRoot<piper::RpcResponse>();
@@ -231,6 +239,7 @@ public:
     finish(PluginStub *plugin) override {
 
         if (!m_transport->isOK()) {
+            log("Piper server crashed or failed to start (caller should have checked this)");
             throw std::runtime_error("Piper server crashed or failed to start");
         }
 
@@ -244,7 +253,7 @@ public:
         ReqId id = getId();
         builder.getId().setNumber(id);
         
-        auto karr = call(message, true);
+        auto karr = call(message, "finish", true);
 
         capnp::FlatArrayMessageReader responseMessage(karr);
         piper::RpcResponse::Reader reader = responseMessage.getRoot<piper::RpcResponse>();
@@ -271,8 +280,11 @@ public:
           PluginConfiguration config) override {
 
         // Reload the plugin on the server side, and configure it as requested
+
+        log("CapnpRRClient: reset() called, plugin will be closed and reloaded");
         
         if (!m_transport->isOK()) {
+            log("Piper server crashed or failed to start (caller should have checked this)");
             throw std::runtime_error("Piper server crashed or failed to start");
         }
 
@@ -319,25 +331,27 @@ private:
                       ReqId id) {
         
         if (r.getResponse().which() != type) {
-            std::cerr << "checkResponseType: wrong response type (received "
-                      << int(r.getResponse().which()) << ", expected "
-                      << int(type) << ")"
-                      << std::endl;
+            std::ostringstream s;
+            s << "checkResponseType: wrong response type (received "
+              << int(r.getResponse().which()) << ", expected " << int(type) << ")";
+            log(s.str());
             throw std::runtime_error("Wrong response type");
         }
         if (ReqId(r.getId().getNumber()) != id) {
-            std::cerr << "checkResponseType: wrong response id (received "
-                      << r.getId().getNumber() << ", expected " << id << ")"
-                      << std::endl;
+            std::ostringstream s;
+            s << "checkResponseType: wrong response id (received "
+              << r.getId().getNumber() << ", expected " << id << ")";
+            log(s.str());
             throw std::runtime_error("Wrong response id");
         }
     }
 
     kj::Array<capnp::word>
-    call(capnp::MallocMessageBuilder &message, bool slow) {
+    call(capnp::MallocMessageBuilder &message, std::string type, bool slow) {
         auto arr = capnp::messageToFlatArray(message);
         auto responseBuffer = m_transport->call(arr.asChars().begin(),
                                                 arr.asChars().size(),
+                                                type,
                                                 slow);
         return toKJArray(responseBuffer);
     }
@@ -359,7 +373,7 @@ private:
         ReqId id = getId();
         builder.getId().setNumber(id);
 
-        auto karr = call(message, false);
+        auto karr = call(message, "load", false);
 
         //!!! ... --> will also need some way to kill this process
         //!!! (from another thread)
@@ -378,8 +392,14 @@ private:
     };     
 
 private:
+    LogCallback *m_logger;
     SynchronousTransport *m_transport; //!!! I don't own this, but should I?
     CompletenessChecker *m_completenessChecker; // I own this
+    
+    void log(std::string message) const {
+        if (m_logger) m_logger->log(message);
+        else std::cerr << message << std::endl;
+    }
 };
 
 }

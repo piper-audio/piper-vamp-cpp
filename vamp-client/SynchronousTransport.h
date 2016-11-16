@@ -47,7 +47,6 @@ class MessageCompletenessChecker // interface
 {
 public:
     virtual ~MessageCompletenessChecker() = default;
-    
     virtual bool isComplete(const std::vector<char> &message) const = 0;
 };
 
@@ -55,6 +54,13 @@ class ServerCrashed : public std::runtime_error
 {
 public:
     ServerCrashed() : std::runtime_error("Piper server exited unexpectedly") {}
+};
+
+class LogCallback
+{
+public:
+    virtual ~LogCallback() { }
+    virtual void log(std::string) const = 0;
 };
 
 class SynchronousTransport // interface
@@ -72,6 +78,8 @@ public:
      * Make a synchronous call, passing a serialised request in the data array
      * of length bytes, and return the result.
      *
+     * The type field is only used for logging and debug output.
+     *
      * The slow flag is a hint that the recipient may take longer than usual
      * to process this request and so the caller may wish to be more relaxed
      * about idling to wait for the reply. (This shouldn't make any difference
@@ -81,7 +89,8 @@ public:
      * call. Throws std::logic_error if isOK() is not true at the time of
      * calling, so check that before you call.
      */
-    virtual std::vector<char> call(const char *data, size_t bytes, bool slow) = 0;
+    virtual std::vector<char> call(const char *data, size_t bytes,
+                                   std::string type, bool slow) = 0;
 
     /**
      * Check whether the transport was initialised correctly and is working.

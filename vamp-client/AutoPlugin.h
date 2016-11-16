@@ -50,10 +50,12 @@ public:
     AutoPlugin(std::string serverName,
                std::string pluginKey,
                float inputSampleRate,
-               int adapterFlags) :
+               int adapterFlags,
+               LogCallback *logger) : // logger may be nullptr for cerr
         Vamp::Plugin(inputSampleRate),
-        m_transport(serverName, "capnp"),
-        m_client(&m_transport)
+        m_logger(logger),
+        m_transport(serverName, "capnp", logger),
+        m_client(&m_transport, logger)
     {
         LoadRequest req;
         req.pluginKey = pluginKey;
@@ -63,7 +65,7 @@ public:
             LoadResponse resp = m_client.loadPlugin(req);
             m_plugin = resp.plugin;
         } catch (ServerCrashed c) {
-            std::cerr << c.what() << std::endl;
+            log(std::string("AutoPlugin: Server crashed: ") + c.what());
             m_plugin = 0;
         }
     }
@@ -168,15 +170,21 @@ public:
     }
 
 private:
+    LogCallback *m_logger;
     ProcessQtTransport m_transport;
     CapnpRRClient m_client;
     Vamp::Plugin *m_plugin;
     Vamp::Plugin *getPlugin() const {
         if (!m_plugin) {
-            throw std::logic_error
-                ("Plugin load failed (should have called AutoPlugin::isOK)");
+            log("AutoPlugin: getPlugin() failed (caller should have called AutoPlugin::isOK)");
+            throw std::logic_error("Plugin load failed");
         }
         return m_plugin;
+    }
+
+    void log(std::string message) const {
+        if (m_logger) m_logger->log(message);
+        else std::cerr << message << std::endl;
     }
 };
 

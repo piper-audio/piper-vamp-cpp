@@ -63,7 +63,10 @@ namespace client {
 class ProcessQtTransport : public SynchronousTransport
 {
 public:
-    ProcessQtTransport(std::string processName, std::string formatArg) :
+    ProcessQtTransport(std::string processName,
+                       std::string formatArg,
+                       LogCallback *logger) : // logger may be nullptr for cerr
+        m_logger(logger),
         m_completenessChecker(0),
         m_crashed(false) {
 
@@ -78,19 +81,21 @@ public:
             if (m_process->state() == QProcess::NotRunning) {
                 QProcess::ProcessError err = m_process->error();
                 if (err == QProcess::FailedToStart) {
-                    std::cerr << "Unable to start server process "
-                              << processName << std::endl;
+                    log("Unable to start server process " + processName);
                 } else if (err == QProcess::Crashed) {
-                    std::cerr << "Server process " << processName
-                              << " crashed on startup" << std::endl;
+                    log("Server process " + processName + " crashed on startup");
                 } else {
-                    std::cerr << "Server process " << processName
-                              << " failed on startup with error code "
-                              << err << std::endl;
+                    QString e = QString("%1").arg(err);
+                    log("Server process " + processName +
+                        " failed on startup with error code " + e.toStdString());
                 }
                 delete m_process;
                 m_process = nullptr;
             }
+        }
+
+        if (m_process) {
+            log("Server process " + processName + " started OK");
         }
     }
 
@@ -101,9 +106,7 @@ public:
                 m_process->waitForFinished(200);
                 m_process->close();
                 m_process->waitForFinished();
-#ifdef DEBUG_TRANSPORT
-                std::cerr << "server exited" << std::endl;
-#endif
+                log("Server process exited normally");
             }
             delete m_process;
         }
@@ -120,14 +123,16 @@ public:
     }
     
     std::vector<char>
-    call(const char *ptr, size_t size, bool slow) override {
+    call(const char *ptr, size_t size, std::string type, bool slow) override {
 
         QMutexLocker locker(&m_mutex);
         
         if (!m_completenessChecker) {
+            log("call: No completeness checker set on transport");
             throw std::logic_error("No completeness checker set on transport");
         }
         if (!isOK()) {
+            log("call: Transport is not OK");
             throw std::logic_error("Transport is not OK");
         }
         
@@ -169,10 +174,11 @@ public:
                     !m_process->bytesAvailable()) {
                     QProcess::ProcessError err = m_process->error();
                     if (err == QProcess::Crashed) {
-                        std::cerr << "Server crashed during request" << std::endl;
+                        log("Server crashed during " + type + " request");
                     } else {
-                        std::cerr << "Server failed during request with error code "
-                                  << err << std::endl;
+                        QString e = QString("%1").arg(err);
+                        log("Server failed during " + type
+                            + " request with error code " + e.toStdString());
                     }
                     m_crashed = true;
                     throw ServerCrashed();
@@ -189,10 +195,16 @@ public:
     }
     
 private:
+    LogCallback *m_logger;
     MessageCompletenessChecker *m_completenessChecker; //!!! I don't own this (currently)
     QProcess *m_process; // I own this
     QMutex m_mutex;
     bool m_crashed;
+
+    void log(std::string message) const {
+        if (m_logger) m_logger->log(message);
+        else std::cerr << message << std::endl;
+    }
 };
 
 }
