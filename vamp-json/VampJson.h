@@ -39,6 +39,7 @@
 #include <string>
 #include <sstream>
 #include <iterator>
+#include <cmath>
 
 #include <json11/json11.hpp>
 #include <base-n/include/basen.hpp>
@@ -263,7 +264,7 @@ public:
             err = "number expected for sample rate";
             return {};
         }
-        od.sampleRate = j["sampleRate"].number_value();
+        od.sampleRate = float(j["sampleRate"].number_value());
         od.hasDuration = j["hasDuration"].bool_value();
 
         if (j["binCount"].is_number() && j["binCount"].int_value() > 0) {
@@ -287,7 +288,7 @@ public:
 
         if (j["quantizeStep"].is_number()) {
             od.isQuantized = true;
-            od.quantizeStep = j["quantizeStep"].number_value();
+            od.quantizeStep = float(j["quantizeStep"].number_value());
         } else {
             od.isQuantized = false;
         }
@@ -356,7 +357,7 @@ public:
             return {};
         }
     
-        pd.defaultValue = j["defaultValue"].number_value();
+        pd.defaultValue = float(j["defaultValue"].number_value());
 
         pd.valueNames.clear();
         for (auto &n: j["valueNames"].array_items()) {
@@ -369,7 +370,7 @@ public:
 
         if (j["quantizeStep"].is_number()) {
             pd.isQuantized = true;
-            pd.quantizeStep = j["quantizeStep"].number_value();
+            pd.quantizeStep = float(j["quantizeStep"].number_value());
         } else {
             pd.isQuantized = false;
         }
@@ -447,7 +448,7 @@ public:
             serialisation = BufferSerialisation::Base64;
         } else if (j["featureValues"].is_array()) {
             for (auto v : j["featureValues"].array_items()) {
-                f.values.push_back(v.number_value());
+                f.values.push_back(float(v.number_value()));
             }
             serialisation = BufferSerialisation::Array;
         }
@@ -731,12 +732,12 @@ public:
 
         PluginConfiguration config;
 
-        config.channelCount = j["channelCount"].number_value();
-        config.stepSize = j["stepSize"].number_value();
-        config.blockSize = j["blockSize"].number_value();
+        config.channelCount = int(round(j["channelCount"].number_value()));
+        config.stepSize = int(round(j["stepSize"].number_value()));
+        config.blockSize = int(round(j["blockSize"].number_value()));
         
         for (auto &pv : j["parameterValues"].object_items()) {
-            config.parameterValues[pv.first] = pv.second.number_value();
+            config.parameterValues[pv.first] = float(pv.second.number_value());
         }
 
         if (j["currentProgram"].is_string()) {
@@ -877,7 +878,7 @@ public:
     
         LoadRequest req;
         req.pluginKey = j["key"].string_value();
-        req.inputSampleRate = j["inputSampleRate"].number_value();
+        req.inputSampleRate = float(j["inputSampleRate"].number_value());
         if (!j["adapterFlags"].is_null()) {
             req.adapterFlags = toAdapterFlags(j["adapterFlags"], err);
             if (failed(err)) return {};
@@ -1053,7 +1054,7 @@ public:
             } else if (a.is_array()) {
                 std::vector<float> buf;
                 for (auto v : a.array_items()) {
-                    buf.push_back(v.number_value());
+                    buf.push_back(float(v.number_value()));
                 }
                 r.inputBuffers.push_back(buf);
                 serialisation = BufferSerialisation::Array;
