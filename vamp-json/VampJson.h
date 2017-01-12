@@ -156,8 +156,8 @@ public:
         } else if (j["extents"].is_object()) {
             if (j["extents"]["min"].is_number() &&
                 j["extents"]["max"].is_number()) {
-                t.minValue = j["extents"]["min"].number_value();
-                t.maxValue = j["extents"]["max"].number_value();
+                t.minValue = float(j["extents"]["min"].number_value());
+                t.maxValue = float(j["extents"]["max"].number_value());
                 return true;
             } else {
                 err = "numbers expected for min and max";

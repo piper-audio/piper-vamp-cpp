@@ -202,7 +202,7 @@ readJsonId(const Json &j)
 
     if (j["id"].is_number()) {
         id.type = RequestOrResponse::RpcId::Number;
-        id.number = j["id"].number_value();
+        id.number = int(round(j["id"].number_value()));
     } else if (j["id"].is_string()) {
         id.type = RequestOrResponse::RpcId::Tag;
         id.tag = j["id"].string_value();
