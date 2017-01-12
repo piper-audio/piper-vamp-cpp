@@ -57,10 +57,16 @@ static int pid = _getpid();
 static int pid = getpid();
 #endif
 
-// for _setmode stuff
+// for _setmode stuff and _dup
 #ifdef _WIN32
 #include <io.h>
 #include <fcntl.h>
+#endif
+
+// for dup, open etc
+#ifndef _WIN32
+#include <fcntl.h>
+#include <unistd.h>
 #endif
 
 using namespace std;
@@ -103,6 +109,57 @@ static void usage(bool successful = false)
 }
 
 static CountingPluginHandleMapper mapper;
+
+// We write our output to stdout, but want to ensure that the plugin
+// doesn't write anything itself. To do this we open a null file
+// descriptor and dup2() it into place of stdout in the gaps between
+// our own output activity.
+
+static int normalFd = -1;
+static int suspendedFd = -1;
+
+static void initFds(bool binary)
+{
+#ifdef _WIN32
+    if (binary) {
+        int result = _setmode(0, _O_BINARY);
+        if (result == -1) {
+            throw runtime_error("Failed to set binary mode on stdin");
+        }
+        result = _setmode(1, _O_BINARY);
+        if (result == -1) {
+            throw runtime_error("Failed to set binary mode on stdout");
+        }
+    }
+    normalFd = _dup(1);
+    suspendedFd = _open("NUL", _O_WRONLY);
+#else
+    normalFd = dup(1);
+    suspendedFd = open("/dev/null", O_WRONLY);
+#endif
+    
+    if (normalFd < 0 || suspendedFd < 0) {
+        throw runtime_error("Failed to initialise fds for stdio suspend/resume");
+    }
+}
+
+static void suspendOutput()
+{
+#ifdef _WIN32
+    _dup2(suspendedFd, 1);
+#else
+    dup2(suspendedFd, 1);
+#endif
+}
+
+static void resumeOutput()
+{
+#ifdef _WIN32
+    _dup2(normalFd, 1);
+#else
+    dup2(normalFd, 1);
+#endif
+}
 
 static RequestOrResponse::RpcId
 readId(const piper::RpcRequest::Reader &r)
@@ -276,12 +333,12 @@ writeResponseJson(RequestOrResponse &rr, bool useBase64)
             break;
         }
     }
-    
+
     cout << j.dump() << endl;
 }
 
 void
-writeExceptionJson(const std::exception &e, RRType type)
+writeExceptionJson(const exception &e, RRType type)
 {
     Json j = VampJson::fromError(e.what(), type, Json());
     cout << j.dump() << endl;
@@ -372,7 +429,7 @@ writeResponseCapnp(RequestOrResponse &rr)
 }
 
 void
-writeExceptionCapnp(const std::exception &e, RRType type)
+writeExceptionCapnp(const exception &e, RRType type)
 {
     capnp::MallocMessageBuilder message;
     piper::RpcResponse::Builder builder = message.initRoot<piper::RpcResponse>();
@@ -506,6 +563,7 @@ readRequest(string format)
 void
 writeResponse(string format, RequestOrResponse &rr)
 {
+    resumeOutput();
     if (format == "capnp") {
         writeResponseCapnp(rr);
     } else if (format == "json") {
@@ -513,11 +571,13 @@ writeResponse(string format, RequestOrResponse &rr)
     } else {
         throw runtime_error("unknown output format \"" + format + "\"");
     }
+    suspendOutput();
 }
 
 void
-writeException(string format, const std::exception &e, RRType type)
+writeException(string format, const exception &e, RRType type)
 {
+    resumeOutput();
     if (format == "capnp") {
         writeExceptionCapnp(e, type);
     } else if (format == "json") {
@@ -525,6 +585,7 @@ writeException(string format, const std::exception &e, RRType type)
     } else {
         throw runtime_error("unknown output format \"" + format + "\"");
     }
+    suspendOutput();
 }
 
 int main(int argc, char **argv)
@@ -563,25 +624,19 @@ int main(int argc, char **argv)
         usage();
     }
 
-#ifdef _WIN32
-    if (format == "capnp") {
-        int result = _setmode(_fileno(stdin), _O_BINARY);
-        if (result == -1) {
-            cerr << "Failed to set binary mode on stdin, necessary for capnp format" << endl;
-            exit(1);
-        }
-        result = _setmode(_fileno(stdout), _O_BINARY);
-        if (result == -1) {
-            cerr << "Failed to set binary mode on stdout, necessary for capnp format" << endl;
-            exit(1);
-        }
+    try {            
+        initFds(format == "capnp");
+    } catch (exception &e) {
+        cerr << "ERROR: " << e.what() << endl;
+        exit(1);
     }
-#endif
+
+    suspendOutput();
 
     if (debug) {
         cerr << myname << " " << pid << ": waiting for format: " << format << endl;
     }
-
+    
     while (true) {
 
         RequestOrResponse request;
@@ -627,7 +682,7 @@ int main(int argc, char **argv)
                 delete request.finishRequest.plugin;
             }
             
-        } catch (std::exception &e) {
+        } catch (exception &e) {
 
             if (debug) {
                 cerr << myname << " " << pid << ": error: " << e.what() << endl;
