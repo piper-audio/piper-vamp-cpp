@@ -134,6 +134,7 @@ static void initFds(bool binary)
     normalFd = _dup(1);
     suspendedFd = _open("NUL", _O_WRONLY);
 #else
+    (void)binary;
     normalFd = dup(1);
     suspendedFd = open("/dev/null", O_WRONLY);
 #endif
