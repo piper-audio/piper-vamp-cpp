@@ -48,7 +48,7 @@
 
 #include <capnp/serialize.h>
 
-#define LOG_ENTRYPOINTS 1
+//#define LOG_ENTRYPOINTS 1
 
 #ifdef LOG_ENTRYPOINTS
 #define LOG_E(x) log(x)
