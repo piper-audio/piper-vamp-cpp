@@ -79,6 +79,8 @@ class CapnpRRClient : public PluginClient,
             auto karr = toKJArray(message);
             size_t words = karr.size();
             size_t expected = capnp::expectedSizeInWordsFromPrefix(karr);
+//            cerr << "CompletenessChecker: message.size() = " << message.size()
+//                 << ", words = " << words << ", expected = " << expected << endl;
             if (words > expected) {
                 std::cerr << "WARNING: obtained more data than expected ("
                           << words << " " << sizeof(capnp::word)

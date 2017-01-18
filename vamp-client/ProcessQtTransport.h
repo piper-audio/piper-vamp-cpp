@@ -151,7 +151,7 @@ public:
 
             if (!byteCount) {
 #ifdef DEBUG_TRANSPORT
-                std::cerr << "waiting for data from server..." << std::endl;
+                std::cerr << "waiting for data from server (slow = " << slow << ")..." << std::endl;
 #endif
                 if (slow) {
                     m_process->waitForReadyRead(1000);
