@@ -6,6 +6,10 @@ piperdir=../piper
 vampsdkdir=../vamp-plugin-sdk
 schemadir="$piperdir"/json/schema
 
+if [ ! -d "$schemadir" ]; then
+    echo "WARNING: schema directory $schemadir not found, won't be validating JSON schema" 1>&2
+fi
+
 tmpdir=$(mktemp -d)
 
 if [ ! -d "$tmpdir" ]; then
@@ -25,9 +29,13 @@ obtained="$tmpdir/obtained"
 validate() {
     local file="$1"
     local schemaname="$2"
-    jsonschema -i "$file" "$schemadir/$schemaname.json" 1>&2 && \
-        echo "validated $schemaname" 1>&2 || \
-        echo "failed to validate $schemaname" 1>&2
+    if [ -d "$schemadir" ]; then
+        jsonschema -i "$file" "$schemadir/$schemaname.json" 1>&2 && \
+            echo "validated $schemaname" 1>&2 || \
+            echo "failed to validate $schemaname" 1>&2
+    else
+        echo "schema directory $schemadir not found, skipping validation" 1>&2
+    fi
 }
 
 validate_request() {
