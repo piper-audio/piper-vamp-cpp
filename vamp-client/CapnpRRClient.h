@@ -48,6 +48,14 @@
 
 #include <capnp/serialize.h>
 
+#define LOG_ENTRYPOINTS 1
+
+#ifdef LOG_ENTRYPOINTS
+#define LOG_E(x) log(x)
+#else
+#define LOG_E(x)
+#endif
+
 namespace piper_vamp {
 namespace client {
 
@@ -105,6 +113,8 @@ public:
     ListResponse
     listPluginData(const ListRequest &req) override {
 
+        LOG_E("CapnpRRClient::listPluginData called");
+        
         if (!m_transport->isOK()) {
             log("Piper server crashed or failed to start (caller should have checked this)");
             throw std::runtime_error("Piper server crashed or failed to start");
@@ -125,12 +135,17 @@ public:
 
         ListResponse lr;
         VampnProto::readListResponse(lr, reader.getResponse().getList());
+
+        LOG_E("CapnpRRClient::listPluginData returning");
+        
         return lr;
     }
     
     LoadResponse
     loadPlugin(const LoadRequest &req) override {
 
+        LOG_E("CapnpRRClient::loadPlugin called");
+        
         if (!m_transport->isOK()) {
             log("Piper server crashed or failed to start (caller should have checked this)");
             throw std::runtime_error("Piper server crashed or failed to start");
@@ -153,6 +168,9 @@ public:
         m_mapper.addPlugin(handle, plugin);
 
         resp.plugin = plugin;
+
+        LOG_E("CapnpRRClient::loadPlugin returning");
+        
         return resp;
     }
 
@@ -163,6 +181,8 @@ public:
     configure(PluginStub *plugin,
               PluginConfiguration config) override {
 
+        LOG_E("CapnpRRClient::configure called");
+        
         if (!m_transport->isOK()) {
             log("Piper server crashed or failed to start (caller should have checked this)");
             throw std::runtime_error("Piper server crashed or failed to start");
@@ -193,6 +213,8 @@ public:
                                               reader.getResponse().getConfigure(),
                                               m_mapper);
 
+        LOG_E("CapnpRRClient::configure returning");
+        
         return cr.outputs;
     };
     
@@ -202,6 +224,8 @@ public:
             std::vector<std::vector<float> > inputBuffers,
             Vamp::RealTime timestamp) override {
 
+        LOG_E("CapnpRRClient::process called");
+        
         if (!m_transport->isOK()) {
             log("Piper server crashed or failed to start (caller should have checked this)");
             throw std::runtime_error("Piper server crashed or failed to start");
@@ -232,12 +256,16 @@ public:
                                         reader.getResponse().getProcess(),
                                         m_mapper);
 
+        LOG_E("CapnpRRClient::process returning");
+        
         return pr.features;
     }
 
     virtual Vamp::Plugin::FeatureSet
     finish(PluginStub *plugin) override {
 
+        LOG_E("CapnpRRClient::finish called");
+        
         if (!m_transport->isOK()) {
             log("Piper server crashed or failed to start (caller should have checked this)");
             throw std::runtime_error("Piper server crashed or failed to start");
@@ -271,6 +299,8 @@ public:
 
         // Don't delete the plugin. It's the plugin that is supposed
         // to be calling us here
+        
+        LOG_E("CapnpRRClient::finish returning");
         
         return pr.features;
     }
