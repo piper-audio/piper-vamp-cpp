@@ -41,6 +41,7 @@
 #include <QProcess>
 #include <QString>
 #include <QMutex>
+#include <QTime>
 
 #include <iostream>
 
@@ -144,12 +145,51 @@ public:
         
         std::vector<char> buffer;
         bool complete = false;
+
+        QTime t;
+        t.start();
+
+        // We don't like to timeout at all while waiting for a
+        // response -- we'd like to wait as long as the server
+        // continues running.
+        //
+        int beforeResponseTimeout = 0; // ms, 0 = no timeout
+
+        // But if the call is marked as fast (i.e. just retrieving
+        // info rather than calculating something) we will time out
+        // after a bit.
+        //
+        if (!slow) beforeResponseTimeout = 10000; // ms, 0 = no timeout
+
+        // But we do timeout if the server sends part of a reply and
+        // then gets stuck. It's reasonable to assume that a server
+        // that's already prepared its message and started sending has
+        // finished doing any real work. In each case the timeout is
+        // measured since data was last read.
+        //
+        int duringResponseTimeout = 5000; // ms, 0 = no timeout
         
         while (!complete) {
 
+            bool responseStarted = !buffer.empty(); // already have something
+            int ms = t.elapsed(); // time since start or since last read
+            
             qint64 byteCount = m_process->bytesAvailable();
 
             if (!byteCount) {
+
+                if (responseStarted) {
+                    if (duringResponseTimeout > 0 && ms > duringResponseTimeout) {
+                        log("Server timed out during response");
+                        throw std::runtime_error("Request timed out");
+                    }
+                } else {
+                    if (beforeResponseTimeout > 0 && ms > beforeResponseTimeout) {
+                        log("Server timed out before response");
+                        throw std::runtime_error("Request timed out");
+                    }
+                }
+                
 #ifdef DEBUG_TRANSPORT
                 std::cerr << "waiting for data from server (slow = " << slow << ")..." << std::endl;
 #endif
@@ -194,6 +234,7 @@ public:
                     throw std::runtime_error
                         ("Invalid message received: corrupt stream from server?");
                 }
+                (void)t.restart(); // reset timeout when we read anything
             }
         }
 
