@@ -77,6 +77,10 @@ class CapnpRRClient : public PluginClient,
     public:
         State check(const std::vector<char> &message) const override {
 
+            if (message.size() < sizeof(capnp::word)) {
+                return Incomplete;
+            }
+            
             auto karr = toKJArray(message);
             size_t words = karr.size();
             size_t expected = capnp::expectedSizeInWordsFromPrefix(karr);
@@ -103,6 +107,9 @@ class CapnpRRClient : public PluginClient,
             } else if (words == expected) {
                 return Complete;
             } else if (expected > limit) {
+                std::cerr << "WARNING: apparently invalid message prefix: have "
+                          << words << " words in prefix, projected message size is "
+                          << expected << " against limit of " << limit << std::endl;
                 return Invalid;
             } else {
                 return Incomplete;
