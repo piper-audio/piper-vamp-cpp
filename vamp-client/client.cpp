@@ -44,9 +44,10 @@ using std::endl;
 
 int main(int, char **)
 {
-    piper_vamp::client::ProcessQtTransport transport("../bin/piper-vamp-simple-server",
-                                                     "capnp");
-    piper_vamp::client::CapnpRRClient client(&transport);
+    piper_vamp::client::ProcessQtTransport transport
+        ("../bin/piper-vamp-simple-server", "capnp", nullptr);
+
+    piper_vamp::client::CapnpRRClient client(&transport, nullptr);
 
     piper_vamp::ListResponse lr = client.listPluginData({});
     cerr << "Plugins available:" << endl;
@@ -97,8 +98,10 @@ int main(int, char **)
 
     // Let's try a crazy AutoPlugin
 
-    piper_vamp::client::AutoPlugin ap("../bin/piper-vamp-simple-server",
-                                      "vamp-example-plugins:zerocrossing", 16, 0);
+    piper_vamp::client::AutoPlugin ap
+        ("../bin/piper-vamp-simple-server",
+         "vamp-example-plugins:zerocrossing", 16, 0, nullptr);
+    
     if (!ap.isOK()) {
         cerr << "AutoPlugin creation failed" << endl;
     } else {
