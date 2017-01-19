@@ -46,8 +46,10 @@ namespace client {
 class MessageCompletenessChecker // interface
 {
 public:
+    enum State { Complete, Incomplete, Invalid };
+
     virtual ~MessageCompletenessChecker() = default;
-    virtual bool isComplete(const std::vector<char> &message) const = 0;
+    virtual State check(const std::vector<char> &message) const = 0;
 };
 
 class ServerCrashed : public std::runtime_error

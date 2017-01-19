@@ -187,7 +187,13 @@ public:
                 size_t formerSize = buffer.size();
                 buffer.resize(formerSize + byteCount);
                 m_process->read(buffer.data() + formerSize, byteCount);
-                complete = m_completenessChecker->isComplete(buffer);
+                switch (m_completenessChecker->check(buffer)) {
+                case MessageCompletenessChecker::Complete: complete = true; break;
+                case MessageCompletenessChecker::Incomplete: break;
+                case MessageCompletenessChecker::Invalid:
+                    throw std::runtime_error
+                        ("Invalid message received: corrupt stream from server?");
+                }
             }
         }
 

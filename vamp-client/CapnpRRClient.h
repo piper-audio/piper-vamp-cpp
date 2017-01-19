@@ -75,19 +75,38 @@ class CapnpRRClient : public PluginClient,
 
     class CompletenessChecker : public MessageCompletenessChecker {
     public:
-        bool isComplete(const std::vector<char> &message) const override {
+        State check(const std::vector<char> &message) const override {
+
             auto karr = toKJArray(message);
             size_t words = karr.size();
             size_t expected = capnp::expectedSizeInWordsFromPrefix(karr);
+
+            // Lacking a way to definitively check whether a message
+            // is valid or not, we would still like to trap obvious
+            // cases where a programming mistake results in garbage
+            // being returned from the server. We impose a limit on
+            // message size and, if a prefix is projected to exceed
+            // that limit, call it invalid. If an extractor wants to
+            // return a feature set greater than a gigaword in size,
+            // it'll just have to do it across multiple process calls.
+            size_t limit = size_t(1) << 30;
+            
 //            cerr << "CompletenessChecker: message.size() = " << message.size()
-//                 << ", words = " << words << ", expected = " << expected << endl;
+//                 << ", words = " << words << ", limit = " << limit << ", expected = " << expected << endl;
+
             if (words > expected) {
                 std::cerr << "WARNING: obtained more data than expected ("
                           << words << " " << sizeof(capnp::word)
                           << "-byte words, expected "
                           << expected << ")" << std::endl;
+                return Complete;
+            } else if (words == expected) {
+                return Complete;
+            } else if (expected > limit) {
+                return Invalid;
+            } else {
+                return Incomplete;
             }
-            return words >= expected;
         }
     };
     
