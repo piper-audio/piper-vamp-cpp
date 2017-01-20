@@ -874,7 +874,13 @@ public:
         }
 
         e.setCode(0);
-        e.setMessage(std::string("error in ") + type + " request: " + errorText);
+
+        if (responseType == RRType::NotValid) {
+            e.setMessage(errorText);
+        } else {
+            e.setMessage
+                (std::string("error in ") + type + " request: " + errorText);
+        }
     }
 
     static void

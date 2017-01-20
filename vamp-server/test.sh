@@ -2,8 +2,11 @@
 
 set -eu
 
-piperdir=../piper
-vampsdkdir=../vamp-plugin-sdk
+mydir=$(dirname "$0")
+
+piperdir="$mydir"/../../piper
+vampsdkdir="$mydir"/../../vamp-plugin-sdk
+bindir="$mydir"/../bin
 schemadir="$piperdir"/json/schema
 
 if [ ! -d "$schemadir" ]; then
@@ -51,23 +54,32 @@ validate_response() {
     validate "$respfile" "rpcresponse"
 }
 
+# NB this list of commands includes a couple that are expected to fail
+# (process before configure, configure with nonexistent handle, finish
+# same handle twice)
 cat > "$input" <<EOF
 {"method":"list"}
 {"method":"list","params": {"from":["vamp-example-plugins","something-nonexistent"]}}
 {"method":"list","params": {"from":["something-nonexistent"]}}
 {"method":"load","id":6,"params": {"key":"vamp-example-plugins:percussiononsets","inputSampleRate":44100,"adapterFlags":["AdaptInputDomain","AdaptBufferSize"]}}
+{"method":"process","params": {"handle": 1, "processInput": { "timestamp": {"s": 0, "n": 0}, "inputBuffers": [ [1,2,3,4,5,6,7,8] ]}}}
 {"method":"configure","id":"weevil","params":{"handle":1,"configuration":{"blockSize": 8, "channelCount": 1, "parameterValues": {"sensitivity": 40, "threshold": 3}, "stepSize": 8}}}
+{"method":"configure","id":9,"params":{"handle":-9999,"configuration":{"blockSize": 8, "channelCount": 1, "parameterValues": {"sensitivity": 40, "threshold": 3}, "stepSize": 8}}}
 {"method":"process","params": {"handle": 1, "processInput": { "timestamp": {"s": 0, "n": 0}, "inputBuffers": [ [1,2,3,4,5,6,7,8] ]}}}
 {"method":"finish","params": {"handle": 1}}
+{"method":"finish","id":"blah","params": {"handle": 1}}
 EOF
 
 # Expected output, apart from the plugin list which seems a bit
 # fragile to check here
 cat > "$expected" <<EOF
 {"id": 6, "jsonrpc": "2.0", "method": "load", "result": {"defaultConfiguration": {"blockSize": 1024, "channelCount": 1, "parameterValues": {"sensitivity": 40, "threshold": 3}, "stepSize": 1024}, "handle": 1, "staticData": {"basic": {"description": "Detect percussive note onsets by identifying broadband energy rises", "identifier": "percussiononsets", "name": "Simple Percussion Onset Detector"}, "basicOutputInfo": [{"description": "Percussive note onset locations", "identifier": "onsets", "name": "Onsets"}, {"description": "Broadband energy rise detection function", "identifier": "detectionfunction", "name": "Detection Function"}], "category": ["Time", "Onsets"], "copyright": "Code copyright 2006 Queen Mary, University of London, after Dan Barry et al 2005.  Freely redistributable (BSD license)", "inputDomain": "TimeDomain", "key": "vamp-example-plugins:percussiononsets", "maker": "Vamp SDK Example Plugins", "maxChannelCount": 1, "minChannelCount": 1, "parameters": [{"basic": {"description": "Energy rise within a frequency bin necessary to count toward broadband total", "identifier": "threshold", "name": "Energy rise threshold"}, "defaultValue": 3, "extents": {"max": 20, "min": 0}, "unit": "dB", "valueNames": []}, {"basic": {"description": "Sensitivity of peak detector applied to broadband detection function", "identifier": "sensitivity", "name": "Sensitivity"}, "defaultValue": 40, "extents": {"max": 100, "min": 0}, "unit": "%", "valueNames": []}], "programs": [], "version": 2}}}
+{"error": {"code": 0, "message": "error in process request: plugin has not been configured"}, "jsonrpc": "2.0", "method": "process"}
 {"id": "weevil", "jsonrpc": "2.0", "method": "configure", "result": {"handle": 1, "outputList": [{"basic": {"description": "Percussive note onset locations", "identifier": "onsets", "name": "Onsets"}, "configured": {"binCount": 0, "binNames": [], "hasDuration": false, "sampleRate": 44100, "sampleType": "VariableSampleRate", "unit": ""}}, {"basic": {"description": "Broadband energy rise detection function", "identifier": "detectionfunction", "name": "Detection Function"}, "configured": {"binCount": 1, "binNames": [""], "hasDuration": false, "quantizeStep": 1, "sampleRate": 86.1328125, "sampleType": "FixedSampleRate", "unit": ""}}]}}
+{"error": {"code": 0, "message": "error in configure request: unknown plugin handle supplied to configure"}, "id": 9, "jsonrpc": "2.0", "method": "configure"}
 {"jsonrpc": "2.0", "method": "process", "result": {"features": {}, "handle": 1}}
 {"jsonrpc": "2.0", "method": "finish", "result": {"features": {"detectionfunction": [{"featureValues": [0], "timestamp": {"n": 11609977, "s": 0}}]}, "handle": 1}}
+{"error": {"code": 0, "message": "error in finish request: unknown plugin handle supplied to finish"}, "id": "blah", "jsonrpc": "2.0", "method": "finish"}
 EOF
 
 # We run the whole test twice, once with the server in Capnp mode
@@ -77,7 +89,7 @@ EOF
 #debugflag=-d
 debugflag=
 
-for format in json capnp ; do
+for format in json capnp ; do  # nb must be json first: see comment at end of loop
 
     ( export VAMP_PATH="$vampsdkdir"/examples ;
       while read request ; do
@@ -85,11 +97,11 @@ for format in json capnp ; do
           echo "$request"
       done |
           if [ "$format" = "json" ]; then
-              bin/piper-vamp-simple-server $debugflag json
+              "$bindir"/piper-vamp-simple-server $debugflag json
           else
-              bin/piper-convert request -i json -o capnp |
-                  bin/piper-vamp-simple-server $debugflag capnp |
-                  bin/piper-convert response -i capnp -o json
+              "$bindir"/piper-convert request -i json -o capnp |
+                  "$bindir"/piper-vamp-simple-server $debugflag capnp |
+                  "$bindir"/piper-convert response -i capnp -o json
           fi |
           while read response ; do
               echo "$response" >> "$allrespfile"
@@ -102,7 +114,7 @@ for format in json capnp ; do
 
     echo "Checking response contents against expected contents..."
     if ! cmp "$obtained" "$expected"; then
-        diff -u1 "$obtained" "$expected"
+        diff -U 1 "$obtained" "$expected"
     else
         echo "OK"
     fi
@@ -142,6 +154,9 @@ for format in json capnp ; do
     
     rm "$allrespfile"
 
+    # The capnp output doesn't preserve the method name in error
+    # responses, so replace those now that we've done the json test
+    perl -i -p -e 's/(error.*"method": )"[^"]*"/$1"invalid"/' "$expected"
 done
 
 echo "Tests succeeded"  # set -e at top should ensure we don't get here otherwise

@@ -187,7 +187,7 @@ buildCapnpId(Builder &b, const RequestOrResponse::RpcId &id)
 }
 
 RequestOrResponse
-readRequestJson(string &err)
+readRequestJson(string &err, bool &eof)
 {
     RequestOrResponse rr;
     rr.direction = RequestOrResponse::Request;
@@ -195,7 +195,7 @@ readRequestJson(string &err)
     string input;
     if (!getline(cin, input)) {
         // the EOF case, not actually an error
-        rr.type = RRType::NotValid;
+        eof = true;
         return rr;
     }
     
@@ -272,7 +272,7 @@ writeRequestJson(RequestOrResponse &rr, bool useBase64)
 }
 
 RequestOrResponse
-readResponseJson(string &err)
+readResponseJson(string &err, bool &eof)
 {
     RequestOrResponse rr;
     rr.direction = RequestOrResponse::Response;
@@ -280,7 +280,7 @@ readResponseJson(string &err)
     string input;
     if (!getline(cin, input)) {
         // the EOF case, not actually an error
-        rr.type = RRType::NotValid;
+        eof = true;
         return rr;
     }
 
@@ -361,6 +361,7 @@ writeResponseJson(RequestOrResponse &rr, bool useBase64)
                 (rr.finishResponse, mapper, serialisation, id);
             break;
         case RRType::NotValid:
+            j = VampJson::fromError(rr.errorText, rr.type, id);
             break;
         }
     }
@@ -472,8 +473,6 @@ readResponseCapnp(kj::BufferedInputStreamWrapper &buffered)
         VampnProto::readRpcResponse_Finish(rr.finishResponse, reader, mapper);
         break;
     case RRType::NotValid:
-        // error
-        rr.success = false;
         VampnProto::readRpcResponse_Error(errorCode, rr.errorText, reader);
         break;
     }
@@ -513,6 +512,7 @@ writeResponseCapnp(RequestOrResponse &rr)
             VampnProto::buildRpcResponse_Finish(builder, rr.finishResponse, mapper);
             break;
         case RRType::NotValid:
+            VampnProto::buildRpcResponse_Error(builder, rr.errorText, rr.type);
             break;
         }
     }
@@ -521,22 +521,23 @@ writeResponseCapnp(RequestOrResponse &rr)
 }
 
 RequestOrResponse
-readInputJson(RequestOrResponse::Direction direction, string &err)
+readInputJson(RequestOrResponse::Direction direction, string &err, bool &eof)
 {
     if (direction == RequestOrResponse::Request) {
-        return readRequestJson(err);
+        return readRequestJson(err, eof);
     } else {
-        return readResponseJson(err);
+        return readResponseJson(err, eof);
     }
 }
 
 RequestOrResponse
-readInputCapnp(RequestOrResponse::Direction direction)
+readInputCapnp(RequestOrResponse::Direction direction, bool &eof)
 {
     static kj::FdInputStream stream(0); // stdin
     static kj::BufferedInputStreamWrapper buffered(stream);
 
     if (buffered.tryGetReadBuffer() == nullptr) {
+        eof = true;
         return {};
     }
     
@@ -548,15 +549,17 @@ readInputCapnp(RequestOrResponse::Direction direction)
 }
 
 RequestOrResponse
-readInput(string format, RequestOrResponse::Direction direction)
+readInput(string format, RequestOrResponse::Direction direction, bool &eof)
 {
+    eof = false;
+    
     if (format == "json") {
         string err;
-        auto result = readInputJson(direction, err);
+        auto result = readInputJson(direction, err, eof);
         if (err != "") throw runtime_error(err);
         else return result;
     } else if (format == "capnp") {
-        return readInputCapnp(direction);
+        return readInputCapnp(direction, eof);
     } else {
         throw runtime_error("unknown input format \"" + format + "\"");
     }
@@ -649,13 +652,12 @@ int main(int argc, char **argv)
 
         try {
 
-            RequestOrResponse rr = readInput(informat, direction);
-
-            // NotValid without an exception indicates EOF:
-            if (rr.type == RRType::NotValid) break;
+            bool eof = false;
+            RequestOrResponse rr = readInput(informat, direction, eof);
+            if (eof) break;
 
             writeOutput(outformat, rr);
-            
+
         } catch (std::exception &e) {
 
             cerr << "Error: " << e.what() << endl;

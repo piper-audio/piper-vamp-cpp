@@ -245,7 +245,7 @@ convertRequestJson(string input, string &err)
 }
 
 RequestOrResponse
-readRequestJson(string &err)
+readRequestJson(string &err, bool &eof)
 {
     RequestOrResponse rr;
     rr.direction = RequestOrResponse::Request;
@@ -253,7 +253,7 @@ readRequestJson(string &err)
     string input;
     if (!getline(cin, input)) {
         // the EOF case, not actually an error
-        rr.type = RRType::NotValid;
+        eof = true;
         return rr;
     }
     
@@ -339,14 +339,15 @@ writeResponseJson(RequestOrResponse &rr, bool useBase64)
 }
 
 void
-writeExceptionJson(const exception &e, RRType type)
+writeExceptionJson(const exception &e, RRType type, RequestOrResponse::RpcId id)
 {
-    Json j = VampJson::fromError(e.what(), type, Json());
+    Json jid = writeJsonId(id);
+    Json j = VampJson::fromError(e.what(), type, jid);
     cout << j.dump() << endl;
 }
 
 RequestOrResponse
-readRequestCapnp()
+readRequestCapnp(bool &eof)
 {
     RequestOrResponse rr;
     rr.direction = RequestOrResponse::Request;
@@ -355,7 +356,7 @@ readRequestCapnp()
     static kj::BufferedInputStreamWrapper buffered(stream);
 
     if (buffered.tryGetReadBuffer() == nullptr) {
-        rr.type = RRType::NotValid;
+        eof = true;
         return rr;
     }
 
@@ -430,10 +431,12 @@ writeResponseCapnp(RequestOrResponse &rr)
 }
 
 void
-writeExceptionCapnp(const exception &e, RRType type)
+writeExceptionCapnp(const exception &e, RRType type, RequestOrResponse::RpcId id)
 {
     capnp::MallocMessageBuilder message;
     piper::RpcResponse::Builder builder = message.initRoot<piper::RpcResponse>();
+
+    buildId(builder, id);
     VampnProto::buildRpcResponse_Exception(builder, e, type);
     
     writeMessageToFd(1, message);
@@ -472,6 +475,10 @@ handleRequest(const RequestOrResponse &request, bool debug)
     case RRType::Configure:
     {
         auto &creq = request.configurationRequest;
+        if (!creq.plugin) {
+            throw runtime_error("unknown plugin handle supplied to configure");
+        }
+            
         auto h = mapper.pluginToHandle(creq.plugin);
         if (mapper.isConfigured(h)) {
             throw runtime_error("plugin has already been configured");
@@ -490,6 +497,10 @@ handleRequest(const RequestOrResponse &request, bool debug)
     case RRType::Process:
     {
         auto &preq = request.processRequest;
+        if (!preq.plugin) {
+            throw runtime_error("unknown plugin handle supplied to process");
+        }
+
         auto h = mapper.pluginToHandle(preq.plugin);
         if (!mapper.isConfigured(h)) {
             throw runtime_error("plugin has not been configured");
@@ -521,6 +532,10 @@ handleRequest(const RequestOrResponse &request, bool debug)
     case RRType::Finish:
     {
         auto &freq = request.finishRequest;
+        if (!freq.plugin) {
+            throw runtime_error("unknown plugin handle supplied to finish");
+        }
+
         response.finishResponse.plugin = freq.plugin;
 
         auto h = mapper.pluginToHandle(freq.plugin);
@@ -547,13 +562,13 @@ handleRequest(const RequestOrResponse &request, bool debug)
 }
 
 RequestOrResponse
-readRequest(string format)
+readRequest(string format, bool &eof)
 {
     if (format == "capnp") {
-        return readRequestCapnp();
+        return readRequestCapnp(eof);
     } else if (format == "json") {
         string err;
-        auto result = readRequestJson(err);
+        auto result = readRequestJson(err, eof);
         if (err != "") throw runtime_error(err);
         else return result;
     } else {
@@ -576,13 +591,13 @@ writeResponse(string format, RequestOrResponse &rr)
 }
 
 void
-writeException(string format, const exception &e, RRType type)
+writeException(string format, const exception &e, RRType type, RequestOrResponse::RpcId id)
 {
     resumeOutput();
     if (format == "capnp") {
-        writeExceptionCapnp(e, type);
+        writeExceptionCapnp(e, type, id);
     } else if (format == "json") {
-        writeExceptionJson(e, type);
+        writeExceptionJson(e, type, id);
     } else {
         throw runtime_error("unknown output format \"" + format + "\"");
     }
@@ -644,10 +659,10 @@ int main(int argc, char **argv)
         
         try {
 
-            request = readRequest(format);
+            bool eof = false;
+            request = readRequest(format, eof);
             
-            // NotValid without an exception indicates EOF:
-            if (request.type == RRType::NotValid) {
+            if (eof) {
                 if (debug) {
                     cerr << myname << " " << pid << ": eof reached, exiting" << endl;
                 }
@@ -659,7 +674,28 @@ int main(int argc, char **argv)
                      << int(request.type)
                      << endl;
             }
+            
+        } catch (exception &e) {
 
+            if (debug) {
+                cerr << myname << " " << pid << ": error: " << e.what() << endl;
+            }
+
+            writeException(format, e, request.type, request.id);
+
+            if (format == "capnp") {
+                // Don't try to continue; we can't recover from a
+                // mangled input stream. However, we can return a
+                // successful error code because we are reporting the
+                // status in our Capnp output stream instead
+                if (debug) {
+                    cerr << myname << " " << pid << ": not attempting to recover from capnp parse problems, exiting" << endl;
+                }
+                exit(0);
+            }
+        }
+
+        try {
             RequestOrResponse response = handleRequest(request, debug);
             response.id = request.id;
 
@@ -689,18 +725,7 @@ int main(int argc, char **argv)
                 cerr << myname << " " << pid << ": error: " << e.what() << endl;
             }
 
-            writeException(format, e, request.type);
-
-            if (format == "capnp") {
-                // Don't try to continue; we can't recover from a
-                // mangled input stream. However, we can return a
-                // successful error code because we are reporting the
-                // status in our Capnp output stream instead
-                if (debug) {
-                    cerr << myname << " " << pid << ": not attempting to recover from capnp parse problems, exiting" << endl;
-                }
-                exit(0);
-            }
+            writeException(format, e, request.type, request.id);
         }
     }
 

@@ -1314,8 +1314,13 @@ public:
 
         json11::Json::object eo;
         eo["code"] = 0;
-        eo["message"] = 
-            std::string("error in ") + type + " request: " + errorText;
+
+        if (responseType == RRType::NotValid) {
+            eo["message"] = errorText;
+        } else {
+            eo["message"] = 
+                std::string("error in ") + type + " request: " + errorText;
+        }
 
         jo["method"] = type;
         jo["error"] = eo;
