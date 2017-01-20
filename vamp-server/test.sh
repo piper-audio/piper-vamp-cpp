@@ -125,15 +125,15 @@ for format in json capnp ; do  # nb must be json first: see comment at end of lo
     # probably a bit fragile, let's just count the number of plugins
 
     # First, with no "from" arg to the list call
-    list_no_from=$(head -n +1 "$allrespfile" | fmt -1 | grep '"key"' | wc -l)
+    list_no_from=$(head -n +1 "$allrespfile" | fmt -1 | grep '"key"' | wc -l | sed 's/[^0-9]//g')
 
     # Now with a "from" arg that includes the library that exists
     list_with_good_from=$(tail -n +2 "$allrespfile" | head -n +1 | fmt -1 |
-                              grep '"key"' | wc -l)
+                              grep '"key"' | wc -l | sed 's/[^0-9]//g')
     
     # Now with a "from" arg that doesn't include any real library
     list_with_bad_from=$(tail -n +3 "$allrespfile" | head -n +1 | fmt -1 |
-                             grep '"key"' | wc -l)
+                             grep '"key"' | wc -l | sed 's/[^0-9]//g')
 
     if [ "$list_no_from" != "6" ]; then
         echo "Wrong number of plugins from list response without \"from\" arg"
