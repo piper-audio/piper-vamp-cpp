@@ -177,7 +177,7 @@ readId(const piper::RpcRequest::Reader &r)
     case piper::RpcRequest::Id::Which::NONE:
         return { RequestOrResponse::RpcId::Absent, 0, "" };
     }
-    return {};
+    return { RequestOrResponse::RpcId::Absent, 0, "" };
 }
 
 static void
