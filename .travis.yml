@@ -19,11 +19,11 @@ addons:
 before_install:
   - ( cd ../ ; git clone https://github.com/piper-audio/piper )
   - ( cd ../ ; hg clone https://code.soundsoftware.ac.uk/hg/vamp-plugin-sdk )
-  - ( cd ../vamp-plugin-sdk ; ./configure --disable-programs && make sdkstatic plugins )
   - ( cd ../ ; git clone https://github.com/sandstorm-io/capnproto )
   - ( cd ../capnproto/c++ ; ./setup-autotools.sh && autoreconf -i )
   - ( cd ../capnproto/c++ ; ./configure && make && sudo make install )
   - if [[ "$TRAVIS_OS_NAME" = "osx" ]] ; then brew install qt5 ; fi
+  - ( cd ../vamp-plugin-sdk ; if [[ "$TRAVIS_OS_NAME" = "osx" ]] ; then make -f build/Makefile.osx sdkstatic plugins ; else ./configure --disable-programs && make sdkstatic plugins; fi )
 
 install:
   - sudo pip install jsonschema
