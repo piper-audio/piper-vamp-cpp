@@ -36,7 +36,7 @@
 #ifndef PIPER_PROCESS_QT_TRANSPORT_H
 #define PIPER_PROCESS_QT_TRANSPORT_H
 
-#include "SynchronousTransport.h"
+#include "../SynchronousTransport.h"
 
 #include <QProcess>
 #include <QString>

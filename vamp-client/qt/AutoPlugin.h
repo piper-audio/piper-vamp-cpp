@@ -37,7 +37,7 @@
 #define PIPER_AUTO_PLUGIN_H
 
 #include "ProcessQtTransport.h"
-#include "CapnpRRClient.h"
+#include "../CapnpRRClient.h"
 
 #include <cstdint>
 
