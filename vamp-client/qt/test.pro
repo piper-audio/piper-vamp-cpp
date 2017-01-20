@@ -11,10 +11,10 @@ QT -= xml network gui widgets
 OBJECTS_DIR = ../o
 MOC_DIR = ../o
 
-VAMPSDK_DIR = ../../vamp-plugin-sdk
-PIPER_DIR = ../../piper
+VAMPSDK_DIR = ../../../vamp-plugin-sdk
+PIPER_DIR = ../../../piper
 
-QMAKE_CXXFLAGS = -I$$VAMPSDK_DIR -I..
+QMAKE_CXXFLAGS = -I$$VAMPSDK_DIR -I.. -I../..
 
 LIBS += -lcapnp -lkj -lvamp-hostsdk
 
@@ -24,19 +24,19 @@ win32-x-g++:QMAKE_LFLAGS += -Wl,-subsystem,console
 
 macx*: CONFIG -= app_bundle
 
-TARGET = client
+TARGET = test
 
 SOURCES += \
-        client.cpp \
-        ../vamp-capnp/piper-capnp.cpp
+        test.cpp \
+        ../../vamp-capnp/piper-capnp.cpp
         
 HEADERS += \
         ProcessQtTransport.h \
-        CapnpRRClient.h \
-        Loader.h \
-        PluginClient.h \
-        PluginStub.h \
         AutoPlugin.h \
-        SynchronousTransport.h
+        ../CapnpRRClient.h \
+        ../Loader.h \
+        ../PluginClient.h \
+        ../PluginStub.h \
+        ../SynchronousTransport.h
         
 

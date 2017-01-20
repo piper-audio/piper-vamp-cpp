@@ -30,11 +30,12 @@ validate() {
     local file="$1"
     local schemaname="$2"
     if [ -d "$schemadir" ]; then
+	echo " * validating against schema $schemaname... " 1>&2
         jsonschema -i "$file" "$schemadir/$schemaname.json" 1>&2 && \
-            echo "validated $schemaname" 1>&2 || \
-            echo "failed to validate $schemaname" 1>&2
+            echo " -> validated against schema $schemaname" 1>&2 || \
+            echo " !! failed to validate $schemaname!" 1>&2
     else
-        echo "schema directory $schemadir not found, skipping validation" 1>&2
+        echo "(schema directory $schemadir not found, skipping validation)" 1>&2
     fi
 }
 
@@ -73,6 +74,9 @@ EOF
 # (converting to JSON using piper-convert) and once with it directly
 # in JSON mode
 
+#debugflag=-d
+debugflag=
+
 for format in json capnp ; do
 
     ( export VAMP_PATH="$vampsdkdir"/examples ;
@@ -81,10 +85,10 @@ for format in json capnp ; do
           echo "$request"
       done |
           if [ "$format" = "json" ]; then
-              bin/piper-vamp-simple-server -d json
+              bin/piper-vamp-simple-server $debugflag json
           else
               bin/piper-convert request -i json -o capnp |
-                  bin/piper-vamp-simple-server -d capnp |
+                  bin/piper-vamp-simple-server $debugflag capnp |
                   bin/piper-convert response -i capnp -o json
           fi |
           while read response ; do

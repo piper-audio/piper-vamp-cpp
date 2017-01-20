@@ -1,0 +1,8 @@
+*.o
+*.a
+o/
+.qmake.stash
+*~
+vamp-client/qt/Makefile
+vamp-client/qt/test
+bin/

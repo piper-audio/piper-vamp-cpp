@@ -56,7 +56,7 @@ public:
 
 	auto loader = Vamp::HostExt::PluginLoader::getInstance();
 
-        std::cerr << "listPluginData: about to ask loader to list plugins" << std::endl;
+//        std::cerr << "listPluginData: about to ask loader to list plugins" << std::endl;
         
         std::vector<std::string> keys;
         if (req.from.empty()) {
@@ -65,11 +65,11 @@ public:
             keys = loader->listPluginsIn(req.from);
         }
 
-        std::cerr << "listPluginData: loader listed " << keys.size() << " plugins" << std::endl;
+//        std::cerr << "listPluginData: loader listed " << keys.size() << " plugins" << std::endl;
         
 	ListResponse response;
 	for (std::string key: keys) {
-            std::cerr << "listPluginData: loading plugin and querying static data: " << key << std::endl;
+//            std::cerr << "listPluginData: loading plugin and querying static data: " << key << std::endl;
 	    Vamp::Plugin *p = loader->loadPlugin(key, 44100, 0);
 	    if (!p) continue;
 	    auto category = loader->getPluginCategory(key);

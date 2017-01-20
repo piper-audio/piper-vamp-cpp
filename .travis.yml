@@ -1,0 +1,32 @@
+dist:
+  - trusty
+
+language:
+  - cpp
+
+sudo:
+  - false
+
+os:
+  - linux
+  - osx
+
+addons:
+  apt:
+    packages:
+      - qt5-default
+      
+before_install:
+  - ( cd ../ ; hg clone https://code.soundsoftware.ac.uk/hg/vamp-plugin-sdk )
+  - ( cd ../vamp-plugin-sdk ; ./configure && make sdkstatic )
+  - ( cd ../ ; git clone https://github.com/sandstorm-io/capnproto )
+  - ( cd ../capnproto/c++ ; ./setup-autotools.sh && autoreconf -i )
+  - ( cd ../capnproto/c++ ; ./configure && make && sudo make install )
+  - if [[ "$TRAVIS_OS_NAME" = "osx" ]] ; then brew install qt5 ; fi
+
+install:
+  - sudo pip install jsonschema
+
+script:
+  - ./test.sh
+
