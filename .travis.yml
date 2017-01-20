@@ -19,7 +19,7 @@ addons:
 before_install:
   - ( cd ../ ; git clone https://github.com/piper-audio/piper )
   - ( cd ../ ; hg clone https://code.soundsoftware.ac.uk/hg/vamp-plugin-sdk )
-  - ( cd ../vamp-plugin-sdk ; ./configure --disable-programs && make sdkstatic )
+  - ( cd ../vamp-plugin-sdk ; ./configure --disable-programs && make sdkstatic plugins )
   - ( cd ../ ; git clone https://github.com/sandstorm-io/capnproto )
   - ( cd ../capnproto/c++ ; ./setup-autotools.sh && autoreconf -i )
   - ( cd ../capnproto/c++ ; ./configure && make && sudo make install )
@@ -29,5 +29,5 @@ install:
   - sudo pip install jsonschema
 
 script:
-  - ./test.sh
+  - VAMP_PATH=$(pwd)/../vamp-plugin-sdk/examples ./test.sh
 
