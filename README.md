@@ -15,19 +15,19 @@ Includes:
 
 Directories:
 
-*vamp-json* -- convert between Piper JSON messages and Vamp SDK classes
+ * *vamp-json* - convert between Piper JSON messages and Vamp SDK classes
 
-*vamp-capnp* -- convert between Piper Cap'n Proto messages and Vamp
- abstractions
+ * *vamp-capnp* - convert between Piper Cap'n Proto messages and Vamp
+   abstractions
 
-*vamp-support* -- support classes for the above
+ * *vamp-support* - support classes for the above
 
-*vamp-server* -- main programs for command-line converter and server
+ * *vamp-server* - main programs for command-line converter and server
 
-*vamp-client* -- logic to make Piper servers available to Vamp hosts
- through a Vamp-like API
+ * *vamp-client* - logic to make Piper servers available to Vamp hosts
+   through a Vamp-like API
 
-*vamp-client/qt* -- logic specific to hosts written with Qt
+ * *vamp-client/qt* - logic specific to hosts written with Qt
 
 [![Build Status](https://travis-ci.org/piper-audio/piper-cpp.svg?branch=master)](https://travis-ci.org/piper-audio/piper-cpp)
 
