@@ -27,6 +27,9 @@ through a Vamp-like API
 
 *vamp-client/qt* - logic specific to hosts written with Qt
 
+*ext* - json11 and base-n third-party libraries: see individual
+directories for copyright details
+
 [![Build Status](https://travis-ci.org/piper-audio/piper-cpp.svg?branch=master)](https://travis-ci.org/piper-audio/piper-cpp)
 
 ## Authors and licensing
