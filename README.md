@@ -4,14 +4,14 @@
 Supporting code in C++ for the Piper audio feature extractor protocol,
 primarily for making Vamp plugins work with the Piper protocol.
 
-Includes:
+## Contents
 
  * code to adapt Piper messages to the classes used in the Vamp SDK
  * a command-line converter between Piper serialisations (via Vamp SDK
    classes)
  * a server that makes Vamp plugins available via Piper messages
 
-Directories:
+## Directory index
 
 *vamp-json* - convert between Piper JSON messages and Vamp SDK classes
 
