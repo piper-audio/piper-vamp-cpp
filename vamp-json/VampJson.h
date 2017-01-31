@@ -305,7 +305,7 @@ public:
             return {};
         }
 
-        od = toConfiguredOutputDescriptor(j, err);
+        od = toConfiguredOutputDescriptor(j["configured"], err);
         if (failed(err)) return {};
     
         toBasicDescriptor(j["basic"], od, err);
