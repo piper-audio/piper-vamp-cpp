@@ -42,9 +42,10 @@
 #include "vamp-support/PluginStaticData.h"
 #include "vamp-support/PluginConfiguration.h"
 
-#include <cstdint>
-
 #include "PluginClient.h"
+
+#include <cstdint>
+#include <iostream>
 
 namespace piper_vamp {
 namespace client {
@@ -52,7 +53,7 @@ namespace client {
 class PluginStub : public Vamp::Plugin
 {
     enum State {
-        Loaded, Configured, Finished
+        Loaded, Configured, Finished, Failed
     };
     
 public:
@@ -73,8 +74,13 @@ public:
     { }
 
     virtual ~PluginStub() {
-        if (m_state != Finished) {
-            (void)m_client->finish(this);
+        if (m_state != Finished && m_state != Failed) {
+            try {
+                (void)m_client->finish(this);
+            } catch (const std::exception &e) {
+                // Finish can throw, but our destructor must not
+                std::cerr << "WARNING: PluginStub::~PluginStub: caught exception from finish(): " << e.what() << std::endl;
+            }
         }
     }
     
@@ -115,7 +121,11 @@ public:
     }
 
     virtual void setParameter(std::string name, float value) {
+        if (m_state == Failed) {
+            throw std::logic_error("Plugin is in failed state");
+        }
         if (m_state != Loaded) {
+            m_state = Failed;
             throw std::logic_error("Can't set parameter after plugin initialised");
         }
         m_config.parameterValues[name] = value;
@@ -130,7 +140,11 @@ public:
     }
     
     virtual void selectProgram(std::string program) {
+        if (m_state == Failed) {
+            throw std::logic_error("Plugin is in failed state");
+        }
         if (m_state != Loaded) {
+            m_state = Failed;
             throw std::logic_error("Can't select program after plugin initialised");
         }
         m_config.currentProgram = program;
@@ -140,7 +154,11 @@ public:
                             size_t stepSize,
                             size_t blockSize) {
 
+        if (m_state == Failed) {
+            throw std::logic_error("Plugin is in failed state");
+        }
         if (m_state != Loaded) {
+            m_state = Failed;
             throw std::logic_error("Plugin has already been initialised");
         }
         
@@ -160,6 +178,9 @@ public:
 
     virtual void reset() {
         
+        if (m_state == Failed) {
+            throw std::logic_error("Plugin is in failed state");
+        }
         if (m_state == Loaded) {
             // reset is a no-op if the plugin hasn't been initialised yet
             return;
@@ -191,6 +212,10 @@ public:
     }
 
     virtual OutputList getOutputDescriptors() const {
+
+        if (m_state == Failed) {
+            throw std::logic_error("Plugin is in failed state");
+        }
         if (m_state == Configured) {
             return m_outputs;
         }
@@ -214,10 +239,15 @@ public:
     virtual FeatureSet process(const float *const *inputBuffers,
                                Vamp::RealTime timestamp) {
 
+        if (m_state == Failed) {
+            throw std::logic_error("Plugin is in failed state");
+        }
         if (m_state == Loaded) {
+            m_state = Failed;
             throw std::logic_error("Plugin has not been initialised");
         }
         if (m_state == Finished) {
+            m_state = Failed;
             throw std::logic_error("Plugin has already been disposed of");
         }
 
@@ -234,10 +264,15 @@ public:
 
     virtual FeatureSet getRemainingFeatures() {
 
+        if (m_state == Failed) {
+            throw std::logic_error("Plugin is in failed state");
+        }
         if (m_state == Loaded) {
+            m_state = Failed;
             throw std::logic_error("Plugin has not been configured");
         }
         if (m_state == Finished) {
+            m_state = Failed;
             throw std::logic_error("Plugin has already been disposed of");
         }
 
