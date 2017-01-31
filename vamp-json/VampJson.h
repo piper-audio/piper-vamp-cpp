@@ -1298,7 +1298,8 @@ public:
     static json11::Json
     fromError(std::string errorText,
               RRType responseType,
-              const json11::Json &id) {
+              const json11::Json &id,
+              bool writeVerbatimError = false) {
 
         json11::Json::object jo;
         markRPC(jo);
@@ -1315,7 +1316,7 @@ public:
         json11::Json::object eo;
         eo["code"] = 0;
 
-        if (responseType == RRType::NotValid) {
+        if (responseType == RRType::NotValid || writeVerbatimError) {
             eo["message"] = errorText;
         } else {
             eo["message"] = 

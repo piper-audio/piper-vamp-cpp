@@ -337,11 +337,11 @@ writeResponseJson(RequestOrResponse &rr, bool useBase64)
     Json id = writeJsonId(rr.id);
 
     if (!rr.success) {
-
-        j = VampJson::fromError(rr.errorText, rr.type, id);
+         // errorText here likely contains a full message produced by simple-server
+         // setting writeVerbatimError to true avoids doubling error descriptions 
+        j = VampJson::fromError(rr.errorText, rr.type, id, true);
 
     } else {
-    
         switch (rr.type) {
 
         case RRType::List:
@@ -558,8 +558,15 @@ readInput(string format, RequestOrResponse::Direction direction, bool &eof)
     if (format == "json") {
         string err;
         auto result = readInputJson(direction, err, eof);
-        if (err != "") throw runtime_error(err);
-        else return result;
+        const bool isRecognisedError = !result.success && result.errorText != "";
+        
+        // if the RequestOrResponse (result) has been populated with success=false and an error message
+        // then the server returned a well formed error, it is safe to return it for conversion 
+        // -- but if err is populated, something else has gone wrong
+        if (isRecognisedError || err == "") 
+            return result;
+        else 
+            throw runtime_error(err);
     } else if (format == "capnp") {
         return readInputCapnp(direction, eof);
     } else {
@@ -661,7 +668,6 @@ int main(int argc, char **argv)
             writeOutput(outformat, rr);
 
         } catch (std::exception &e) {
-
             cerr << "Error: " << e.what() << endl;
             exit(1);
         }
