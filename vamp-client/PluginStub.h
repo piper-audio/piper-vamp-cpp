@@ -166,7 +166,12 @@ public:
         m_config.stepSize = int(stepSize);
         m_config.blockSize = int(blockSize);
 
-        m_outputs = m_client->configure(this, m_config);
+        try {
+            m_outputs = m_client->configure(this, m_config);
+        } catch (const std::exception &e) {
+            m_state = Failed;
+            throw;
+        }
 
         if (!m_outputs.empty()) {
             m_state = Configured;
@@ -185,8 +190,13 @@ public:
             // reset is a no-op if the plugin hasn't been initialised yet
             return;
         }
-        
-        m_client->reset(this, m_config);
+
+        try {
+            m_client->reset(this, m_config);
+        } catch (const std::exception &e) {
+            m_state = Failed;
+            throw;
+        }
 
         m_state = Configured;
     }
@@ -258,8 +268,13 @@ public:
                              (inputBuffers[c],
                               inputBuffers[c] + m_config.blockSize));
         }
-        
-        return m_client->process(this, vecbuf, timestamp);
+
+        try {
+            return m_client->process(this, vecbuf, timestamp);
+        } catch (const std::exception &e) {
+            m_state = Failed;
+            throw;
+        }
     }
 
     virtual FeatureSet getRemainingFeatures() {
@@ -278,7 +293,12 @@ public:
 
         m_state = Finished;
 
-        return m_client->finish(this);
+        try {
+            return m_client->finish(this);
+        } catch (const std::exception &e) {
+            m_state = Failed;
+            throw;
+        }
     }
 
     // Not Plugin methods, but needed by the PluginClient to support reloads:
