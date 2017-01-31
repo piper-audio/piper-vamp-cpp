@@ -295,8 +295,10 @@ readResponseJson(string &err, bool &eof)
     VampJson::BufferSerialisation serialisation =
         VampJson::BufferSerialisation::Array;
 
-    rr.success = j["success"].bool_value();
-    rr.errorText = j["errorText"].string_value();
+    const bool isSuccess = j["result"].is_object();
+    const bool isError = j["error"].is_object();
+    rr.success = isSuccess;
+    rr.errorText = isError ? j["error"]["message"].string_value() : "";
 
     switch (rr.type) {
 

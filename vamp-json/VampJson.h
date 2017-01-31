@@ -1109,11 +1109,11 @@ private: // go private briefly for a couple of helper functions
 
     static bool
     successful(json11::Json j, std::string &err) {
-        if (!j["success"].is_bool()) {
-            err = "bool expected for success";
+        if (!j["result"].is_object()) {
+            err = "result object expected for success";
             return false;
         }
-        return j["success"].bool_value();
+        return true;
     }
 
     static void
