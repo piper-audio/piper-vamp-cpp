@@ -89,16 +89,23 @@ EOF
 #debugflag=-d
 debugflag=
 
-for format in json capnp ; do  # nb must be json first: see comment at end of loop
+for request_response_conversion in none json_to_json json_to_capnp ; do 
 
     ( export VAMP_PATH="$vampsdkdir"/examples ;
       while read request ; do
           validate_request "$request"
           echo "$request"
       done |
-          if [ "$format" = "json" ]; then
+          if [ "$request_response_conversion" = "none" ]; then
               "$bindir"/piper-vamp-simple-server $debugflag json
+          elif [ "$request_response_conversion" = "json_to_json" ]; then
+              "$bindir"/piper-convert request -i json -o json |
+                  "$bindir"/piper-vamp-simple-server $debugflag json |
+                  "$bindir"/piper-convert response -i json -o json
           else
+              # The capnp output doesn't preserve the method name in error
+              # responses, so replace those now that we've done the json tests
+              perl -i -p -e 's/(error.*"method": )"[^"]*"/$1"invalid"/' "$expected"
               "$bindir"/piper-convert request -i json -o capnp |
                   "$bindir"/piper-vamp-simple-server $debugflag capnp |
                   "$bindir"/piper-convert response -i capnp -o json
@@ -153,10 +160,6 @@ for format in json capnp ; do  # nb must be json first: see comment at end of lo
     echo OK
     
     rm "$allrespfile"
-
-    # The capnp output doesn't preserve the method name in error
-    # responses, so replace those now that we've done the json test
-    perl -i -p -e 's/(error.*"method": )"[^"]*"/$1"invalid"/' "$expected"
 done
 
 echo "Tests succeeded"  # set -e at top should ensure we don't get here otherwise
