@@ -261,7 +261,6 @@ public:
             throw std::logic_error("Plugin has already been disposed of");
         }
 
-        //!!! ew
         std::vector<std::vector<float> > vecbuf;
         for (int c = 0; c < m_config.channelCount; ++c) {
             vecbuf.push_back(std::vector<float>

@@ -52,12 +52,6 @@ public:
     virtual State check(const std::vector<char> &message) const = 0;
 };
 
-class ServerCrashed : public std::runtime_error
-{
-public:
-    ServerCrashed() : std::runtime_error("Piper server exited unexpectedly") {}
-};
-
 class LogCallback
 {
 public:

@@ -143,11 +143,8 @@ public:
 
         LOG_E("CapnpRRClient::listPluginData called");
         
-        if (!m_transport->isOK()) {
-            log("Piper server crashed or failed to start (caller should have checked this)");
-            throw std::runtime_error("Piper server crashed or failed to start");
-        }
-
+        checkServerOK();
+        
         capnp::MallocMessageBuilder message;
         piper::RpcRequest::Builder builder = message.initRoot<piper::RpcRequest>();
         VampnProto::buildRpcRequest_List(builder, req);
@@ -174,11 +171,8 @@ public:
 
         LOG_E("CapnpRRClient::loadPlugin called");
         
-        if (!m_transport->isOK()) {
-            log("Piper server crashed or failed to start (caller should have checked this)");
-            throw std::runtime_error("Piper server crashed or failed to start");
-        }
-
+        checkServerOK();
+        
         LoadResponse resp;
         PluginHandleMapper::Handle handle = serverLoad(req.pluginKey,
                                                        req.inputSampleRate,
@@ -210,12 +204,9 @@ public:
               PluginConfiguration config) override {
 
         LOG_E("CapnpRRClient::configure called");
-        
-        if (!m_transport->isOK()) {
-            log("Piper server crashed or failed to start (caller should have checked this)");
-            throw std::runtime_error("Piper server crashed or failed to start");
-        }
 
+        checkServerOK();
+        
         ConfigurationRequest request;
         request.plugin = plugin;
         request.configuration = config;
@@ -231,8 +222,6 @@ public:
 
         capnp::FlatArrayMessageReader responseMessage(karr);
         piper::RpcResponse::Reader reader = responseMessage.getRoot<piper::RpcResponse>();
-
-        //!!! handle (explicit) error case
 
         checkResponseType(reader, piper::RpcResponse::Response::Which::CONFIGURE, id);
 
@@ -254,11 +243,8 @@ public:
 
         LOG_E("CapnpRRClient::process called");
         
-        if (!m_transport->isOK()) {
-            log("Piper server crashed or failed to start (caller should have checked this)");
-            throw std::runtime_error("Piper server crashed or failed to start");
-        }
-
+        checkServerOK();
+        
         ProcessRequest request;
         request.plugin = plugin;
         request.inputBuffers = inputBuffers;
@@ -274,8 +260,6 @@ public:
 
         capnp::FlatArrayMessageReader responseMessage(karr);
         piper::RpcResponse::Reader reader = responseMessage.getRoot<piper::RpcResponse>();
-
-        //!!! handle (explicit) error case
 
         checkResponseType(reader, piper::RpcResponse::Response::Which::PROCESS, id);
 
@@ -294,11 +278,8 @@ public:
 
         LOG_E("CapnpRRClient::finish called");
         
-        if (!m_transport->isOK()) {
-            log("Piper server crashed or failed to start (caller should have checked this)");
-            throw std::runtime_error("Piper server crashed or failed to start");
-        }
-
+        checkServerOK();
+        
         FinishRequest request;
         request.plugin = plugin;
         
@@ -313,8 +294,6 @@ public:
 
         capnp::FlatArrayMessageReader responseMessage(karr);
         piper::RpcResponse::Reader reader = responseMessage.getRoot<piper::RpcResponse>();
-
-        //!!! handle (explicit) error case
 
         checkResponseType(reader, piper::RpcResponse::Response::Which::FINISH, id);
 
@@ -341,11 +320,8 @@ public:
 
         log("CapnpRRClient: reset() called, plugin will be closed and reloaded");
         
-        if (!m_transport->isOK()) {
-            log("Piper server crashed or failed to start (caller should have checked this)");
-            throw std::runtime_error("Piper server crashed or failed to start");
-        }
-
+        checkServerOK();
+        
         if (m_mapper.havePlugin(plugin)) {
             (void)finish(plugin); // server-side unload
         }
@@ -384,23 +360,58 @@ private:
     }
 
     void
+    checkServerOK() {
+        if (!m_transport->isOK()) {
+            log("Piper server crashed or failed to start (caller should have checked this)");
+            throw ServerCrashed();
+        }
+    }
+    
+    /**
+     * Check (i) that the response has the same id as supplied (which
+     * presumably is the corresponding request id) and (ii) that the
+     * response has the expected type.
+     *
+     * Return only if both of these things are the case.
+     * 
+     * If the response has the right id but is an error response,
+     * throw a ServiceError exception with the error response's
+     * message in it.
+     *
+     * If the response has the wrong id, or if it has the wrong type
+     * and is not an error response, throw ProtocolError. (i.e. for
+     * cases having errors that are not conveyed through our official
+     * error response.)
+     */
+    void
     checkResponseType(const piper::RpcResponse::Reader &r,
                       piper::RpcResponse::Response::Which type,
                       ReqId id) {
         
-        if (r.getResponse().which() != type) {
-            std::ostringstream s;
-            s << "checkResponseType: wrong response type (received "
-              << int(r.getResponse().which()) << ", expected " << int(type) << ")";
-            log(s.str());
-            throw std::runtime_error("Wrong response type");
-        }
         if (ReqId(r.getId().getNumber()) != id) {
             std::ostringstream s;
             s << "checkResponseType: wrong response id (received "
               << r.getId().getNumber() << ", expected " << id << ")";
             log(s.str());
-            throw std::runtime_error("Wrong response id");
+            throw ProtocolError("Wrong response id");
+        }
+        if (r.getResponse().which() != type) {
+            if (r.getResponse().which() == piper::RpcResponse::Response::Which::ERROR) {
+                int code;
+                std::string message;
+                VampnProto::readRpcResponse_Error(code, message, r);
+                std::ostringstream s;
+                s << "checkResponseType: received an error with message: "
+                  << message;
+                log(s.str());
+                throw ServiceError(message);
+            } else {
+                std::ostringstream s;
+                s << "checkResponseType: wrong response type (received "
+                  << int(r.getResponse().which()) << ", expected " << int(type) << ")";
+                log(s.str());
+                throw ProtocolError("Wrong response type");
+            }
         }
     }
 
@@ -433,13 +444,8 @@ private:
 
         auto karr = call(message, "load", false);
 
-        //!!! ... --> will also need some way to kill this process
-        //!!! (from another thread)
-
         capnp::FlatArrayMessageReader responseMessage(karr);
         piper::RpcResponse::Reader reader = responseMessage.getRoot<piper::RpcResponse>();
-
-        //!!! handle (explicit) error case
 
         checkResponseType(reader, piper::RpcResponse::Response::Which::LOAD, id);
         
