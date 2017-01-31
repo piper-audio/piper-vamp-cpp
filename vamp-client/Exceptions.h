@@ -36,6 +36,9 @@
 #ifndef PIPER_CLIENT_EXCEPTIONS_H
 #define PIPER_CLIENT_EXCEPTIONS_H
 
+#include <stdexcept>
+#include <string>
+
 namespace piper_vamp {
 namespace client {
 
