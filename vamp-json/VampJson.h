@@ -849,7 +849,7 @@ public:
     toListResponse(json11::Json j, std::string &err) {
 
         ListResponse resp;
-        for (const auto &a: j["result"]["available"].array_items()) {
+        for (const auto &a: j["available"].array_items()) {
             resp.available.push_back(toPluginStaticData(a, err));
             if (failed(err)) return {};
         }
