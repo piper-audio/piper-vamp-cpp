@@ -912,7 +912,7 @@ public:
     getRequestResponseType(const piper::RpcResponse::Reader &r) {
         switch (r.getResponse().which()) {
         case piper::RpcResponse::Response::Which::ERROR:
-            return RRType::NotValid; //!!! or error type? test this
+            return RRType::NotValid;
         case piper::RpcResponse::Response::Which::LIST:
             return RRType::List;
         case piper::RpcResponse::Response::Which::LOAD:

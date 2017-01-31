@@ -37,6 +37,7 @@
 #define PIPER_PROCESS_QT_TRANSPORT_H
 
 #include "../SynchronousTransport.h"
+#include "../Exceptions.h"
 
 #include <QProcess>
 #include <QString>
@@ -181,12 +182,14 @@ public:
                 if (responseStarted) {
                     if (duringResponseTimeout > 0 && ms > duringResponseTimeout) {
                         log("Server timed out during response");
-                        throw std::runtime_error("Request timed out");
+                        m_crashed = true;
+                        throw RequestTimedOut();
                     }
                 } else {
                     if (beforeResponseTimeout > 0 && ms > beforeResponseTimeout) {
                         log("Server timed out before response");
-                        throw std::runtime_error("Request timed out");
+                        m_crashed = true;
+                        throw RequestTimedOut();
                     }
                 }
                 
@@ -230,9 +233,7 @@ public:
                 switch (m_completenessChecker->check(buffer)) {
                 case MessageCompletenessChecker::Complete: complete = true; break;
                 case MessageCompletenessChecker::Incomplete: break;
-                case MessageCompletenessChecker::Invalid:
-                    throw std::runtime_error
-                        ("Invalid message received: corrupt stream from server?");
+                case MessageCompletenessChecker::Invalid: throw ProtocolError();
                 }
                 (void)t.restart(); // reset timeout when we read anything
             }

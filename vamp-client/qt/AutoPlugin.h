@@ -38,12 +38,21 @@
 
 #include "ProcessQtTransport.h"
 #include "../CapnpRRClient.h"
+#include "../Exceptions.h"
 
 #include <cstdint>
 
 namespace piper_vamp {
 namespace client {
 
+/**
+ * This "plugin" make the Piper client abstraction behave like a local
+ * Vamp plugin, with its own server that lasts only for the lifetime
+ * of this plugin and serves only it.
+ *
+ * Note that any method may throw ServerCrashed, RequestTimedOut or
+ * ProtocolError exceptions.
+ */
 class AutoPlugin : public Vamp::Plugin
 {
 public:
@@ -129,7 +138,14 @@ public:
     virtual bool initialise(size_t inputChannels,
                             size_t stepSize,
                             size_t blockSize) {
-        return getPlugin()->initialise(inputChannels, stepSize, blockSize);
+        try {
+            return getPlugin()->initialise(inputChannels, stepSize, blockSize);
+        } catch (const ServiceError &e) {
+            // Sadly, the Vamp API has taught hosts to try to divine
+            // initialisation problems from a bool return value alone
+            log(std::string("AutoPlugin: initialise failed: ") + e.what());
+            return false;
+        }
     }
 
     virtual void reset() {
