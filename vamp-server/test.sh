@@ -91,7 +91,7 @@ EOF
 #debugflag=-d
 debugflag=
 
-for request_response_conversion in none json_to_json json_to_capnp ; do 
+for request_response_conversion in none json_to_json json_to_capnp ; do # nb json_to_capnp must be last: see comment in else case
 
     ( export VAMP_PATH="$vampsdkdir"/examples ;
       while read request ; do
