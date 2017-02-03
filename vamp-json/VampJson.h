@@ -1109,13 +1109,18 @@ private: // go private briefly for a couple of helper functions
 
     static bool
     successful(json11::Json j, std::string &err) {
-        if (j["result"].is_object()) {
-            return true;
-        } else if (j["error"].is_object()) {
+        const bool hasResult = j["result"].is_object();
+        const bool hasError = j["error"].is_object();
+        if (hasResult && hasError) {
+            err = "valid response may contain only one of result and error objects";
+            return false;
+        } else if (hasError) {
+            return false;
+        } else if (!hasResult) {
+            err = "either a result or an error object is required for a valid response";
             return false;
         } else {
-            err = "result or error object required for valid response";
-            return false;
+            return true;
         }
     }
 
