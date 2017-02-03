@@ -27,7 +27,7 @@ respfile="$tmpdir/resp.json"
 allrespfile="$tmpdir/resp.all"
 input="$tmpdir/input"
 expected="$tmpdir/expected"
-expected_less_strict="$tmpdir/obtained-less-strict"
+expected_less_strict="$tmpdir/expected-less-strict"
 obtained="$tmpdir/obtained"
 
 validate() {
