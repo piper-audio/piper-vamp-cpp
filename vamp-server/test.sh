@@ -27,6 +27,7 @@ respfile="$tmpdir/resp.json"
 allrespfile="$tmpdir/resp.all"
 input="$tmpdir/input"
 expected="$tmpdir/expected"
+expected_less_strict="$tmpdir/expected-less-strict"
 obtained="$tmpdir/obtained"
 
 validate() {
@@ -82,23 +83,31 @@ cat > "$expected" <<EOF
 {"error": {"code": 0, "message": "error in finish request: unknown plugin handle supplied to finish"}, "id": "blah", "jsonrpc": "2.0", "method": "finish"}
 EOF
 
-# We run the whole test twice, once with the server in Capnp mode
-# (converting to JSON using piper-convert) and once with it directly
-# in JSON mode
+# We run the whole test three times,
+# to cover (de)serialisation of json and capnp requests and responses
+# as well as exercising both server modes (json and capnp)
+# converting / reading from capnp requests is currently not tested
 
 #debugflag=-d
 debugflag=
 
-for format in json capnp ; do  # nb must be json first: see comment at end of loop
+for request_response_conversion in none json_to_json json_to_capnp ; do # nb json_to_capnp must be last: see comment in else case
 
     ( export VAMP_PATH="$vampsdkdir"/examples ;
       while read request ; do
           validate_request "$request"
           echo "$request"
       done |
-          if [ "$format" = "json" ]; then
+          if [ "$request_response_conversion" = "none" ]; then
               "$bindir"/piper-vamp-simple-server $debugflag json
+          elif [ "$request_response_conversion" = "json_to_json" ]; then
+              "$bindir"/piper-convert request -i json -o json |
+                  "$bindir"/piper-vamp-simple-server $debugflag json |
+                  "$bindir"/piper-convert response -i json -o json
           else
+              # The capnp output doesn't preserve the method name in error
+              # responses, so replace those now that we've done the json tests
+              perl -i -p -e 's/(error.*"method": )"[^"]*"/$1"invalid"/' "$expected"
               "$bindir"/piper-convert request -i json -o capnp |
                   "$bindir"/piper-vamp-simple-server $debugflag capnp |
                   "$bindir"/piper-convert response -i capnp -o json
@@ -112,11 +121,16 @@ for format in json capnp ; do  # nb must be json first: see comment at end of lo
     # Skip plugin lists
     tail -n +4 "$allrespfile" > "$obtained"
 
-    echo "Checking response contents against expected contents..."
-    if ! cmp "$obtained" "$expected"; then
-        diff -U 1 "$obtained" "$expected"
+    echo "Checking response contents against expected contents..."  
+    # the expected configuration response is fragile, capnp fills in optional fields,
+    # json doesn't - which is fine behaviour, but causes the test to fail - remove empty binCount and binNames
+    expected_without_optional_fields=$( cat "$expected" | sed -E 's/\"(binCount|binNames)\": ?((\[\])|0),? ?//g')
+    echo "$expected_without_optional_fields" > "$expected_less_strict"
+
+    if cmp "$obtained" "$expected" -s || cmp "$obtained" "$expected_less_strict" -s; then
+      echo "OK"
     else
-        echo "OK"
+      diff -U 1 "$obtained" "$expected"
     fi
 
     echo "Checking plugin counts from list responses..."
@@ -153,10 +167,6 @@ for format in json capnp ; do  # nb must be json first: see comment at end of lo
     echo OK
     
     rm "$allrespfile"
-
-    # The capnp output doesn't preserve the method name in error
-    # responses, so replace those now that we've done the json test
-    perl -i -p -e 's/(error.*"method": )"[^"]*"/$1"invalid"/' "$expected"
 done
 
 echo "Tests succeeded"  # set -e at top should ensure we don't get here otherwise

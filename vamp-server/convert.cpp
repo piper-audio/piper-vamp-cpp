@@ -295,8 +295,10 @@ readResponseJson(string &err, bool &eof)
     VampJson::BufferSerialisation serialisation =
         VampJson::BufferSerialisation::Array;
 
-    rr.success = j["success"].bool_value();
-    rr.errorText = j["errorText"].string_value();
+    const bool isSuccess = j["result"].is_object();
+    const bool isError = j["error"].is_object();
+    rr.success = isSuccess;
+    rr.errorText = isError ? j["error"]["message"].string_value() : "";
 
     switch (rr.type) {
 
@@ -335,11 +337,11 @@ writeResponseJson(RequestOrResponse &rr, bool useBase64)
     Json id = writeJsonId(rr.id);
 
     if (!rr.success) {
-
-        j = VampJson::fromError(rr.errorText, rr.type, id);
+         // errorText here likely contains a full message produced by simple-server
+         // setting writeVerbatimError to true avoids doubling error descriptions 
+        j = VampJson::fromError(rr.errorText, rr.type, id, true);
 
     } else {
-    
         switch (rr.type) {
 
         case RRType::List:
@@ -659,7 +661,6 @@ int main(int argc, char **argv)
             writeOutput(outformat, rr);
 
         } catch (std::exception &e) {
-
             cerr << "Error: " << e.what() << endl;
             exit(1);
         }

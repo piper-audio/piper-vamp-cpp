@@ -305,7 +305,7 @@ public:
             return {};
         }
 
-        od = toConfiguredOutputDescriptor(j, err);
+        od = toConfiguredOutputDescriptor(j["configured"], err);
         if (failed(err)) return {};
     
         toBasicDescriptor(j["basic"], od, err);
@@ -849,7 +849,7 @@ public:
     toListResponse(json11::Json j, std::string &err) {
 
         ListResponse resp;
-        for (const auto &a: j["result"]["available"].array_items()) {
+        for (const auto &a: j["available"].array_items()) {
             resp.available.push_back(toPluginStaticData(a, err));
             if (failed(err)) return {};
         }
@@ -1109,11 +1109,19 @@ private: // go private briefly for a couple of helper functions
 
     static bool
     successful(json11::Json j, std::string &err) {
-        if (!j["success"].is_bool()) {
-            err = "bool expected for success";
+        const bool hasResult = j["result"].is_object();
+        const bool hasError = j["error"].is_object();
+        if (hasResult && hasError) {
+            err = "valid response may contain only one of result and error objects";
             return false;
+        } else if (hasError) {
+            return false;
+        } else if (!hasResult) {
+            err = "either a result or an error object is required for a valid response";
+            return false;
+        } else {
+            return true;
         }
-        return j["success"].bool_value();
     }
 
     static void
@@ -1298,7 +1306,8 @@ public:
     static json11::Json
     fromError(std::string errorText,
               RRType responseType,
-              const json11::Json &id) {
+              const json11::Json &id,
+              bool writeVerbatimError = false) {
 
         json11::Json::object jo;
         markRPC(jo);
@@ -1315,7 +1324,7 @@ public:
         json11::Json::object eo;
         eo["code"] = 0;
 
-        if (responseType == RRType::NotValid) {
+        if (responseType == RRType::NotValid || writeVerbatimError) {
             eo["message"] = errorText;
         } else {
             eo["message"] = 
