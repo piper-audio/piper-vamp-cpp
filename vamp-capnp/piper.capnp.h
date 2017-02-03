@@ -37,6 +37,7 @@ CAPNP_DECLARE_SCHEMA(c6f3f05f2bc614ba);
 CAPNP_DECLARE_SCHEMA(d6a172208c9a1760);
 CAPNP_DECLARE_SCHEMA(ffa3fccceb684869);
 CAPNP_DECLARE_SCHEMA(ab2572c346316b24);
+CAPNP_DECLARE_SCHEMA(fe907ebf410a65a4);
 CAPNP_DECLARE_SCHEMA(db209a01f86fe045);
 CAPNP_DECLARE_SCHEMA(900b56fed422dd37);
 CAPNP_DECLARE_SCHEMA(b5edf73eb2e79c4e);
@@ -226,6 +227,21 @@ struct FeatureSet::FSPair {
   };
 };
 
+struct Framing {
+  Framing() = delete;
+
+  class Reader;
+  class Builder;
+  class Pipeline;
+
+  struct _capnpPrivate {
+    CAPNP_DECLARE_STRUCT_HEADER(fe907ebf410a65a4, 1, 0)
+    #if !CAPNP_LITE
+    static constexpr ::capnp::_::RawBrandedSchema const* brand = &schema->defaultBrand;
+    #endif  // !CAPNP_LITE
+  };
+};
+
 struct Configuration {
   Configuration() = delete;
 
@@ -235,7 +251,7 @@ struct Configuration {
   struct PVPair;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(db209a01f86fe045, 2, 2)
+    CAPNP_DECLARE_STRUCT_HEADER(db209a01f86fe045, 1, 3)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand = &schema->defaultBrand;
     #endif  // !CAPNP_LITE
@@ -344,7 +360,7 @@ struct ConfigurationResponse {
   class Pipeline;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(c433db5864bf6d56, 1, 1)
+    CAPNP_DECLARE_STRUCT_HEADER(c433db5864bf6d56, 1, 2)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand = &schema->defaultBrand;
     #endif  // !CAPNP_LITE
@@ -1655,6 +1671,87 @@ private:
 };
 #endif  // !CAPNP_LITE
 
+class Framing::Reader {
+public:
+  typedef Framing Reads;
+
+  Reader() = default;
+  inline explicit Reader(::capnp::_::StructReader base): _reader(base) {}
+
+  inline ::capnp::MessageSize totalSize() const {
+    return _reader.totalSize().asPublic();
+  }
+
+#if !CAPNP_LITE
+  inline ::kj::StringTree toString() const {
+    return ::capnp::_::structString(_reader, *_capnpPrivate::brand);
+  }
+#endif  // !CAPNP_LITE
+
+  inline  ::int32_t getStepSize() const;
+
+  inline  ::int32_t getBlockSize() const;
+
+private:
+  ::capnp::_::StructReader _reader;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::_::PointerHelpers;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::List;
+  friend class ::capnp::MessageBuilder;
+  friend class ::capnp::Orphanage;
+};
+
+class Framing::Builder {
+public:
+  typedef Framing Builds;
+
+  Builder() = delete;  // Deleted to discourage incorrect usage.
+                       // You can explicitly initialize to nullptr instead.
+  inline Builder(decltype(nullptr)) {}
+  inline explicit Builder(::capnp::_::StructBuilder base): _builder(base) {}
+  inline operator Reader() const { return Reader(_builder.asReader()); }
+  inline Reader asReader() const { return *this; }
+
+  inline ::capnp::MessageSize totalSize() const { return asReader().totalSize(); }
+#if !CAPNP_LITE
+  inline ::kj::StringTree toString() const { return asReader().toString(); }
+#endif  // !CAPNP_LITE
+
+  inline  ::int32_t getStepSize();
+  inline void setStepSize( ::int32_t value);
+
+  inline  ::int32_t getBlockSize();
+  inline void setBlockSize( ::int32_t value);
+
+private:
+  ::capnp::_::StructBuilder _builder;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+  friend class ::capnp::Orphanage;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::_::PointerHelpers;
+};
+
+#if !CAPNP_LITE
+class Framing::Pipeline {
+public:
+  typedef Framing Pipelines;
+
+  inline Pipeline(decltype(nullptr)): _typeless(nullptr) {}
+  inline explicit Pipeline(::capnp::AnyPointer::Pipeline&& typeless)
+      : _typeless(kj::mv(typeless)) {}
+
+private:
+  ::capnp::AnyPointer::Pipeline _typeless;
+  friend class ::capnp::PipelineHook;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+};
+#endif  // !CAPNP_LITE
+
 class Configuration::Reader {
 public:
   typedef Configuration Reads;
@@ -1680,9 +1777,8 @@ public:
 
   inline  ::int32_t getChannelCount() const;
 
-  inline  ::int32_t getStepSize() const;
-
-  inline  ::int32_t getBlockSize() const;
+  inline bool hasFraming() const;
+  inline  ::piper::Framing::Reader getFraming() const;
 
 private:
   ::capnp::_::StructReader _reader;
@@ -1729,11 +1825,12 @@ public:
   inline  ::int32_t getChannelCount();
   inline void setChannelCount( ::int32_t value);
 
-  inline  ::int32_t getStepSize();
-  inline void setStepSize( ::int32_t value);
-
-  inline  ::int32_t getBlockSize();
-  inline void setBlockSize( ::int32_t value);
+  inline bool hasFraming();
+  inline  ::piper::Framing::Builder getFraming();
+  inline void setFraming( ::piper::Framing::Reader value);
+  inline  ::piper::Framing::Builder initFraming();
+  inline void adoptFraming(::capnp::Orphan< ::piper::Framing>&& value);
+  inline ::capnp::Orphan< ::piper::Framing> disownFraming();
 
 private:
   ::capnp::_::StructBuilder _builder;
@@ -1753,6 +1850,7 @@ public:
   inline explicit Pipeline(::capnp::AnyPointer::Pipeline&& typeless)
       : _typeless(kj::mv(typeless)) {}
 
+  inline  ::piper::Framing::Pipeline getFraming();
 private:
   ::capnp::AnyPointer::Pipeline _typeless;
   friend class ::capnp::PipelineHook;
@@ -2314,6 +2412,9 @@ public:
   inline bool hasOutputs() const;
   inline  ::capnp::List< ::piper::OutputDescriptor>::Reader getOutputs() const;
 
+  inline bool hasFraming() const;
+  inline  ::piper::Framing::Reader getFraming() const;
+
 private:
   ::capnp::_::StructReader _reader;
   template <typename, ::capnp::Kind>
@@ -2352,6 +2453,13 @@ public:
   inline void adoptOutputs(::capnp::Orphan< ::capnp::List< ::piper::OutputDescriptor>>&& value);
   inline ::capnp::Orphan< ::capnp::List< ::piper::OutputDescriptor>> disownOutputs();
 
+  inline bool hasFraming();
+  inline  ::piper::Framing::Builder getFraming();
+  inline void setFraming( ::piper::Framing::Reader value);
+  inline  ::piper::Framing::Builder initFraming();
+  inline void adoptFraming(::capnp::Orphan< ::piper::Framing>&& value);
+  inline ::capnp::Orphan< ::piper::Framing> disownFraming();
+
 private:
   ::capnp::_::StructBuilder _builder;
   template <typename, ::capnp::Kind>
@@ -2370,6 +2478,7 @@ public:
   inline explicit Pipeline(::capnp::AnyPointer::Pipeline&& typeless)
       : _typeless(kj::mv(typeless)) {}
 
+  inline  ::piper::Framing::Pipeline getFraming();
 private:
   ::capnp::AnyPointer::Pipeline _typeless;
   friend class ::capnp::PipelineHook;
@@ -4698,6 +4807,34 @@ inline ::capnp::Orphan< ::capnp::List< ::piper::Feature>> FeatureSet::FSPair::Bu
       _builder.getPointerField(1 * ::capnp::POINTERS));
 }
 
+inline  ::int32_t Framing::Reader::getStepSize() const {
+  return _reader.getDataField< ::int32_t>(
+      0 * ::capnp::ELEMENTS);
+}
+
+inline  ::int32_t Framing::Builder::getStepSize() {
+  return _builder.getDataField< ::int32_t>(
+      0 * ::capnp::ELEMENTS);
+}
+inline void Framing::Builder::setStepSize( ::int32_t value) {
+  _builder.setDataField< ::int32_t>(
+      0 * ::capnp::ELEMENTS, value);
+}
+
+inline  ::int32_t Framing::Reader::getBlockSize() const {
+  return _reader.getDataField< ::int32_t>(
+      1 * ::capnp::ELEMENTS);
+}
+
+inline  ::int32_t Framing::Builder::getBlockSize() {
+  return _builder.getDataField< ::int32_t>(
+      1 * ::capnp::ELEMENTS);
+}
+inline void Framing::Builder::setBlockSize( ::int32_t value) {
+  _builder.setDataField< ::int32_t>(
+      1 * ::capnp::ELEMENTS, value);
+}
+
 inline bool Configuration::Reader::hasParameterValues() const {
   return !_reader.getPointerField(0 * ::capnp::POINTERS).isNull();
 }
@@ -4776,32 +4913,41 @@ inline void Configuration::Builder::setChannelCount( ::int32_t value) {
       0 * ::capnp::ELEMENTS, value);
 }
 
-inline  ::int32_t Configuration::Reader::getStepSize() const {
-  return _reader.getDataField< ::int32_t>(
-      1 * ::capnp::ELEMENTS);
+inline bool Configuration::Reader::hasFraming() const {
+  return !_reader.getPointerField(2 * ::capnp::POINTERS).isNull();
 }
-
-inline  ::int32_t Configuration::Builder::getStepSize() {
-  return _builder.getDataField< ::int32_t>(
-      1 * ::capnp::ELEMENTS);
+inline bool Configuration::Builder::hasFraming() {
+  return !_builder.getPointerField(2 * ::capnp::POINTERS).isNull();
 }
-inline void Configuration::Builder::setStepSize( ::int32_t value) {
-  _builder.setDataField< ::int32_t>(
-      1 * ::capnp::ELEMENTS, value);
+inline  ::piper::Framing::Reader Configuration::Reader::getFraming() const {
+  return ::capnp::_::PointerHelpers< ::piper::Framing>::get(
+      _reader.getPointerField(2 * ::capnp::POINTERS));
 }
-
-inline  ::int32_t Configuration::Reader::getBlockSize() const {
-  return _reader.getDataField< ::int32_t>(
-      2 * ::capnp::ELEMENTS);
+inline  ::piper::Framing::Builder Configuration::Builder::getFraming() {
+  return ::capnp::_::PointerHelpers< ::piper::Framing>::get(
+      _builder.getPointerField(2 * ::capnp::POINTERS));
 }
-
-inline  ::int32_t Configuration::Builder::getBlockSize() {
-  return _builder.getDataField< ::int32_t>(
-      2 * ::capnp::ELEMENTS);
+#if !CAPNP_LITE
+inline  ::piper::Framing::Pipeline Configuration::Pipeline::getFraming() {
+  return  ::piper::Framing::Pipeline(_typeless.getPointerField(2));
 }
-inline void Configuration::Builder::setBlockSize( ::int32_t value) {
-  _builder.setDataField< ::int32_t>(
-      2 * ::capnp::ELEMENTS, value);
+#endif  // !CAPNP_LITE
+inline void Configuration::Builder::setFraming( ::piper::Framing::Reader value) {
+  ::capnp::_::PointerHelpers< ::piper::Framing>::set(
+      _builder.getPointerField(2 * ::capnp::POINTERS), value);
+}
+inline  ::piper::Framing::Builder Configuration::Builder::initFraming() {
+  return ::capnp::_::PointerHelpers< ::piper::Framing>::init(
+      _builder.getPointerField(2 * ::capnp::POINTERS));
+}
+inline void Configuration::Builder::adoptFraming(
+    ::capnp::Orphan< ::piper::Framing>&& value) {
+  ::capnp::_::PointerHelpers< ::piper::Framing>::adopt(
+      _builder.getPointerField(2 * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::piper::Framing> Configuration::Builder::disownFraming() {
+  return ::capnp::_::PointerHelpers< ::piper::Framing>::disown(
+      _builder.getPointerField(2 * ::capnp::POINTERS));
 }
 
 inline bool Configuration::PVPair::Reader::hasParameter() const {
@@ -5183,6 +5329,43 @@ inline void ConfigurationResponse::Builder::adoptOutputs(
 inline ::capnp::Orphan< ::capnp::List< ::piper::OutputDescriptor>> ConfigurationResponse::Builder::disownOutputs() {
   return ::capnp::_::PointerHelpers< ::capnp::List< ::piper::OutputDescriptor>>::disown(
       _builder.getPointerField(0 * ::capnp::POINTERS));
+}
+
+inline bool ConfigurationResponse::Reader::hasFraming() const {
+  return !_reader.getPointerField(1 * ::capnp::POINTERS).isNull();
+}
+inline bool ConfigurationResponse::Builder::hasFraming() {
+  return !_builder.getPointerField(1 * ::capnp::POINTERS).isNull();
+}
+inline  ::piper::Framing::Reader ConfigurationResponse::Reader::getFraming() const {
+  return ::capnp::_::PointerHelpers< ::piper::Framing>::get(
+      _reader.getPointerField(1 * ::capnp::POINTERS));
+}
+inline  ::piper::Framing::Builder ConfigurationResponse::Builder::getFraming() {
+  return ::capnp::_::PointerHelpers< ::piper::Framing>::get(
+      _builder.getPointerField(1 * ::capnp::POINTERS));
+}
+#if !CAPNP_LITE
+inline  ::piper::Framing::Pipeline ConfigurationResponse::Pipeline::getFraming() {
+  return  ::piper::Framing::Pipeline(_typeless.getPointerField(1));
+}
+#endif  // !CAPNP_LITE
+inline void ConfigurationResponse::Builder::setFraming( ::piper::Framing::Reader value) {
+  ::capnp::_::PointerHelpers< ::piper::Framing>::set(
+      _builder.getPointerField(1 * ::capnp::POINTERS), value);
+}
+inline  ::piper::Framing::Builder ConfigurationResponse::Builder::initFraming() {
+  return ::capnp::_::PointerHelpers< ::piper::Framing>::init(
+      _builder.getPointerField(1 * ::capnp::POINTERS));
+}
+inline void ConfigurationResponse::Builder::adoptFraming(
+    ::capnp::Orphan< ::piper::Framing>&& value) {
+  ::capnp::_::PointerHelpers< ::piper::Framing>::adopt(
+      _builder.getPointerField(1 * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::piper::Framing> ConfigurationResponse::Builder::disownFraming() {
+  return ::capnp::_::PointerHelpers< ::piper::Framing>::disown(
+      _builder.getPointerField(1 * ::capnp::POINTERS));
 }
 
 inline  ::int32_t ProcessRequest::Reader::getHandle() const {

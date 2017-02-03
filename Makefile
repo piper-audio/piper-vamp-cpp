@@ -24,8 +24,13 @@ bin/piper-convert: o/convert.o o/json11.o o/piper.capnp.o
 bin/piper-vamp-simple-server: o/simple-server.o o/json11.o o/piper.capnp.o
 	c++ $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-o/piper.capnp.o:	vamp-capnp/piper.capnp.c++ vamp-capnp/piper.capnp.h
+o/piper.capnp.o:	vamp-capnp/piper.capnp.c++
 	c++ $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
+
+vamp-capnp/piper.capnp.h:	vamp-capnp/piper.capnp.c++
+
+vamp-capnp/piper.capnp.c++: $(PIPER_DIR)/capnp/piper.capnp
+	capnpc --src-prefix=$(PIPER_DIR)/capnp -oc++:vamp-capnp $<
 
 o/json11.o:	ext/json11/json11.cpp
 	c++ $(CXXFLAGS) -c $< -o $@

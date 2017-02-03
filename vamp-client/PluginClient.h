@@ -47,7 +47,7 @@ class PluginClient
 {
 public:
     virtual
-    Vamp::Plugin::OutputList
+    ConfigurationResponse
     configure(PluginStub *plugin,
               PluginConfiguration config) = 0;
     

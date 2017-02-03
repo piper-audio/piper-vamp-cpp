@@ -45,6 +45,20 @@
 namespace piper_vamp {
 
 /**
+ * \struct Framing
+ * 
+ * A structure bundling the processing step and block size.
+ */
+struct Framing
+{
+    Framing() : // invalid by default 
+        stepSize(0), blockSize(0) { }
+    
+    int stepSize;
+    int blockSize;
+};
+
+/**
  * \class PluginConfiguration
  * 
  * PluginConfiguration is a structure bundling together data that
@@ -59,11 +73,10 @@ namespace piper_vamp {
 struct PluginConfiguration
 {
     PluginConfiguration() : // invalid configuration by default
-	channelCount(0), stepSize(0), blockSize(0) { }
+	channelCount(0) { }
 	
     int channelCount;
-    int stepSize;
-    int blockSize;
+    Framing framing;
     typedef std::map<std::string, float> ParameterMap;
     ParameterMap parameterValues;
     std::string currentProgram;
@@ -77,8 +90,8 @@ struct PluginConfiguration
 	PluginConfiguration c;
 	
 	c.channelCount = channelCount;
-	c.stepSize = stepSize;
-	c.blockSize = blockSize;
+	c.framing.stepSize = stepSize;
+	c.framing.blockSize = blockSize;
 
 	Vamp::PluginBase::ParameterList params = p->getParameterDescriptors();
 	for (Vamp::PluginBase::ParameterList::const_iterator i = params.begin();

@@ -477,8 +477,10 @@ public:
 
         b.setCurrentProgram(c.currentProgram);
         b.setChannelCount(c.channelCount);
-        b.setStepSize(c.stepSize);
-        b.setBlockSize(c.blockSize);
+
+        auto framing = b.initFraming();
+        framing.setStepSize(c.framing.stepSize);
+        framing.setBlockSize(c.framing.blockSize);
     }
 
     static void
@@ -492,8 +494,8 @@ public:
 
         c.currentProgram = r.getCurrentProgram();
         c.channelCount = r.getChannelCount();
-        c.stepSize = r.getStepSize();
-        c.blockSize = r.getBlockSize();
+        c.framing.stepSize = r.getFraming().getStepSize();
+        c.framing.blockSize = r.getFraming().getBlockSize();
     }
     
     static void
@@ -642,6 +644,9 @@ public:
             auto od = olist[i];
             buildOutputDescriptor(od, cr.outputs[i]);
         }
+        auto framing = b.initFraming();
+        framing.setStepSize(cr.framing.stepSize);
+        framing.setBlockSize(cr.framing.blockSize);
     }
 
     static void
@@ -657,6 +662,8 @@ public:
             readOutputDescriptor(desc, o);
             cr.outputs.push_back(desc);
         }
+        cr.framing.stepSize = r.getFraming().getStepSize();
+        cr.framing.blockSize = r.getFraming().getBlockSize();
     }
 
     static void

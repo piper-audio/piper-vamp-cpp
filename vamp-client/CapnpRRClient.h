@@ -199,7 +199,7 @@ public:
     // PluginClient methods:
     
     virtual
-    Vamp::Plugin::OutputList
+    ConfigurationResponse
     configure(PluginStub *plugin,
               PluginConfiguration config) override {
 
@@ -232,7 +232,7 @@ public:
 
         LOG_E("CapnpRRClient::configure returning");
         
-        return cr.outputs;
+        return cr;
     };
     
     virtual

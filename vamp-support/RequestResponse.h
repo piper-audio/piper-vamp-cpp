@@ -187,7 +187,10 @@ public:
  * The return value from a configuration request (i.e. setting the
  * parameters and initialising the plugin). If the configuration was
  * successful, the output list will contain the final
- * post-initialisation output descriptors. If configuration failed,
+ * post-initialisation output descriptors and the required step and
+ * block size. (The step and block size will usually match those
+ * passed to configure, but may differ if the parameter settings
+ * turned out to be incompatible with those.) If configuration failed,
  * the output list will be empty.
  *
  * \see PluginConfiguration, ConfigurationRequest, LoadRequest, LoadResponse
@@ -200,6 +203,7 @@ public:
 
     Vamp::Plugin *plugin;
     Vamp::Plugin::OutputList outputs;
+    Framing framing;
 };
 
 /**

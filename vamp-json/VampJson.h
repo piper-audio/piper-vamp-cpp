@@ -694,8 +694,11 @@ public:
         }
 
         jo["channelCount"] = c.channelCount;
-        jo["stepSize"] = c.stepSize;
-        jo["blockSize"] = c.blockSize;
+
+        json11::Json::object framing;
+        framing["stepSize"] = c.framing.stepSize;
+        framing["blockSize"] = c.framing.blockSize;
+        jo["framing"] = framing;
     
         return json11::Json(jo);
     }
@@ -704,13 +707,18 @@ public:
     toPluginConfiguration(json11::Json j, std::string &err) {
         
         if (!j.has_shape({
-                    { "channelCount", json11::Json::NUMBER },
-                    { "stepSize", json11::Json::NUMBER },
-                    { "blockSize", json11::Json::NUMBER } }, err)) {
+                    { "channelCount", json11::Json::NUMBER } }, err)) {
             err = "malformed plugin configuration: " + err;
             return {};
         }
 
+        if (!j["framing"].has_shape({
+                    { "stepSize", json11::Json::NUMBER },
+                    { "blockSize", json11::Json::NUMBER } }, err)) {
+            err = "malformed framing: " + err;
+            return {};
+        }
+                    
         if (!j["parameterValues"].is_null() &&
             !j["parameterValues"].is_object()) {
             err = "object expected for parameter values";
@@ -733,8 +741,8 @@ public:
         PluginConfiguration config;
 
         config.channelCount = int(round(j["channelCount"].number_value()));
-        config.stepSize = int(round(j["stepSize"].number_value()));
-        config.blockSize = int(round(j["blockSize"].number_value()));
+        config.framing.stepSize = int(round(j["framing"]["stepSize"].number_value()));
+        config.framing.blockSize = int(round(j["framing"]["blockSize"].number_value()));
         
         for (auto &pv : j["parameterValues"].object_items()) {
             config.parameterValues[pv.first] = float(pv.second.number_value());
@@ -963,6 +971,11 @@ public:
             outs.push_back(fromOutputDescriptor(d));
         }
         jo["outputList"] = outs;
+
+        json11::Json::object framing;
+        framing["stepSize"] = cr.framing.stepSize;
+        framing["blockSize"] = cr.framing.blockSize;
+        jo["framing"] = framing;
         
         return json11::Json(jo);
     }
@@ -973,18 +986,28 @@ public:
         
         ConfigurationResponse cr;
 
-        cr.plugin = pmapper.handleToPlugin(j["handle"].int_value());
+        if (!j["framing"].has_shape({
+                    { "stepSize", json11::Json::NUMBER },
+                    { "blockSize", json11::Json::NUMBER } }, err)) {
+            err = "malformed framing: " + err;
+            return {};
+        }
         
         if (!j["outputList"].is_array()) {
             err = "array expected for output list";
             return {};
         }
+        
+        cr.plugin = pmapper.handleToPlugin(j["handle"].int_value());
 
         for (const auto &o: j["outputList"].array_items()) {
             cr.outputs.push_back(toOutputDescriptor(o, err));
             if (failed(err)) return {};
         }
 
+        cr.framing.stepSize = int(round(j["framing"]["stepSize"].number_value()));
+        cr.framing.blockSize = int(round(j["framing"]["blockSize"].number_value()));
+        
         return cr;
     }
 

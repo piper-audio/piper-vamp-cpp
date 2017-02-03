@@ -163,11 +163,21 @@ public:
         }
         
         m_config.channelCount = int(inputChannels);
-        m_config.stepSize = int(stepSize);
-        m_config.blockSize = int(blockSize);
+        m_config.framing.stepSize = int(stepSize);
+        m_config.framing.blockSize = int(blockSize);
 
         try {
-            m_outputs = m_client->configure(this, m_config);
+            auto response = m_client->configure(this, m_config);
+            m_outputs = response.outputs;
+
+            // Update with the new preferred step and block size now
+            // that the plugin has taken into account its parameter
+            // settings. If the values passed in to initialise()
+            // weren't suitable, then this ensures that a subsequent
+            // call to getPreferredStepSize/BlockSize on this plugin
+            // object will at least get acceptable values from now on
+            m_config.framing = response.framing;
+            
         } catch (const std::exception &e) {
             m_state = Failed;
             throw;
@@ -206,11 +216,17 @@ public:
     }
 
     virtual size_t getPreferredBlockSize() const {
-        return m_defaultConfig.blockSize;
+        // Return this from m_config instead of m_defaultConfig, so
+        // that it gets updated in the event of an initialise() call
+        // that fails for the wrong value
+        return m_config.framing.blockSize;
     }
 
     virtual size_t getPreferredStepSize() const {
-        return m_defaultConfig.stepSize;
+        // Return this from m_config instead of m_defaultConfig, so
+        // that it gets updated in the event of an initialise() call
+        // that fails for the wrong value
+        return m_config.framing.stepSize;
     }
 
     virtual size_t getMinChannelCount() const {
@@ -265,7 +281,7 @@ public:
         for (int c = 0; c < m_config.channelCount; ++c) {
             vecbuf.push_back(std::vector<float>
                              (inputBuffers[c],
-                              inputBuffers[c] + m_config.blockSize));
+                              inputBuffers[c] + m_config.framing.blockSize));
         }
 
         try {
