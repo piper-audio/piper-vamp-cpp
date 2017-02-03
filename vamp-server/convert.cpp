@@ -558,15 +558,8 @@ readInput(string format, RequestOrResponse::Direction direction, bool &eof)
     if (format == "json") {
         string err;
         auto result = readInputJson(direction, err, eof);
-        const bool isRecognisedError = !result.success && result.errorText != "";
-        
-        // if the RequestOrResponse (result) has been populated with success=false and an error message
-        // then the server returned a well formed error, it is safe to return it for conversion 
-        // -- but if err is populated, something else has gone wrong
-        if (isRecognisedError || err == "") 
-            return result;
-        else 
-            throw runtime_error(err);
+        if (err != "") throw runtime_error(err);
+        else return result;
     } else if (format == "capnp") {
         return readInputCapnp(direction, eof);
     } else {
