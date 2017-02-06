@@ -484,11 +484,18 @@ handleRequest(const RequestOrResponse &request, bool debug)
             throw runtime_error("plugin has already been configured");
         }
 
+        if (creq.configuration.framing.stepSize == 0 ||
+            creq.configuration.framing.blockSize == 0) {
+            throw runtime_error("step and block size must be non-zero");
+        }
+
         response.configurationResponse = LoaderRequests().configurePlugin(creq);
         
         if (!response.configurationResponse.outputs.empty()) {
             mapper.markConfigured
-                (h, creq.configuration.channelCount, creq.configuration.blockSize);
+                (h,
+                 creq.configuration.channelCount,
+                 creq.configuration.framing.blockSize);
             response.success = true;
         }
         break;

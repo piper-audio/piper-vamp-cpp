@@ -130,12 +130,32 @@ public:
 	ConfigurationResponse response;
 
 	response.plugin = req.plugin;
-    
+
+        if (req.configuration.framing.stepSize == 0 ||
+            req.configuration.framing.blockSize == 0) {
+            return response;
+        }
+
 	if (req.plugin->initialise(req.configuration.channelCount,
-				   req.configuration.stepSize,
-				   req.configuration.blockSize)) {
+				   req.configuration.framing.stepSize,
+				   req.configuration.framing.blockSize)) {
+
 	    response.outputs = req.plugin->getOutputDescriptors();
-	}
+
+            // If the Vamp plugin initialise() call succeeds, then by
+            // definition it is accepting the step and block size
+            // passed in
+            response.framing = req.configuration.framing;
+
+	} else {
+
+            // If initialise() fails, one reason could be that it
+            // didn't like the passed-in step and block size. If we
+            // return its current preferred values here, the
+            // host/client can retry with these (if they differ)
+            response.framing.stepSize = req.plugin->getPreferredStepSize();
+            response.framing.blockSize = req.plugin->getPreferredBlockSize();
+        }
 
 	return response;
     }
