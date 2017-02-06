@@ -495,7 +495,7 @@ handleRequest(const RequestOrResponse &request, bool debug)
             mapper.markConfigured
                 (h,
                  creq.configuration.channelCount,
-                 creq.configuration.framing.blockSize);
+                 response.configurationResponse.framing.blockSize);
             response.success = true;
         }
         break;
@@ -521,8 +521,12 @@ handleRequest(const RequestOrResponse &request, bool debug)
         const float **fbuffers = new const float *[channels];
         for (int i = 0; i < channels; ++i) {
             if (int(preq.inputBuffers[i].size()) != mapper.getBlockSize(h)) {
+                ostringstream os;
+                os << "wrong block size supplied to process ("
+                   << preq.inputBuffers[i].size()
+                   << ", expecting " << mapper.getBlockSize(h) << ")" << ends;
                 delete[] fbuffers;
-                throw runtime_error("wrong block size supplied to process");
+                throw runtime_error(os.str());
             }
             fbuffers[i] = preq.inputBuffers[i].data();
         }
