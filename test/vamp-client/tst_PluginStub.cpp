@@ -25,12 +25,10 @@ public:
         ConfigurationResponse cr;
         cr.plugin = plugin;
         
-        // we want to return different framing sizes
-        // than config provides
+        // we want to return different framing sizes than config provides
         // there isn't really any need to be doing this with a plugin param
-        cr.framing.blockSize = config.framing.stepSize * scale;
-        cr.framing.stepSize = config.framing.blockSize * scale;
-        
+        cr.framing.blockSize = config.framing.blockSize * scale;
+        cr.framing.stepSize = config.framing.stepSize * scale;
         
         // just return some outputs anyway 
         // to avoid a failure case we are not testing here.
@@ -66,12 +64,13 @@ private:
 
 
 TEST_CASE("Init plugin with parameter dependent preferred framing sizes") {
-    
+    const std::size_t initialBlockSize = 1024;
+    const std::size_t initialStepSize = 512;
     PluginConfiguration defaultConfig;
     defaultConfig.channelCount = 1;
     defaultConfig.parameterValues = {};
-    defaultConfig.framing.blockSize = 1024;
-    defaultConfig.framing.stepSize = 512;
+    defaultConfig.framing.blockSize = initialBlockSize;
+    defaultConfig.framing.stepSize = initialStepSize;
     defaultConfig.parameterValues = {{"framing-scale", 1.0}};
     
     Vamp::PluginBase::ParameterDescriptor stubParam;
@@ -104,20 +103,51 @@ TEST_CASE("Init plugin with parameter dependent preferred framing sizes") {
         defaultConfig 
     };
     
-    vampPiperAdapter.setParameter("framing-scale", 2.0);
-    // setup
-    REQUIRE( 
-        vampPiperAdapter.initialise(
+    const auto initWithPreferredFraming = [&]() -> bool {
+        return vampPiperAdapter.initialise(
             1, 
             vampPiperAdapter.getPreferredStepSize(), 
             vampPiperAdapter.getPreferredBlockSize()
-        ) == false 
-    );
-    REQUIRE( 
-        vampPiperAdapter.initialise(
-            1, 
-            vampPiperAdapter.getPreferredStepSize(), 
-            vampPiperAdapter.getPreferredBlockSize()
-        )
-    );   
+        );  
+    };
+    
+    SECTION("Initialises with default parameters")
+    {
+        REQUIRE( initWithPreferredFraming() );   
+    }
+    
+    SECTION("Fails to init when changing framing influencing parameter")
+    {
+        const float scalingFactor = 2.0;
+        vampPiperAdapter.setParameter("framing-scale", scalingFactor);
+        REQUIRE( initWithPreferredFraming() == false );
+        const float configuredStepSize = vampPiperAdapter.getPreferredStepSize();
+        const float configuredBlockSize = vampPiperAdapter.getPreferredBlockSize();
+        REQUIRE( configuredStepSize == initialStepSize * scalingFactor );
+        REQUIRE( configuredBlockSize == initialBlockSize * scalingFactor );
+    }
+    
+    SECTION("Cannot process after a failed init call (due to framing)")
+    {
+        const float scalingFactor = 2.0;
+        vampPiperAdapter.setParameter("framing-scale", scalingFactor);
+        REQUIRE( initWithPreferredFraming() == false );
+        REQUIRE_THROWS( vampPiperAdapter.process(nullptr, {}) );
+    }
+    
+    SECTION("Can process after correctly initialising framing")
+    {
+        const float scalingFactor = 2.0;
+        vampPiperAdapter.setParameter("framing-scale", scalingFactor);
+        REQUIRE( initWithPreferredFraming() == false );
+        REQUIRE( initWithPreferredFraming() );
+                
+        const AudioBuffer monoAudio = {
+            std::vector<float>(vampPiperAdapter.getPreferredBlockSize())
+        };
+        const std::vector<const float*> channelPtrs {
+            monoAudio[0].data()
+        };
+        REQUIRE( vampPiperAdapter.process(channelPtrs.data(), {}).empty() );
+    }
 }
