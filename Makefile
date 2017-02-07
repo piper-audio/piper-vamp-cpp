@@ -10,7 +10,9 @@ LDFLAGS		:= $(VAMPSDK_DIR)/libvamp-hostsdk.a -lcapnp -lkj
 
 LDFLAGS		+= -ldl
 
-all:	o bin bin/piper-convert bin/piper-vamp-simple-server
+TEST_SRCS := test/vamp-client/tst_PluginStub.cpp
+
+all:	o bin bin/piper-convert bin/piper-vamp-simple-server bin/test-suite
 
 bin:
 	mkdir bin
@@ -23,6 +25,9 @@ bin/piper-convert: o/convert.o o/json11.o o/piper.capnp.o
 
 bin/piper-vamp-simple-server: o/simple-server.o o/json11.o o/piper.capnp.o
 	c++ $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+	
+bin/test-suite: test/main.cpp $(TEST_SRCS)
+	c++ $(CXXFLAGS) $(INCFLAGS) $< $(TEST_SRCS) -o $@ $(LDFLAGS)
 
 o/piper.capnp.o:	vamp-capnp/piper.capnp.c++
 	c++ $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
@@ -42,13 +47,14 @@ o/simple-server.o:	vamp-server/simple-server.cpp vamp-capnp/piper.capnp.h vamp-c
 	c++ $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
 test:	all
+	bin/test-suite
 	vamp-server/test.sh
 
 clean:
 	rm -f */*.o
 
 distclean:	clean
-	rm -f bin/*
+	rm -rf bin/*
 
 # cancel implicit rule which otherwise could try to link %.capnp
 %:	%.o
