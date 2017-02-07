@@ -68,7 +68,6 @@ TEST_CASE("Init plugin with parameter dependent preferred framing sizes") {
     const std::size_t initialStepSize = 512;
     PluginConfiguration defaultConfig;
     defaultConfig.channelCount = 1;
-    defaultConfig.parameterValues = {};
     defaultConfig.framing.blockSize = initialBlockSize;
     defaultConfig.framing.stepSize = initialStepSize;
     defaultConfig.parameterValues = {{"framing-scale", 1.0}};
