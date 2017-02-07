@@ -9,7 +9,7 @@ using namespace piper_vamp;
 using namespace piper_vamp::client;
 using AudioBuffer = std::vector<std::vector<float>>;
 
-// This stub mimicks the interaction with a Piper server
+// This stub fakes the interaction with a Piper server
 // Here we only need to implement the configure method 
 // due to testing only the initialise implemention of PluginStub
 class StubClient : public PluginClient
