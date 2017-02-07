@@ -138,14 +138,7 @@ public:
     virtual bool initialise(size_t inputChannels,
                             size_t stepSize,
                             size_t blockSize) {
-        try {
-            return getPlugin()->initialise(inputChannels, stepSize, blockSize);
-        } catch (const ServiceError &e) {
-            // Sadly, the Vamp API has taught hosts to try to divine
-            // initialisation problems from a bool return value alone
-            log(std::string("AutoPlugin: initialise failed: ") + e.what());
-            return false;
-        }
+        return getPlugin()->initialise(inputChannels, stepSize, blockSize);
     }
 
     virtual void reset() {

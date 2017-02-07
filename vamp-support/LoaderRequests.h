@@ -136,6 +136,10 @@ public:
             return response;
         }
 
+        Framing pluginPreferredFraming;
+        pluginPreferredFraming.stepSize = req.plugin->getPreferredStepSize();
+        pluginPreferredFraming.blockSize = req.plugin->getPreferredBlockSize();
+        
 	if (req.plugin->initialise(req.configuration.channelCount,
 				   req.configuration.framing.stepSize,
 				   req.configuration.framing.blockSize)) {
@@ -148,13 +152,54 @@ public:
             response.framing = req.configuration.framing;
 
 	} else {
-
+           
             // If initialise() fails, one reason could be that it
-            // didn't like the passed-in step and block size. If we
-            // return its current preferred values here, the
-            // host/client can retry with these (if they differ)
-            response.framing.stepSize = req.plugin->getPreferredStepSize();
-            response.framing.blockSize = req.plugin->getPreferredBlockSize();
+            // didn't like the passed-in framing (step and block
+            // size).
+            // 
+            // Vamp and Piper have quite different mechanisms for
+            // negotiating step and block size:
+            //
+            // - If a Vamp plugin doesn't like the step and block size
+            // passed to initialise(), it fails the initialise() call,
+            // returning false from it. The host is expected to have
+            // called getPreferredStepSize()/BlockSize() after it made
+            // any parameter changes that might have affected these
+            // preferences (but before calling initialise).
+            //
+            // - If a Piper server doesn't like the step and block
+            // size passed in a configure request, but if everything
+            // else about the configure request is OK, then it returns
+            // a successful configure response including its preferred
+            // step and block sizes in the response (which the host
+            // must then use). The important thing to note is that
+            // this is still a successful response, something we do
+            // not yet have here.
+            //
+            // We need to check whether the passed-in framing differs
+            // from the plugin's preferences; if so, then we form a
+            // working supposition that initialise() failed because of
+            // this. Vamp contains nothing to allow us to test this,
+            // except to try initialise() again with different
+            // values. So we try again with the values the plugin told
+            // us it would prefer and, if that succeeds, return them
+            // in a successful response in the Piper manner.
+            //
+            // Note that if the "other side" (i.e. the client) wants
+            // to interpret this as if it were dealing with a Vamp
+            // plugin, then it's going to need some equal-but-opposite
+            // acrobatics.
+
+            if (req.plugin->initialise(req.configuration.channelCount,
+                                       pluginPreferredFraming.stepSize,
+                                       pluginPreferredFraming.blockSize)) {
+
+                response.outputs = req.plugin->getOutputDescriptors();
+                response.framing = pluginPreferredFraming;
+
+            } // ... else we return no outputs, which is the error
+              // case (presumably to be converted to Piper error
+              // response).
         }
 
 	return response;

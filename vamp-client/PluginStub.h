@@ -53,7 +53,48 @@ namespace client {
 class PluginStub : public Vamp::Plugin
 {
     enum State {
-        Loaded, Configured, Finished, Failed
+        /**
+         * The plugin's corresponding Piper feature extractor has been
+         * loaded but no subsequent state change has happened. This is
+         * the initial state of PluginStub on construction, since it
+         * is associated with a pre-loaded handle.
+         */
+        Loaded,
+        
+        /**
+         * The plugin has been configured, and the step and block size
+         * received from the host in its last call to initialise()
+         * match those that were returned in the configuration
+         * response (i.e. the server's desired step and block
+         * size). Our m_config record reflects these correct
+         * values. The plugin is ready to process.
+         */
+        Configured,
+
+        /**
+         * The plugin has been configured, but the step and block size
+         * received from the host in its last call to initialise()
+         * differ from those returned by the server in the
+         * configuration response. Our initialise() call therefore
+         * returned false, and the plugin cannot be used until the
+         * host calls initialise() again with the "correct" step and
+         * block size. Our m_config record reflects these correct
+         * values, so the host can retrieve them through
+         * getPreferredStepSize and getPreferredBlockSize.
+         */
+        Misconfigured,
+
+        /**
+         * The finish() function has been called and the plugin
+         * unloaded. No further plugin activity is possible.
+         */
+        Finished,
+
+        /** 
+         * A call has failed unrecoverably. No further plugin activity
+         * is possible.
+         */
+        Failed
     };
     
 public:
@@ -157,6 +198,17 @@ public:
         if (m_state == Failed) {
             throw std::logic_error("Plugin is in failed state");
         }
+
+        if (m_state == Misconfigured) {
+            if (int(stepSize) == m_config.framing.stepSize &&
+                int(blockSize) == m_config.framing.blockSize) {
+                m_state = Configured;
+                return true;
+            } else {
+                return false;
+            }
+        }
+        
         if (m_state != Loaded) {
             m_state = Failed;
             throw std::logic_error("Plugin has already been initialised");
@@ -169,7 +221,7 @@ public:
         try {
             auto response = m_client->configure(this, m_config);
             m_outputs = response.outputs;
-
+            
             // Update with the new preferred step and block size now
             // that the plugin has taken into account its parameter
             // settings. If the values passed in to initialise()
@@ -177,6 +229,16 @@ public:
             // call to getPreferredStepSize/BlockSize on this plugin
             // object will at least get acceptable values from now on
             m_config.framing = response.framing;
+
+            // And if they didn't match up with the passed-in ones,
+            // lodge ourselves in Misconfigured state and report
+            // failure so as to provoke the host to call initialise()
+            // again before any processing.
+            if (m_config.framing.stepSize != int(stepSize) ||
+                m_config.framing.blockSize != int(blockSize)) {
+                m_state = Misconfigured;
+                return false;
+            }
             
         } catch (const std::exception &e) {
             m_state = Failed;
@@ -196,7 +258,7 @@ public:
         if (m_state == Failed) {
             throw std::logic_error("Plugin is in failed state");
         }
-        if (m_state == Loaded) {
+        if (m_state == Loaded || m_state == Misconfigured) {
             // reset is a no-op if the plugin hasn't been initialised yet
             return;
         }
@@ -268,7 +330,7 @@ public:
         if (m_state == Failed) {
             throw std::logic_error("Plugin is in failed state");
         }
-        if (m_state == Loaded) {
+        if (m_state == Loaded || m_state == Misconfigured) {
             m_state = Failed;
             throw std::logic_error("Plugin has not been initialised");
         }
@@ -297,7 +359,7 @@ public:
         if (m_state == Failed) {
             throw std::logic_error("Plugin is in failed state");
         }
-        if (m_state == Loaded) {
+        if (m_state == Loaded || m_state == Misconfigured) {
             m_state = Failed;
             throw std::logic_error("Plugin has not been configured");
         }
