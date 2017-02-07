@@ -141,7 +141,7 @@ TEST_CASE("Init plugin with parameter dependent preferred framing sizes") {
         REQUIRE( initWithPreferredFraming() == false );
         REQUIRE( initWithPreferredFraming() );
                 
-        const AudioBuffer monoAudio = {
+        const AudioBuffer monoAudio {
             std::vector<float>(vampPiperAdapter.getPreferredBlockSize())
         };
         const std::vector<const float*> channelPtrs {
