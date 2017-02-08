@@ -50,6 +50,9 @@
 namespace piper_vamp {
 namespace client {
 
+/**
+ * PluginStub presents a Piper feature extractor in the form of a Vamp plugin.
+ */
 class PluginStub : public Vamp::Plugin
 {
     enum State {

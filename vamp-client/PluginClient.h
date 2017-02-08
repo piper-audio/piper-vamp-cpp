@@ -43,6 +43,12 @@ namespace client {
 
 class PluginStub;
 
+/**
+ * Interface for a client that accepts Vamp-like structures (Plugin
+ * and the classes in vamp-support) and communicates with a Piper
+ * server, using some serialisation and transport defined by the
+ * specific implementation.
+ */
 class PluginClient
 {
 public:
@@ -63,7 +69,8 @@ public:
 
     virtual
     void
-    reset(PluginStub *plugin, PluginConfiguration config) = 0;
+    reset(PluginStub *plugin,
+          PluginConfiguration config) = 0;
 };
 
 }

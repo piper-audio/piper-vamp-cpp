@@ -81,6 +81,10 @@ struct PluginConfiguration
     ParameterMap parameterValues;
     std::string currentProgram;
 
+    /**
+     * Extract the configuration from the given plugin (without
+     * retaining any persistent reference to the plugin itself).
+     */
     static PluginConfiguration
     fromPlugin(Vamp::Plugin *p,
 	       int channelCount,
