@@ -66,6 +66,16 @@ namespace client {
  * such as a subprocess pipe arrangement. Only one request can be
  * handled at a time. This class is thread-safe if and only if it is
  * constructed with a thread-safe SynchronousTransport implementation.
+ *
+ * This class takes Vamp-like structures (Plugin and the classes in
+ * vamp-support) and uses them to communicate with a Piper server
+ * using the Cap'n Proto serialisation of the Piper API. The transport
+ * layer (and thus the nature of the server) is defined by the
+ * SynchronousTransport passed to the constructor.
+ *
+ * This class implements both the Loader interface (which constructs
+ * PluginStub objects) and the PluginClient (which accepts PluginStubs
+ * and maps them into Piper handles).
  */
 class CapnpRRClient : public PluginClient,
                       public Loader
