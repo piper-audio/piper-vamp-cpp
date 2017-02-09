@@ -47,7 +47,7 @@ o/simple-server.o:	vamp-server/simple-server.cpp vamp-capnp/piper.capnp.h vamp-c
 	c++ $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
 test:	all
-	bin/test-suite
+	bin/test-suite -s -d yes
 	vamp-server/test.sh
 
 clean:
