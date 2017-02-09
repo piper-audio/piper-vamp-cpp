@@ -71,7 +71,7 @@ public:
         req.inputSampleRate = inputSampleRate;
         req.adapterFlags = adapterFlags;
         try {
-            LoadResponse resp = m_client.loadPlugin(req);
+            LoadResponse resp = m_client.load(req);
             m_plugin = resp.plugin;
         } catch (ServerCrashed c) {
             log(std::string("AutoPlugin: Server crashed: ") + c.what());

@@ -60,7 +60,7 @@ int main(int argc, char **argv)
             
         piper_vamp::client::CapnpRRClient client(&transport, nullptr);
 
-        piper_vamp::ListResponse lr = client.listPluginData({});
+        piper_vamp::ListResponse lr = client.list({});
         cerr << "Plugins available:" << endl;
         int i = 1;
         for (const auto &p: lr.available) {
@@ -70,7 +70,7 @@ int main(int argc, char **argv)
         piper_vamp::LoadRequest req;
         req.pluginKey = "vamp-example-plugins:zerocrossing";
         req.inputSampleRate = 16;
-        piper_vamp::LoadResponse resp = client.loadPlugin(req);
+        piper_vamp::LoadResponse resp = client.load(req);
         Vamp::Plugin *plugin = resp.plugin;
     
         if (!plugin->initialise(1, 4, 4)) {

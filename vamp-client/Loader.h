@@ -44,8 +44,8 @@ namespace client {
 class Loader
 {
 public:
-    virtual ListResponse listPluginData(const ListRequest &) = 0;
-    virtual LoadResponse loadPlugin(const LoadRequest &) = 0;
+    virtual ListResponse list(const ListRequest &) = 0;
+    virtual LoadResponse load(const LoadRequest &) = 0;
 };
 
 }

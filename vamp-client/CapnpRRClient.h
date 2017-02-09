@@ -139,7 +139,7 @@ public:
     // Loader methods:
 
     ListResponse
-    listPluginData(const ListRequest &req) override {
+    list(const ListRequest &req) override {
 
         LOG_E("CapnpRRClient::listPluginData called");
         
@@ -167,7 +167,7 @@ public:
     }
     
     LoadResponse
-    loadPlugin(const LoadRequest &req) override {
+    load(const LoadRequest &req) override {
 
         LOG_E("CapnpRRClient::loadPlugin called");
         
