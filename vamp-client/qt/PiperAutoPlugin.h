@@ -46,9 +46,26 @@ namespace piper_vamp {
 namespace client {
 
 /**
- * This "plugin" make the Piper client abstraction behave like a local
- * Vamp plugin, with its own server that lasts only for the lifetime
- * of this plugin and serves only it.
+ * AutoPlugin presents a Piper feature extractor in the form of a Vamp
+ * plugin, managing its own single-use server instance. That is, the
+ * distinguishing quality of AutoPlugin (in comparison with
+ * PluginStub) is that it runs and terminates its own Piper server,
+ * whose lifetime matches that of the plugin.
+ *
+ * Example usage:
+ *
+ *    Vamp::Plugin *plugin = 
+ *        new AutoPlugin("piper-server-name.exe",
+ *                       "vamp-example-plugins:zerocrossing",
+ *                       44100.0f,
+ *                       Vamp::HostExt::PluginLoader::ADAPT_ALL_SAFE,
+ *                       nullptr);
+ *    plugin->initialise(...);
+ *    plugin->process(...);       <-- in the normal way for a Vamp plugin
+ *    delete plugin;              <-- causes the server to exit
+ *
+ * AutoPlugin makes use of the Loader and PluginClient interfaces,
+ * providing them its own transport layer object for its single server.
  *
  * Note that any method may throw ServerCrashed, RequestTimedOut or
  * ProtocolError exceptions.
@@ -56,6 +73,17 @@ namespace client {
 class PiperAutoPlugin : public Vamp::Plugin
 {
 public:
+    /**
+     * Construct a PiperAutoPlugin that runs an instance of the Piper
+     * server with the given server name (executable path), requesting
+     * the given plugin key from the server.
+     *
+     * \param adapterFlags a bitwise OR of the values in the
+     * Vamp::HostExt::PluginLoader::AdapterFlags enumeration
+     *
+     * \param logger an optional callback for log messages. Pass a
+     * null pointer to use cerr instead.
+     */
     PiperAutoPlugin(std::string serverName,
                     std::string pluginKey,
                     float inputSampleRate,
@@ -81,6 +109,8 @@ public:
 
     virtual ~PiperAutoPlugin() {
         delete m_plugin;
+        // The transport is a plain data member and will be deleted
+        // here, which will have the effect of terminating the server
     }
 
     bool isOK() const {
