@@ -35,7 +35,7 @@
 
 #include "ProcessQtTransport.h"
 #include "CapnpRRClient.h"
-#include "AutoPlugin.h"
+#include "PiperAutoPlugin.h"
 
 #include <stdexcept>
 
@@ -107,13 +107,13 @@ int main(int argc, char **argv)
 
         delete plugin;
 
-        // Let's try a crazy AutoPlugin
+        // Let's try a crazy PiperAutoPlugin
 
-        piper_vamp::client::AutoPlugin ap
+        piper_vamp::client::PiperAutoPlugin ap
             (argv[1], "vamp-example-plugins:zerocrossing", 16, 0, nullptr);
     
         if (!ap.isOK()) {
-            cerr << "AutoPlugin creation failed" << endl;
+            cerr << "PiperAutoPlugin creation failed" << endl;
         } else {
             if (!ap.initialise(1, 4, 4)) {
                 cerr << "initialisation failed" << endl;
