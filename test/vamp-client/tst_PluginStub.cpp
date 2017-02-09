@@ -1,7 +1,7 @@
 #include "catch/catch.hpp"
 #include "vamp-client/Loader.h"
 #include "vamp-client/PluginClient.h"
-#include "vamp-client/PluginStub.h"
+#include "vamp-client/PiperVampPlugin.h"
 #include "vamp-support/RequestResponse.h"
 #include <vector>
 
@@ -11,14 +11,14 @@ using AudioBuffer = std::vector<std::vector<float>>;
 
 // This stub fakes the interaction with a Piper server
 // Here we only need to implement the configure method 
-// due to testing only the initialise implemention of PluginStub
+// due to testing only the initialise implemention of PiperVampPlugin
 class StubClient : public PluginClient
 {
 public:
     StubClient(PluginStaticData staticData) : m_staticData(staticData) {}
     
     ConfigurationResponse
-    configure(PluginStub* plugin,
+    configure(PiperVampPlugin* plugin,
               PluginConfiguration config) override
     {
         const float scale = plugin->getParameter("framing-scale");
@@ -42,7 +42,7 @@ public:
     }
     
     Vamp::Plugin::FeatureSet
-    process(PluginStub* /*plugin*/,
+    process(PiperVampPlugin* /*plugin*/,
             AudioBuffer /*channels*/,
             Vamp::RealTime /*timestamp*/) override
     {
@@ -50,13 +50,13 @@ public:
     }
     
     Vamp::Plugin::FeatureSet
-    finish(PluginStub* /*plugin*/) override
+    finish(PiperVampPlugin* /*plugin*/) override
     {
         return {};
     }
     
     void
-    reset(PluginStub* /*plugin*/, PluginConfiguration /*config*/) override
+    reset(PiperVampPlugin* /*plugin*/, PluginConfiguration /*config*/) override
     {}
 private:
     PluginStaticData m_staticData;
@@ -93,7 +93,7 @@ TEST_CASE("Init plugin with parameter dependent preferred framing sizes") {
 
     StubClient stub {staticData};
     
-    PluginStub vampPiperAdapter {
+    PiperVampPlugin vampPiperAdapter {
         &stub, 
         "stub", // plugin key
         44100.0, // sample rate
