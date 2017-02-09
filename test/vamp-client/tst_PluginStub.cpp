@@ -132,6 +132,7 @@ TEST_CASE("Init plugin with parameter dependent preferred framing sizes") {
         vampPiperAdapter.setParameter("framing-scale", scalingFactor);
         REQUIRE( initWithPreferredFraming() == false );
         REQUIRE_THROWS( vampPiperAdapter.process(nullptr, {}) );
+        REQUIRE_THROWS( initWithPreferredFraming() );
     }
     
     SECTION("Can process after correctly initialising framing")
