@@ -479,11 +479,11 @@ public:
         Vamp::Plugin::FeatureList fl;
         if (!j.is_array()) {
             err = "array expected for feature list";
-            return {};
+            return fl;
         }
         for (const json11::Json &fj : j.array_items()) {
             fl.push_back(toFeature(fj, serialisation, err));
-            if (failed(err)) return {};
+            if (failed(err)) return fl;
         }
         return fl;
     }
@@ -497,16 +497,16 @@ public:
         Vamp::Plugin::FeatureSet fs;
         if (!j.is_object()) {
             err = "object expected for feature set";
-            return {};
+            return fs;
         }
         for (auto &entry : j.object_items()) {
             int n = omapper.idToIndex(entry.first);
             if (fs.find(n) != fs.end()) {
                 err = "duplicate numerical index for output";
-                return {};
+                return fs;
             }
             fs[n] = toFeatureList(entry.second, serialisation, err);
-            if (failed(err)) return {};
+            if (failed(err)) return fs;
         }
         return fs;
     }
