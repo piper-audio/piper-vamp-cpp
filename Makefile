@@ -10,7 +10,7 @@ LDFLAGS		:= $(VAMPSDK_DIR)/libvamp-hostsdk.a -lcapnp -lkj
 
 LDFLAGS		+= -ldl
 
-TEST_SRCS := test/vamp-client/tst_PluginStub.cpp
+TEST_SRCS 	:= test/vamp-client/tst_PluginStub.cpp
 
 all:	o bin bin/piper-convert bin/piper-vamp-simple-server bin/test-suite
 
@@ -28,6 +28,7 @@ bin/piper-vamp-simple-server: o/simple-server.o o/json11.o o/piper.capnp.o
 	
 bin/test-suite: test/main.cpp $(TEST_SRCS)
 	c++ $(CXXFLAGS) $(INCFLAGS) $< $(TEST_SRCS) -o $@ $(LDFLAGS)
+	bin/test-suite
 
 o/piper.capnp.o:	vamp-capnp/piper.capnp.c++
 	c++ $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
