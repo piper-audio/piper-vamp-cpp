@@ -80,7 +80,7 @@ TEST_CASE("Init plugin with parameter dependent preferred framing sizes") {
     
     PluginStaticData staticData;
     staticData.pluginKey = "stub";
-    staticData.basic = {"stub:param-init", "Stub", "Testing init"};
+    staticData.basic = {"param-init", "Stub", "Testing init"};
     staticData.maker = "Lucas Thompson";
     staticData.copyright = "GPL";
     staticData.pluginVersion = 1;
@@ -110,6 +110,13 @@ TEST_CASE("Init plugin with parameter dependent preferred framing sizes") {
         );  
     };
     
+    const AudioBuffer monoAudio {
+        std::vector<float>(vampPiperAdapter.getPreferredBlockSize())
+    };
+    const std::vector<const float*> channelPtrs {
+        monoAudio[0].data()
+    };
+    
     SECTION("Initialises with default parameters")
     {
         REQUIRE( initWithPreferredFraming() );   
@@ -131,7 +138,7 @@ TEST_CASE("Init plugin with parameter dependent preferred framing sizes") {
         const float scalingFactor = 2.0;
         vampPiperAdapter.setParameter("framing-scale", scalingFactor);
         REQUIRE( initWithPreferredFraming() == false );
-        REQUIRE_THROWS( vampPiperAdapter.process(nullptr, {}) );
+        REQUIRE_THROWS( vampPiperAdapter.process(channelPtrs.data(), {}) );
         REQUIRE_THROWS( initWithPreferredFraming() );
     }
     
@@ -141,13 +148,6 @@ TEST_CASE("Init plugin with parameter dependent preferred framing sizes") {
         vampPiperAdapter.setParameter("framing-scale", scalingFactor);
         REQUIRE( initWithPreferredFraming() == false );
         REQUIRE( initWithPreferredFraming() );
-                
-        const AudioBuffer monoAudio {
-            std::vector<float>(vampPiperAdapter.getPreferredBlockSize())
-        };
-        const std::vector<const float*> channelPtrs {
-            monoAudio[0].data()
-        };
         REQUIRE( vampPiperAdapter.process(channelPtrs.data(), {}).empty() );
     }
 }
