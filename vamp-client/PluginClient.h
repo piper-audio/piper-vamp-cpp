@@ -41,7 +41,7 @@
 namespace piper_vamp {
 namespace client {
 
-class PluginStub;
+class PiperVampPlugin;
 
 /**
  * Interface for a client that accepts Vamp-like structures (Plugin
@@ -54,22 +54,22 @@ class PluginClient
 public:
     virtual
     ConfigurationResponse
-    configure(PluginStub *plugin,
+    configure(PiperVampPlugin *plugin,
               PluginConfiguration config) = 0;
     
     virtual
     Vamp::Plugin::FeatureSet
-    process(PluginStub *plugin,
+    process(PiperVampPlugin *plugin,
             std::vector<std::vector<float> > inputBuffers,
             Vamp::RealTime timestamp) = 0;
 
     virtual
     Vamp::Plugin::FeatureSet
-    finish(PluginStub *plugin) = 0;
+    finish(PiperVampPlugin *plugin) = 0;
 
     virtual
     void
-    reset(PluginStub *plugin,
+    reset(PiperVampPlugin *plugin,
           PluginConfiguration config) = 0;
 };
 

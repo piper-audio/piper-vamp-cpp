@@ -38,7 +38,7 @@
 
 #include "Loader.h"
 #include "PluginClient.h"
-#include "PluginStub.h"
+#include "PiperVampPlugin.h"
 #include "SynchronousTransport.h"
 
 #include "vamp-support/AssignedPluginHandleMapper.h"
@@ -149,7 +149,7 @@ public:
     // Loader methods:
 
     ListResponse
-    listPluginData(const ListRequest &req) override {
+    list(const ListRequest &req) override {
 
         LOG_E("CapnpRRClient::listPluginData called");
         
@@ -177,7 +177,7 @@ public:
     }
     
     LoadResponse
-    loadPlugin(const LoadRequest &req) override {
+    load(const LoadRequest &req) override {
 
         LOG_E("CapnpRRClient::loadPlugin called");
         
@@ -190,12 +190,12 @@ public:
                                                        resp.staticData,
                                                        resp.defaultConfiguration);
 
-        Vamp::Plugin *plugin = new PluginStub(this,
-                                              req.pluginKey,
-                                              req.inputSampleRate,
-                                              req.adapterFlags,
-                                              resp.staticData,
-                                              resp.defaultConfiguration);
+        Vamp::Plugin *plugin = new PiperVampPlugin(this,
+                                                   req.pluginKey,
+                                                   req.inputSampleRate,
+                                                   req.adapterFlags,
+                                                   resp.staticData,
+                                                   resp.defaultConfiguration);
 
         m_mapper.addPlugin(handle, plugin);
 
@@ -210,7 +210,7 @@ public:
     
     virtual
     ConfigurationResponse
-    configure(PluginStub *plugin,
+    configure(PiperVampPlugin *plugin,
               PluginConfiguration config) override {
 
         LOG_E("CapnpRRClient::configure called");
@@ -247,7 +247,7 @@ public:
     
     virtual
     Vamp::Plugin::FeatureSet
-    process(PluginStub *plugin,
+    process(PiperVampPlugin *plugin,
             std::vector<std::vector<float> > inputBuffers,
             Vamp::RealTime timestamp) override {
 
@@ -284,7 +284,7 @@ public:
     }
 
     virtual Vamp::Plugin::FeatureSet
-    finish(PluginStub *plugin) override {
+    finish(PiperVampPlugin *plugin) override {
 
         LOG_E("CapnpRRClient::finish called");
         
@@ -323,7 +323,7 @@ public:
     }
 
     virtual void
-    reset(PluginStub *plugin,
+    reset(PiperVampPlugin *plugin,
           PluginConfiguration config) override {
 
         // Reload the plugin on the server side, and configure it as requested

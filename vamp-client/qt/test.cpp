@@ -35,7 +35,7 @@
 
 #include "ProcessQtTransport.h"
 #include "CapnpRRClient.h"
-#include "AutoPlugin.h"
+#include "PiperAutoPlugin.h"
 
 #include <stdexcept>
 
@@ -60,7 +60,7 @@ int main(int argc, char **argv)
             
         piper_vamp::client::CapnpRRClient client(&transport, nullptr);
 
-        piper_vamp::ListResponse lr = client.listPluginData({});
+        piper_vamp::ListResponse lr = client.list({});
         cerr << "Plugins available:" << endl;
         int i = 1;
         for (const auto &p: lr.available) {
@@ -70,7 +70,7 @@ int main(int argc, char **argv)
         piper_vamp::LoadRequest req;
         req.pluginKey = "vamp-example-plugins:zerocrossing";
         req.inputSampleRate = 16;
-        piper_vamp::LoadResponse resp = client.loadPlugin(req);
+        piper_vamp::LoadResponse resp = client.load(req);
         Vamp::Plugin *plugin = resp.plugin;
     
         if (!plugin->initialise(1, 4, 4)) {
@@ -107,13 +107,13 @@ int main(int argc, char **argv)
 
         delete plugin;
 
-        // Let's try a crazy AutoPlugin
+        // Let's try a crazy PiperAutoPlugin
 
-        piper_vamp::client::AutoPlugin ap
+        piper_vamp::client::PiperAutoPlugin ap
             (argv[1], "vamp-example-plugins:zerocrossing", 16, 0, nullptr);
     
         if (!ap.isOK()) {
-            cerr << "AutoPlugin creation failed" << endl;
+            cerr << "PiperAutoPlugin creation failed" << endl;
         } else {
             if (!ap.initialise(1, 4, 4)) {
                 cerr << "initialisation failed" << endl;

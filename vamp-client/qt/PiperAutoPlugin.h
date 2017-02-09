@@ -5,7 +5,7 @@
   An API for audio analysis and feature extraction plugins.
 
   Centre for Digital Music, Queen Mary, University of London.
-  Copyright 2006-2016 Chris Cannam and QMUL.
+  Copyright 2006-2017 Chris Cannam and QMUL.
   
   Permission is hereby granted, free of charge, to any person
   obtaining a copy of this software and associated documentation
@@ -70,11 +70,11 @@ namespace client {
  * Note that any method may throw ServerCrashed, RequestTimedOut or
  * ProtocolError exceptions.
  */
-class AutoPlugin : public Vamp::Plugin
+class PiperAutoPlugin : public Vamp::Plugin
 {
 public:
     /**
-     * Construct an AutoPlugin that runs an instance of the Piper
+     * Construct a PiperAutoPlugin that runs an instance of the Piper
      * server with the given server name (executable path), requesting
      * the given plugin key from the server.
      *
@@ -84,11 +84,11 @@ public:
      * \param logger an optional callback for log messages. Pass a
      * null pointer to use cerr instead.
      */
-    AutoPlugin(std::string serverName,
-               std::string pluginKey,
-               float inputSampleRate,
-               int adapterFlags,
-               LogCallback *logger) :
+    PiperAutoPlugin(std::string serverName,
+                    std::string pluginKey,
+                    float inputSampleRate,
+                    int adapterFlags,
+                    LogCallback *logger) : // logger may be nullptr for cerr
         Vamp::Plugin(inputSampleRate),
         m_logger(logger),
         m_transport(serverName, "capnp", logger),
@@ -99,15 +99,15 @@ public:
         req.inputSampleRate = inputSampleRate;
         req.adapterFlags = adapterFlags;
         try {
-            LoadResponse resp = m_client.loadPlugin(req);
+            LoadResponse resp = m_client.load(req);
             m_plugin = resp.plugin;
         } catch (ServerCrashed c) {
-            log(std::string("AutoPlugin: Server crashed: ") + c.what());
+            log(std::string("PiperAutoPlugin: Server crashed: ") + c.what());
             m_plugin = 0;
         }
     }
 
-    virtual ~AutoPlugin() {
+    virtual ~PiperAutoPlugin() {
         delete m_plugin;
         // The transport is a plain data member and will be deleted
         // here, which will have the effect of terminating the server
@@ -215,7 +215,7 @@ private:
     Vamp::Plugin *m_plugin;
     Vamp::Plugin *getPlugin() const {
         if (!m_plugin) {
-            log("AutoPlugin: getPlugin() failed (caller should have called AutoPlugin::isOK)");
+            log("PiperAutoPlugin: getPlugin() failed (caller should have called PiperAutoPlugin::isOK)");
             throw std::logic_error("Plugin load failed");
         }
         return m_plugin;

@@ -5,7 +5,7 @@
   An API for audio analysis and feature extraction plugins.
 
   Centre for Digital Music, Queen Mary, University of London.
-  Copyright 2006-2016 Chris Cannam and QMUL.
+  Copyright 2006-2017 Chris Cannam and QMUL.
   
   Permission is hereby granted, free of charge, to any person
   obtaining a copy of this software and associated documentation
@@ -33,8 +33,8 @@
   authorization.
 */
 
-#ifndef PIPER_PLUGIN_STUB_H
-#define PIPER_PLUGIN_STUB_H
+#ifndef PIPER_VAMP_PLUGIN_H
+#define PIPER_VAMP_PLUGIN_H
 
 #include <vamp-hostsdk/Plugin.h>
 #include <vamp-hostsdk/PluginLoader.h>
@@ -51,16 +51,17 @@ namespace piper_vamp {
 namespace client {
 
 /**
- * PluginStub presents a Piper feature extractor in the form of a Vamp plugin.
+ * PiperVampPlugin presents a Piper feature extractor in the form of a
+ * Vamp plugin.
  */
-class PluginStub : public Vamp::Plugin
+class PiperVampPlugin : public Vamp::Plugin
 {
     enum State {
         /**
          * The plugin's corresponding Piper feature extractor has been
          * loaded but no subsequent state change has happened. This is
-         * the initial state of PluginStub on construction, since it
-         * is associated with a pre-loaded handle.
+         * the initial state of PiperVampPlugin on construction, since
+         * it is associated with a pre-loaded handle.
          */
         Loaded,
         
@@ -101,12 +102,12 @@ class PluginStub : public Vamp::Plugin
     };
     
 public:
-    PluginStub(PluginClient *client,
-               std::string pluginKey,
-               float inputSampleRate,
-               int adapterFlags,
-               PluginStaticData psd,
-               PluginConfiguration defaultConfig) :
+    PiperVampPlugin(PluginClient *client,
+                    std::string pluginKey,
+                    float inputSampleRate,
+                    int adapterFlags,
+                    PluginStaticData psd,
+                    PluginConfiguration defaultConfig) :
         Plugin(inputSampleRate),
         m_client(client),
         m_key(pluginKey),
@@ -117,13 +118,13 @@ public:
         m_config(defaultConfig)
     { }
 
-    virtual ~PluginStub() {
+    virtual ~PiperVampPlugin() {
         if (m_state != Finished && m_state != Failed) {
             try {
                 (void)m_client->finish(this);
             } catch (const std::exception &e) {
                 // Finish can throw, but our destructor must not
-                std::cerr << "WARNING: PluginStub::~PluginStub: caught exception from finish(): " << e.what() << std::endl;
+                std::cerr << "WARNING: PiperVampPlugin::~PiperVampPlugin: caught exception from finish(): " << e.what() << std::endl;
             }
         }
     }

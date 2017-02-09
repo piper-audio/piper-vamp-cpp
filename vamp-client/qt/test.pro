@@ -32,11 +32,11 @@ SOURCES += \
         
 HEADERS += \
         ProcessQtTransport.h \
-        AutoPlugin.h \
+        PiperAutoPlugin.h \
         ../CapnpRRClient.h \
         ../Loader.h \
         ../PluginClient.h \
-        ../PluginStub.h \
+        ../PiperVampPlugin.h \
         ../SynchronousTransport.h
         
 

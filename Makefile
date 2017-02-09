@@ -110,17 +110,19 @@ test/vamp-client/tst_PluginStub.o: vamp-support/PluginStaticData.h
 test/vamp-client/tst_PluginStub.o: vamp-support/PluginConfiguration.h
 test/vamp-client/tst_PluginStub.o: vamp-client/PluginClient.h
 test/vamp-client/tst_PluginStub.o: vamp-support/PluginConfiguration.h
-test/vamp-client/tst_PluginStub.o: vamp-client/PluginStub.h
+test/vamp-client/tst_PluginStub.o: vamp-client/PiperVampPlugin.h
 test/vamp-client/tst_PluginStub.o: vamp-support/PluginStaticData.h
 test/vamp-client/tst_PluginStub.o: vamp-client/PluginClient.h
 vamp-client/qt/test.o: vamp-client/qt/ProcessQtTransport.h
 vamp-client/qt/test.o: vamp-client/SynchronousTransport.h
-vamp-client/qt/test.o: vamp-client/Exceptions.h vamp-client/qt/AutoPlugin.h
+vamp-client/qt/test.o: vamp-client/Exceptions.h
+vamp-client/qt/test.o: vamp-client/qt/PiperAutoPlugin.h
 vamp-client/qt/test.o: vamp-client/CapnpRRClient.h vamp-client/Loader.h
 vamp-client/qt/test.o: vamp-support/RequestResponse.h
 vamp-client/qt/test.o: vamp-support/PluginStaticData.h
 vamp-client/qt/test.o: vamp-support/PluginConfiguration.h
-vamp-client/qt/test.o: vamp-client/PluginClient.h vamp-client/PluginStub.h
+vamp-client/qt/test.o: vamp-client/PluginClient.h
+vamp-client/qt/test.o: vamp-client/PiperVampPlugin.h
 vamp-client/qt/test.o: vamp-support/PluginStaticData.h
 vamp-client/qt/test.o: vamp-support/PluginConfiguration.h
 vamp-client/qt/test.o: vamp-client/SynchronousTransport.h
