@@ -543,7 +543,7 @@ public:
         jo["key"] = d.pluginKey;
         jo["basic"] = fromBasicDescriptor(d.basic);
         jo["maker"] = d.maker;
-        jo["copyright"] = d.copyright;
+        jo["rights"] = d.copyright;
         jo["version"] = d.pluginVersion;
 
         json11::Json::array cat;
@@ -594,9 +594,9 @@ public:
 
             err = "string expected for maker";
 
-        } else if (!j["copyright"].is_null() &&
-                   !j["copyright"].is_string()) {
-            err = "string expected for copyright";
+        } else if (!j["rights"].is_null() &&
+                   !j["rights"].is_string()) {
+            err = "string expected for rights";
 
         } else if (!j["category"].is_null() &&
                    !j["category"].is_array()) {
@@ -633,7 +633,7 @@ public:
             if (failed(err)) return {};
 
             psd.maker = j["maker"].string_value();
-            psd.copyright = j["copyright"].string_value();
+            psd.copyright = j["rights"].string_value();
             psd.pluginVersion = j["version"].int_value();
 
             for (const auto &c : j["category"].array_items()) {

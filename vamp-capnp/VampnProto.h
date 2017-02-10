@@ -382,7 +382,7 @@ public:
         buildBasicDescriptor(basic, d.basic);
 
         b.setMaker(d.maker);
-        b.setCopyright(d.copyright);
+        b.setRights(d.copyright);
         b.setVersion(d.pluginVersion);
 
         auto clist = b.initCategory(unsigned(d.category.size()));
@@ -425,7 +425,7 @@ public:
         readBasicDescriptor(d.basic, r.getBasic());
 
         d.maker = r.getMaker();
-        d.copyright = r.getCopyright();
+        d.copyright = r.getRights();
         d.pluginVersion = r.getVersion();
 
         d.category.clear();

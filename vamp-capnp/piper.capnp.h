@@ -1053,8 +1053,8 @@ public:
   inline bool hasMaker() const;
   inline  ::capnp::Text::Reader getMaker() const;
 
-  inline bool hasCopyright() const;
-  inline  ::capnp::Text::Reader getCopyright() const;
+  inline bool hasRights() const;
+  inline  ::capnp::Text::Reader getRights() const;
 
   inline  ::int32_t getVersion() const;
 
@@ -1125,12 +1125,12 @@ public:
   inline void adoptMaker(::capnp::Orphan< ::capnp::Text>&& value);
   inline ::capnp::Orphan< ::capnp::Text> disownMaker();
 
-  inline bool hasCopyright();
-  inline  ::capnp::Text::Builder getCopyright();
-  inline void setCopyright( ::capnp::Text::Reader value);
-  inline  ::capnp::Text::Builder initCopyright(unsigned int size);
-  inline void adoptCopyright(::capnp::Orphan< ::capnp::Text>&& value);
-  inline ::capnp::Orphan< ::capnp::Text> disownCopyright();
+  inline bool hasRights();
+  inline  ::capnp::Text::Builder getRights();
+  inline void setRights( ::capnp::Text::Reader value);
+  inline  ::capnp::Text::Builder initRights(unsigned int size);
+  inline void adoptRights(::capnp::Orphan< ::capnp::Text>&& value);
+  inline ::capnp::Orphan< ::capnp::Text> disownRights();
 
   inline  ::int32_t getVersion();
   inline void setVersion( ::int32_t value);
@@ -1688,9 +1688,9 @@ public:
   }
 #endif  // !CAPNP_LITE
 
-  inline  ::int32_t getStepSize() const;
-
   inline  ::int32_t getBlockSize() const;
+
+  inline  ::int32_t getStepSize() const;
 
 private:
   ::capnp::_::StructReader _reader;
@@ -1720,11 +1720,11 @@ public:
   inline ::kj::StringTree toString() const { return asReader().toString(); }
 #endif  // !CAPNP_LITE
 
-  inline  ::int32_t getStepSize();
-  inline void setStepSize( ::int32_t value);
-
   inline  ::int32_t getBlockSize();
   inline void setBlockSize( ::int32_t value);
+
+  inline  ::int32_t getStepSize();
+  inline void setStepSize( ::int32_t value);
 
 private:
   ::capnp::_::StructBuilder _builder;
@@ -4212,34 +4212,34 @@ inline ::capnp::Orphan< ::capnp::Text> ExtractorStaticData::Builder::disownMaker
       _builder.getPointerField(2 * ::capnp::POINTERS));
 }
 
-inline bool ExtractorStaticData::Reader::hasCopyright() const {
+inline bool ExtractorStaticData::Reader::hasRights() const {
   return !_reader.getPointerField(3 * ::capnp::POINTERS).isNull();
 }
-inline bool ExtractorStaticData::Builder::hasCopyright() {
+inline bool ExtractorStaticData::Builder::hasRights() {
   return !_builder.getPointerField(3 * ::capnp::POINTERS).isNull();
 }
-inline  ::capnp::Text::Reader ExtractorStaticData::Reader::getCopyright() const {
+inline  ::capnp::Text::Reader ExtractorStaticData::Reader::getRights() const {
   return ::capnp::_::PointerHelpers< ::capnp::Text>::get(
       _reader.getPointerField(3 * ::capnp::POINTERS));
 }
-inline  ::capnp::Text::Builder ExtractorStaticData::Builder::getCopyright() {
+inline  ::capnp::Text::Builder ExtractorStaticData::Builder::getRights() {
   return ::capnp::_::PointerHelpers< ::capnp::Text>::get(
       _builder.getPointerField(3 * ::capnp::POINTERS));
 }
-inline void ExtractorStaticData::Builder::setCopyright( ::capnp::Text::Reader value) {
+inline void ExtractorStaticData::Builder::setRights( ::capnp::Text::Reader value) {
   ::capnp::_::PointerHelpers< ::capnp::Text>::set(
       _builder.getPointerField(3 * ::capnp::POINTERS), value);
 }
-inline  ::capnp::Text::Builder ExtractorStaticData::Builder::initCopyright(unsigned int size) {
+inline  ::capnp::Text::Builder ExtractorStaticData::Builder::initRights(unsigned int size) {
   return ::capnp::_::PointerHelpers< ::capnp::Text>::init(
       _builder.getPointerField(3 * ::capnp::POINTERS), size);
 }
-inline void ExtractorStaticData::Builder::adoptCopyright(
+inline void ExtractorStaticData::Builder::adoptRights(
     ::capnp::Orphan< ::capnp::Text>&& value) {
   ::capnp::_::PointerHelpers< ::capnp::Text>::adopt(
       _builder.getPointerField(3 * ::capnp::POINTERS), kj::mv(value));
 }
-inline ::capnp::Orphan< ::capnp::Text> ExtractorStaticData::Builder::disownCopyright() {
+inline ::capnp::Orphan< ::capnp::Text> ExtractorStaticData::Builder::disownRights() {
   return ::capnp::_::PointerHelpers< ::capnp::Text>::disown(
       _builder.getPointerField(3 * ::capnp::POINTERS));
 }
@@ -4807,30 +4807,30 @@ inline ::capnp::Orphan< ::capnp::List< ::piper::Feature>> FeatureSet::FSPair::Bu
       _builder.getPointerField(1 * ::capnp::POINTERS));
 }
 
-inline  ::int32_t Framing::Reader::getStepSize() const {
-  return _reader.getDataField< ::int32_t>(
-      0 * ::capnp::ELEMENTS);
-}
-
-inline  ::int32_t Framing::Builder::getStepSize() {
-  return _builder.getDataField< ::int32_t>(
-      0 * ::capnp::ELEMENTS);
-}
-inline void Framing::Builder::setStepSize( ::int32_t value) {
-  _builder.setDataField< ::int32_t>(
-      0 * ::capnp::ELEMENTS, value);
-}
-
 inline  ::int32_t Framing::Reader::getBlockSize() const {
   return _reader.getDataField< ::int32_t>(
-      1 * ::capnp::ELEMENTS);
+      0 * ::capnp::ELEMENTS);
 }
 
 inline  ::int32_t Framing::Builder::getBlockSize() {
   return _builder.getDataField< ::int32_t>(
-      1 * ::capnp::ELEMENTS);
+      0 * ::capnp::ELEMENTS);
 }
 inline void Framing::Builder::setBlockSize( ::int32_t value) {
+  _builder.setDataField< ::int32_t>(
+      0 * ::capnp::ELEMENTS, value);
+}
+
+inline  ::int32_t Framing::Reader::getStepSize() const {
+  return _reader.getDataField< ::int32_t>(
+      1 * ::capnp::ELEMENTS);
+}
+
+inline  ::int32_t Framing::Builder::getStepSize() {
+  return _builder.getDataField< ::int32_t>(
+      1 * ::capnp::ELEMENTS);
+}
+inline void Framing::Builder::setStepSize( ::int32_t value) {
   _builder.setDataField< ::int32_t>(
       1 * ::capnp::ELEMENTS, value);
 }
