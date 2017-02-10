@@ -7,8 +7,8 @@ primarily for making Vamp plugins work with the Piper protocol.
 ## Contents
 
  * code to adapt Piper messages to the classes used in the Vamp SDK
- * a command-line converter between Piper serialisations (via Vamp SDK
-   classes)
+ * a command-line converter between Piper serialisations that goes
+   via Vamp SDK classes
  * a server that makes Vamp plugins available via Piper messages
 
 ## Directory index
@@ -30,7 +30,7 @@ through a Vamp-like API
 *ext* - json11 and base-n third-party libraries: see individual
 directories for copyright details
 
-[![Build Status](https://travis-ci.org/piper-audio/piper-cpp.svg?branch=master)](https://travis-ci.org/piper-audio/piper-cpp)
+[![Build Status](https://travis-ci.org/piper-audio/piper-vamp-cpp.svg?branch=master)](https://travis-ci.org/piper-audio/piper-vamp-cpp)
 
 ## Authors and licensing
 
