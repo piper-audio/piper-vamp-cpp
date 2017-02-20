@@ -10,7 +10,7 @@ LDFLAGS		:= $(VAMPSDK_DIR)/libvamp-hostsdk.a -lcapnp -lkj
 
 LDFLAGS		+= -ldl
 
-TEST_SRCS 	:= test/main.cpp test/vamp-client/tst_PluginStub.cpp
+TEST_SRCS 	:= test/main.cpp test/vamp-client/tst_PluginStub.cpp test/vamp-client/tst_JsonClient.cpp
 TEST_OBJS	:= $(TEST_SRCS:.cpp=.o)
 
 all:	o bin bin/piper-convert bin/piper-vamp-simple-server bin/test-suite
@@ -27,7 +27,7 @@ bin/piper-convert: o/convert.o o/json11.o o/piper.capnp.o
 bin/piper-vamp-simple-server: o/simple-server.o o/json11.o o/piper.capnp.o
 	c++ $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-bin/test-suite: $(TEST_OBJS)
+bin/test-suite: $(TEST_OBJS) o/json11.o
 	c++ $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 	bin/test-suite
 
@@ -104,6 +104,21 @@ vamp-server/simple-server.o: vamp-support/DefaultPluginOutputIdMapper.h
 vamp-server/simple-server.o: vamp-support/LoaderRequests.h
 ext/json11/json11.o: ext/json11/json11.hpp
 ext/json11/test.o: ext/json11/json11.hpp
+test/vamp-client/tst_JsonClient.o: vamp-support/RequestResponse.h
+test/vamp-client/tst_JsonClient.o: vamp-support/PluginStaticData.h
+test/vamp-client/tst_JsonClient.o: vamp-support/PluginConfiguration.h
+test/vamp-client/tst_JsonClient.o: vamp-client/JsonClient.h
+test/vamp-client/tst_JsonClient.o: vamp-client/PluginClient.h
+test/vamp-client/tst_JsonClient.o: vamp-support/PluginConfiguration.h
+test/vamp-client/tst_JsonClient.o: vamp-client/Loader.h
+test/vamp-client/tst_JsonClient.o: vamp-client/SynchronousTransport.h
+test/vamp-client/tst_JsonClient.o: vamp-json/VampJson.h
+test/vamp-client/tst_JsonClient.o: vamp-support/PluginStaticData.h
+test/vamp-client/tst_JsonClient.o: vamp-support/PluginHandleMapper.h
+test/vamp-client/tst_JsonClient.o: vamp-support/PluginOutputIdMapper.h
+test/vamp-client/tst_JsonClient.o: vamp-support/PluginOutputIdMapper.h
+test/vamp-client/tst_JsonClient.o: vamp-support/RequestResponseType.h
+test/vamp-client/tst_JsonClient.o: vamp-client/SynchronousTransport.h
 test/vamp-client/tst_PluginStub.o: vamp-client/Loader.h
 test/vamp-client/tst_PluginStub.o: vamp-support/RequestResponse.h
 test/vamp-client/tst_PluginStub.o: vamp-support/PluginStaticData.h
@@ -122,9 +137,9 @@ vamp-client/qt/test.o: vamp-support/RequestResponse.h
 vamp-client/qt/test.o: vamp-support/PluginStaticData.h
 vamp-client/qt/test.o: vamp-support/PluginConfiguration.h
 vamp-client/qt/test.o: vamp-client/PluginClient.h
+vamp-client/qt/test.o: vamp-support/PluginConfiguration.h
 vamp-client/qt/test.o: vamp-client/PiperVampPlugin.h
 vamp-client/qt/test.o: vamp-support/PluginStaticData.h
-vamp-client/qt/test.o: vamp-support/PluginConfiguration.h
 vamp-client/qt/test.o: vamp-client/SynchronousTransport.h
 vamp-client/qt/test.o: vamp-support/AssignedPluginHandleMapper.h
 vamp-client/qt/test.o: vamp-support/PluginHandleMapper.h
