@@ -2784,7 +2784,6 @@ constexpr uint16_t Basic::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind Basic::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* Basic::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* Basic::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // ParameterDescriptor
@@ -2793,7 +2792,6 @@ constexpr uint16_t ParameterDescriptor::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind ParameterDescriptor::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* ParameterDescriptor::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* ParameterDescriptor::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // ConfiguredOutputDescriptor
@@ -2802,7 +2800,6 @@ constexpr uint16_t ConfiguredOutputDescriptor::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind ConfiguredOutputDescriptor::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* ConfiguredOutputDescriptor::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* ConfiguredOutputDescriptor::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // OutputDescriptor
@@ -2811,7 +2808,6 @@ constexpr uint16_t OutputDescriptor::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind OutputDescriptor::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* OutputDescriptor::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* OutputDescriptor::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // ExtractorStaticData
@@ -2820,7 +2816,6 @@ constexpr uint16_t ExtractorStaticData::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind ExtractorStaticData::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* ExtractorStaticData::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* ExtractorStaticData::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // RealTime
@@ -2829,7 +2824,6 @@ constexpr uint16_t RealTime::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind RealTime::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* RealTime::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* RealTime::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // ProcessInput
@@ -2838,7 +2832,6 @@ constexpr uint16_t ProcessInput::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind ProcessInput::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* ProcessInput::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* ProcessInput::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // Feature
@@ -2847,7 +2840,6 @@ constexpr uint16_t Feature::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind Feature::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* Feature::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* Feature::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // FeatureSet
@@ -2856,7 +2848,6 @@ constexpr uint16_t FeatureSet::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind FeatureSet::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* FeatureSet::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* FeatureSet::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // FeatureSet::FSPair
@@ -2865,7 +2856,6 @@ constexpr uint16_t FeatureSet::FSPair::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind FeatureSet::FSPair::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* FeatureSet::FSPair::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* FeatureSet::FSPair::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // Framing
@@ -2874,7 +2864,6 @@ constexpr uint16_t Framing::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind Framing::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* Framing::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* Framing::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // Configuration
@@ -2883,7 +2872,6 @@ constexpr uint16_t Configuration::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind Configuration::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* Configuration::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* Configuration::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // Configuration::PVPair
@@ -2892,7 +2880,6 @@ constexpr uint16_t Configuration::PVPair::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind Configuration::PVPair::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* Configuration::PVPair::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* Configuration::PVPair::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 const ::capnp::_::ConstList< ::piper::AdapterFlag> ADAPT_ALL_SAFE(::capnp::schemas::b_9ed58097be8bc6f3.words + 27);
@@ -2903,7 +2890,6 @@ constexpr uint16_t ListRequest::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind ListRequest::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* ListRequest::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* ListRequest::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // ListResponse
@@ -2912,7 +2898,6 @@ constexpr uint16_t ListResponse::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind ListResponse::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* ListResponse::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* ListResponse::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // LoadRequest
@@ -2921,7 +2906,6 @@ constexpr uint16_t LoadRequest::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind LoadRequest::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* LoadRequest::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* LoadRequest::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // LoadResponse
@@ -2930,7 +2914,6 @@ constexpr uint16_t LoadResponse::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind LoadResponse::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* LoadResponse::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* LoadResponse::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // ConfigurationRequest
@@ -2939,7 +2922,6 @@ constexpr uint16_t ConfigurationRequest::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind ConfigurationRequest::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* ConfigurationRequest::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* ConfigurationRequest::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // ConfigurationResponse
@@ -2948,7 +2930,6 @@ constexpr uint16_t ConfigurationResponse::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind ConfigurationResponse::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* ConfigurationResponse::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* ConfigurationResponse::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // ProcessRequest
@@ -2957,7 +2938,6 @@ constexpr uint16_t ProcessRequest::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind ProcessRequest::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* ProcessRequest::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* ProcessRequest::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // ProcessResponse
@@ -2966,7 +2946,6 @@ constexpr uint16_t ProcessResponse::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind ProcessResponse::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* ProcessResponse::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* ProcessResponse::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // FinishRequest
@@ -2975,7 +2954,6 @@ constexpr uint16_t FinishRequest::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind FinishRequest::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* FinishRequest::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* FinishRequest::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // FinishResponse
@@ -2984,7 +2962,6 @@ constexpr uint16_t FinishResponse::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind FinishResponse::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* FinishResponse::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* FinishResponse::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // Error
@@ -2993,7 +2970,6 @@ constexpr uint16_t Error::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind Error::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* Error::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* Error::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // RpcRequest
@@ -3002,7 +2978,6 @@ constexpr uint16_t RpcRequest::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind RpcRequest::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* RpcRequest::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* RpcRequest::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // RpcRequest::Id
@@ -3011,7 +2986,6 @@ constexpr uint16_t RpcRequest::Id::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind RpcRequest::Id::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* RpcRequest::Id::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* RpcRequest::Id::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // RpcRequest::Request
@@ -3020,7 +2994,6 @@ constexpr uint16_t RpcRequest::Request::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind RpcRequest::Request::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* RpcRequest::Request::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* RpcRequest::Request::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // RpcResponse
@@ -3029,7 +3002,6 @@ constexpr uint16_t RpcResponse::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind RpcResponse::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* RpcResponse::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* RpcResponse::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // RpcResponse::Id
@@ -3038,7 +3010,6 @@ constexpr uint16_t RpcResponse::Id::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind RpcResponse::Id::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* RpcResponse::Id::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* RpcResponse::Id::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 // RpcResponse::Response
@@ -3047,7 +3018,6 @@ constexpr uint16_t RpcResponse::Response::_capnpPrivate::pointerCount;
 #if !CAPNP_LITE
 constexpr ::capnp::Kind RpcResponse::Response::_capnpPrivate::kind;
 constexpr ::capnp::_::RawSchema const* RpcResponse::Response::_capnpPrivate::schema;
-constexpr ::capnp::_::RawBrandedSchema const* RpcResponse::Response::_capnpPrivate::brand;
 #endif  // !CAPNP_LITE
 
 
