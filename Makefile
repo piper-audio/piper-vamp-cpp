@@ -10,43 +10,33 @@ LDFLAGS		:= $(VAMPSDK_DIR)/libvamp-hostsdk.a -lcapnp -lkj
 
 LDFLAGS		+= -ldl
 
+COMMON_OBJS	:= ext/json11/json11.o vamp-capnp/piper.capnp.o
+
 TEST_SRCS 	:= test/main.cpp test/vamp-client/tst_PluginStub.cpp
 TEST_OBJS	:= $(TEST_SRCS:.cpp=.o)
 
-all:	o bin bin/piper-convert bin/piper-vamp-simple-server bin/test-suite
+all:	bin bin/piper-convert bin/piper-vamp-simple-server bin/test-suite
 
 bin:
 	mkdir bin
 
-o:
-	mkdir o
-
-bin/piper-convert: o/convert.o o/json11.o o/piper.capnp.o
+bin/piper-convert: vamp-server/convert.o $(COMMON_OBJS)
 	c++ $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-bin/piper-vamp-simple-server: o/simple-server.o o/json11.o o/piper.capnp.o
+bin/piper-vamp-simple-server: vamp-server/simple-server.o $(COMMON_OBJS)
 	c++ $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 bin/test-suite: $(TEST_OBJS)
 	c++ $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 	bin/test-suite
 
-o/piper.capnp.o:	vamp-capnp/piper.capnp.c++
+vamp-capnp/piper.capnp.o:	vamp-capnp/piper.capnp.c++
 	c++ $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
 vamp-capnp/piper.capnp.h:	vamp-capnp/piper.capnp.c++
 
 vamp-capnp/piper.capnp.c++: $(PIPER_DIR)/capnp/piper.capnp
 	capnpc --src-prefix=$(PIPER_DIR)/capnp -oc++:vamp-capnp $<
-
-o/json11.o:	ext/json11/json11.cpp
-	c++ $(CXXFLAGS) -c $< -o $@
-
-o/convert.o:	vamp-server/convert.cpp
-	c++ $(CXXFLAGS) -c $< -o $@
-
-o/simple-server.o:	vamp-server/simple-server.cpp
-	c++ $(CXXFLAGS) -c $< -o $@
 
 test:	all
 	bin/test-suite -s -d yes
