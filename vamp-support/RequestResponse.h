@@ -203,6 +203,8 @@ public:
 
     Vamp::Plugin *plugin;
     Vamp::Plugin::OutputList outputs;
+    StaticOutputInfo staticOutputInfo; // stuff not in Plugin::OutputDescriptor
+    
     Framing framing;
 };
 

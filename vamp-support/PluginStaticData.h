@@ -4,7 +4,7 @@
     Piper C++
 
     Centre for Digital Music, Queen Mary, University of London.
-    Copyright 2006-2016 Chris Cannam and QMUL.
+    Copyright 2006-2017 Chris Cannam and QMUL.
   
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -37,6 +37,8 @@
 
 #include <vamp-hostsdk/Plugin.h>
 
+#include "StaticOutputDescriptor.h"
+
 namespace piper_vamp {
 
 /**
@@ -62,7 +64,7 @@ public:
 	std::string description;
     };
     typedef std::vector<Basic> BasicList;
-
+    
     PluginStaticData() : // invalid static data by default
 	pluginVersion(0), minChannelCount(0), maxChannelCount(0),
 	inputDomain(Vamp::Plugin::TimeDomain) { }
@@ -72,13 +74,18 @@ public:
     std::string maker;
     std::string copyright;
     int pluginVersion;
-    std::vector<std::string> category;
+    std::vector<std::string> category; // not found in the plugin, may
+                                       // come from accompanying
+                                       // metadata
     size_t minChannelCount;
     size_t maxChannelCount;
     Vamp::PluginBase::ParameterList parameters;
     Vamp::PluginBase::ProgramList programs;
     Vamp::Plugin::InputDomain inputDomain;
     BasicList basicOutputInfo;
+    StaticOutputInfo staticOutputInfo; // not found in the plugin, may
+                                       // come from accompanying
+                                       // (RDF?) metadata
 
     static PluginStaticData
     fromPlugin(std::string pluginKey,
