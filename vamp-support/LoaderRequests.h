@@ -39,6 +39,7 @@
 
 #include "PluginStaticData.h"
 #include "PluginConfiguration.h"
+#include "RdfTypes.h"
 
 #include <vamp-hostsdk/PluginLoader.h>
 
@@ -73,8 +74,10 @@ public:
 	    Vamp::Plugin *p = loader->loadPlugin(key, 44100, 0);
 	    if (!p) continue;
 	    auto category = loader->getPluginCategory(key);
-	    response.available.push_back
-		(PluginStaticData::fromPlugin(key, category, p));
+            PluginStaticData psd =
+                PluginStaticData::fromPlugin(key, category, p);
+            psd.staticOutputInfo = RdfTypes().loadStaticOutputInfo(key);
+	    response.available.push_back(psd);
 	    delete p;
 	}
 
@@ -99,6 +102,9 @@ public:
 	    (req.pluginKey,
 	     loader->getPluginCategory(req.pluginKey),
 	     plugin);
+        
+        response.staticData.staticOutputInfo =
+            RdfTypes().loadStaticOutputInfo(req.pluginKey);
 
 	int defaultChannels = 0;
 	if (plugin->getMinChannelCount() == plugin->getMaxChannelCount()) {

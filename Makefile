@@ -2,8 +2,8 @@
 VAMPSDK_DIR	:= ../vamp-plugin-sdk
 PIPER_DIR	:= ../piper
 
-INCFLAGS	:= -Iext -I$(VAMPSDK_DIR) -I. -I/usr/local/include
-CXXFLAGS	:= -Wall -Wextra -Werror -g3 -std=c++11 $(INCFLAGS)
+INCFLAGS	:= -Iext -Iext/sord -Iext/serd -I$(VAMPSDK_DIR) -I. -I/usr/local/include
+CXXFLAGS	:= -Wall -Wextra -Werror -Wno-error=unused-parameter -g3 -std=c++11 $(INCFLAGS)
 
 #LDFLAGS		:= -L$(VAMPSDK_DIR) -L/usr/local/lib -lvamp-hostsdk -lcapnp -lkj 
 LDFLAGS		:= $(VAMPSDK_DIR)/libvamp-hostsdk.a -lcapnp -lkj 
