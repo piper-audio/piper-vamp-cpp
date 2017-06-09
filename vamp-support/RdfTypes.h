@@ -43,14 +43,94 @@
 
 #include <sord/sord.h>
 
+#include <mutex>
+
 namespace piper_vamp {
 
-// NB not thread-safe
 class RdfTypes
 {
 public:
-    StaticOutputInfo loadStaticOutputInfo(Vamp::HostExt::PluginLoader::PluginKey) {
-        return {};
+    RdfTypes() :
+        m_world(sord_world_new())
+    {}
+
+    ~RdfTypes() {
+        sord_world_free(m_world);
+    }
+    
+    StaticOutputInfo loadStaticOutputInfo(Vamp::HostExt::PluginLoader::PluginKey
+                                          pluginKey) {
+
+        StaticOutputInfo info;
+        SordModel *model = sord_new(m_world, SORD_SPO|SORD_OPS|SORD_POS, false);
+        if (loadRdf(model, candidateRdfFilesFor(pluginKey))) {
+            // we want to find a graph like
+            // :plugin vamp:output :output1
+            // :plugin vamp:output :output2
+            // :plugin vamp:output :output3
+            // :output1 vamp:computes_event_type :event
+            // :output2 vamp:computes_feature :feature
+            // :output3 vamp:computes_signal_type :signal
+        }
+        sord_free(model);
+        return info;
+    }
+
+private:
+    SordWorld *m_world;
+
+    bool loadRdf(SordModel *targetModel, std::vector<std::string> filenames) {
+        for (auto f: filenames) {
+            if (loadRdfFile(targetModel, f)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool loadRdfFile(SordModel *targetModel, std::string filename) {
+        std::string base = "file://" + filename;
+        SerdURI bu;
+        if (serd_uri_parse((const uint8_t *)base.c_str(), &bu) !=
+            SERD_SUCCESS) {
+            std::cerr << "Failed to parse base URI " << base << std::endl;
+            return false;
+        }
+        SerdNode bn = serd_node_from_string(SERD_URI,
+                                            (const uint8_t *)base.c_str());
+        SerdEnv *env = serd_env_new(&bn);
+        SerdReader *reader = sord_new_reader(targetModel, env, SERD_TURTLE, 0);
+        SerdStatus rv = serd_reader_read_file
+            (reader, (const uint8_t *)filename.c_str());
+        bool success = (rv == SERD_SUCCESS);
+        if (!success) {
+            std::cerr << "Failed to import RDF from " << filename << std::endl;
+        } else {
+            std::cerr << "Imported RDF from " << filename << std::endl;
+        }
+        serd_reader_free(reader);
+        serd_env_free(env);
+        return success;
+    }
+    
+    std::vector<std::string> candidateRdfFilesFor(Vamp::HostExt::
+                                                  PluginLoader::PluginKey key) {
+
+        std::string library = Vamp::HostExt::PluginLoader::getInstance()->
+            getLibraryPathForPlugin(key);
+	
+        auto li = library.rfind('.');
+        if (li == std::string::npos) return {};
+        auto withoutSuffix = library.substr(0, li);
+
+        std::vector<std::string> suffixes { "ttl", "TTL", "n3", "N3" };
+        std::vector<std::string> candidates;
+
+        for (auto suffix : suffixes) {
+            candidates.push_back(withoutSuffix + "." + suffix);
+        }
+
+        return candidates;
     }
 };
 
