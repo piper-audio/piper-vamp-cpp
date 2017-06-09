@@ -65,12 +65,17 @@ public:
         SordModel *model = sord_new(m_world, SORD_SPO|SORD_OPS|SORD_POS, false);
         if (loadRdf(model, candidateRdfFilesFor(pluginKey))) {
             // we want to find a graph like
+            // :plugin a vamp:Plugin
+            // :plugin vamp:identifier "pluginId"
+            // :library vamp:available_plugin :plugin
+            // :library vamp:identifier "libraryId"
             // :plugin vamp:output :output1
             // :plugin vamp:output :output2
             // :plugin vamp:output :output3
             // :output1 vamp:computes_event_type :event
             // :output2 vamp:computes_feature :feature
             // :output3 vamp:computes_signal_type :signal
+            // and where pluginKey == libraryId + ":" + pluginId
         }
         sord_free(model);
         return info;
