@@ -64,18 +64,7 @@ public:
         StaticOutputInfo info;
         SordModel *model = sord_new(m_world, SORD_SPO|SORD_OPS|SORD_POS, false);
         if (loadRdf(model, candidateRdfFilesFor(pluginKey))) {
-            // we want to find a graph like
-            // :plugin a vamp:Plugin
-            // :plugin vamp:identifier "pluginId"
-            // :library vamp:available_plugin :plugin
-            // :library vamp:identifier "libraryId"
-            // :plugin vamp:output :output1
-            // :plugin vamp:output :output2
-            // :plugin vamp:output :output3
-            // :output1 vamp:computes_event_type :event
-            // :output2 vamp:computes_feature :feature
-            // :output3 vamp:computes_signal_type :signal
-            // and where pluginKey == libraryId + ":" + pluginId
+            loadStaticOutputInfoFromModel(model, pluginKey, info);
         }
         sord_free(model);
         return info;
@@ -137,6 +126,41 @@ private:
 
         return candidates;
     }
+
+    void
+    loadStaticOutputInfoFromModel(SordModel *model, std::string pluginKey,
+                                  StaticOutputInfo &info) {
+        // we want to find a graph like
+        // :plugin a vamp:Plugin
+        // :plugin vamp:identifier "pluginId"
+        // :library vamp:available_plugin :plugin
+        // :library vamp:identifier "libraryId"
+        // :plugin vamp:output :output1
+        // :plugin vamp:output :output2
+        // :plugin vamp:output :output3
+        // :output1 vamp:computes_event_type :event
+        // :output2 vamp:computes_feature :feature
+        // :output3 vamp:computes_signal_type :signal
+        // and where pluginKey == libraryId + ":" + pluginId
+
+        std::string libraryId, pluginId;
+        decomposePluginKey(pluginKey, libraryId, pluginId);
+
+        //!!!
+    }
+
+    bool decomposePluginKey(std::string pluginKey,
+                            std::string &libraryId,
+                            std::string &pluginId) {
+        auto i = pluginKey.find(':');
+        if (i == std::string::npos || i == 0 || i + 1 == pluginKey.length()) {
+            return false;
+        }
+        libraryId = pluginKey.substr(0, i);
+        pluginId = pluginKey.substr(i + 1);
+        return true;
+    }
+                            
 };
 
 }
