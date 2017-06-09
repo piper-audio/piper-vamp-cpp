@@ -603,11 +603,33 @@ public:
 
         json11::Json::object statinfo;
         auto souts = d.staticOutputInfo;
-        for (auto &s: souts) jo[s.first] = fromStaticOutputDescriptor(s.second);
+        for (auto &s: souts) {
+            statinfo[s.first] = fromStaticOutputDescriptor(s.second);
+        }
+        jo["staticOutputInfo"] = statinfo;
         
         return json11::Json(jo);
     }
 
+    static StaticOutputInfo
+    toStaticOutputInfo(json11::Json j, std::string &err) {
+
+        if (j == json11::Json()) return {};
+
+        if (!j.is_object()) {
+            err = "object expected for static output info";
+            return {};
+        }
+
+        StaticOutputInfo sinfo;
+        auto items = j.object_items();
+        for (auto i: items) {
+            sinfo[i.first] = toStaticOutputDescriptor(i.second, err);
+            if (failed(err)) return {};
+        }
+        return sinfo;                    
+    }
+    
     static PluginStaticData
     toPluginStaticData(json11::Json j, std::string &err) {
 
@@ -658,6 +680,11 @@ public:
             
             err = "array expected for basicOutputInfo";
 
+        } else if (!j["staticOutputInfo"].is_null() &&
+                   !j["staticOutputInfo"].is_object()) {
+            
+            err = "object expected for staticOutputInfo";
+
         } else {
 
             PluginStaticData psd;
@@ -705,7 +732,12 @@ public:
                 if (failed(err)) return {};
                 psd.basicOutputInfo.push_back(b);
             }
-            
+
+            StaticOutputInfo sinfo =
+                toStaticOutputInfo(j["staticOutputInfo"], err);
+            if (failed(err)) return {};
+            psd.staticOutputInfo = sinfo;
+
             return psd;
         }
 
