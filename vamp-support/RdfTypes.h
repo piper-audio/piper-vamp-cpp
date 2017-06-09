@@ -143,6 +143,12 @@ private:
         // :output3 vamp:computes_signal_type :signal
         // and where pluginKey == libraryId + ":" + pluginId
 
+        // Although, since we know we just loaded an RDF file
+        // associated with one particular plugin library, we could in
+        // theory skip the library bits. We'd still have most of the
+        // rest though since each library can have multiple plugins
+        // with output names that could conflict
+        
         std::string libraryId, pluginId;
         decomposePluginKey(pluginKey, libraryId, pluginId);
 
