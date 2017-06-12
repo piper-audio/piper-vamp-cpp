@@ -47,6 +47,10 @@
 
 namespace piper_vamp {
 
+//!!! todo: better (+ optional) error reporting; check whether file
+//!!! exists before parsing it to avoid spurious error messages;
+//!!! refactoring
+
 class RdfTypes
 {
 public:
@@ -98,9 +102,16 @@ private:
             (reader, (const uint8_t *)filename.c_str());
         bool success = (rv == SERD_SUCCESS);
         if (!success) {
-            std::cerr << "Failed to import RDF from " << filename << std::endl;
-        } else {
-            std::cerr << "Imported RDF from " << filename << std::endl;
+            // We are asking Serd to parse the file without having
+            // checked whether it actually exists or not (in order to
+            // avoid duplicating ugly platform/encoding-specific stuff
+            // in this file). So don't bleat if the file is simply not
+            // found, but only if there's a real parse error
+            if (rv != SERD_ERR_NOT_FOUND &&
+                rv != SERD_ERR_UNKNOWN) {
+                std::cerr << "Failed to import RDF from " << filename
+                          << ": " << serd_strerror(rv) << std::endl;
+            }
         }
         serd_reader_free(reader);
         serd_env_free(env);
@@ -117,7 +128,7 @@ private:
         if (li == std::string::npos) return {};
         auto withoutSuffix = library.substr(0, li);
 
-        std::vector<std::string> suffixes { "ttl", "TTL", "n3", "N3" };
+        std::vector<std::string> suffixes { "n3", "N3", "ttl", "TTL" };
         std::vector<std::string> candidates;
 
         for (auto suffix : suffixes) {
@@ -128,9 +139,12 @@ private:
     }
 
     void
-    loadStaticOutputInfoFromModel(SordModel *model, std::string pluginKey,
+    loadStaticOutputInfoFromModel(SordModel *model,
+                                  std::string pluginKey,
                                   StaticOutputInfo &info) {
+        
         // we want to find a graph like
+        //
         // :plugin a vamp:Plugin
         // :plugin vamp:identifier "pluginId"
         // :library vamp:available_plugin :plugin
@@ -141,18 +155,144 @@ private:
         // :output1 vamp:computes_event_type :event
         // :output2 vamp:computes_feature :feature
         // :output3 vamp:computes_signal_type :signal
-        // and where pluginKey == libraryId + ":" + pluginId
-
-        // Although, since we know we just loaded an RDF file
-        // associated with one particular plugin library, we could in
-        // theory skip the library bits. We'd still have most of the
-        // rest though since each library can have multiple plugins
-        // with output names that could conflict
+        //
+        // in which pluginKey == libraryId + ":" + pluginId
         
         std::string libraryId, pluginId;
         decomposePluginKey(pluginKey, libraryId, pluginId);
 
-        //!!!
+        typedef const uint8_t *S;
+        
+        SordNode *a = sord_new_uri
+            (m_world, S("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"));
+
+        SordNode *pluginType = sord_new_uri
+            (m_world, S("http://purl.org/ontology/vamp/Plugin"));
+
+        SordNode *identProp = sord_new_uri
+            (m_world, S("http://purl.org/ontology/vamp/identifier"));
+        SordNode *availProp = sord_new_uri
+            (m_world, S("http://purl.org/ontology/vamp/available_plugin"));
+        SordNode *outputProp = sord_new_uri
+            (m_world, S("http://purl.org/ontology/vamp/output"));
+
+        SordNode *computesEventProp = sord_new_uri
+            (m_world, S("http://purl.org/ontology/vamp/computes_event_type"));
+        SordNode *computesFeatureProp = sord_new_uri
+            (m_world, S("http://purl.org/ontology/vamp/computes_feature"));
+        SordNode *computesSignalProp = sord_new_uri
+            (m_world, S("http://purl.org/ontology/vamp/computes_signal_type"));
+
+        SordIter *pluginItr = 0;
+
+        for (pluginItr = sord_search(model, 0, a, pluginType, 0);
+             !sord_iter_end(pluginItr);
+             sord_iter_next(pluginItr)) {
+
+            const SordNode *pluginNode =
+                sord_iter_get_node(pluginItr, SORD_SUBJECT);
+
+            SordNode *pluginIdNode =
+                sord_get(model, pluginNode, identProp, 0, 0);
+
+            if (!pluginIdNode ||
+                sord_node_get_type(pluginIdNode) != SORD_LITERAL ||
+                (const char *)sord_node_get_string(pluginIdNode) != pluginId) {
+                // This is a plugin node, but it's not the plugin node
+                // we're looking for. (We have to check both the type
+                // property, vamp:Plugin, and the identifier,
+                // vamp:identifier, because the identifier is just a
+                // string and it's possible it could be used for an
+                // output or parameter rather than just a plugin.)
+                continue;
+            }
+            
+            SordNode *libraryNode =
+                sord_get(model, 0, availProp, pluginNode, 0);
+
+            if (!libraryNode) {
+                std::cerr << "Plugin is not listed as being in a library, "
+                          << "skipping library id check" << std::endl;
+            } else {
+                SordNode *libIdNode =
+                    sord_get(model, libraryNode, identProp, 0, 0);
+                if (!libIdNode ||
+                    sord_node_get_type(libIdNode) != SORD_LITERAL ||
+                    (const char *)sord_node_get_string(libIdNode) != libraryId) {
+                    std::cerr << "Ignoring plugin in wrong library" << std::endl;
+                    continue;
+                }
+            }
+
+            SordIter *outputItr = 0;
+
+            for (outputItr = sord_search(model, pluginNode, outputProp, 0, 0);
+                 !sord_iter_end(outputItr);
+                 sord_iter_next(outputItr)) {
+
+                const SordNode *outputNode =
+                    sord_iter_get_node(outputItr, SORD_OBJECT);
+
+                SordNode *outputIdNode =
+                    sord_get(model, outputNode, identProp, 0, 0);
+
+                if (!outputIdNode ||
+                    sord_node_get_type(outputIdNode) != SORD_LITERAL ||
+                    !sord_node_get_string(outputIdNode)) {
+                    std::cerr << "Ignoring output with no id" << std::endl;
+                    continue;
+                }
+
+                std::string outputId =
+                    (const char *)sord_node_get_string(outputIdNode);
+
+                SordIter *propItr = 0;
+
+                for (propItr = sord_search(model, outputNode, 0, 0, 0);
+                     !sord_iter_end(propItr);
+                     sord_iter_next(propItr)) {
+
+                    const SordNode *propNode =
+                        sord_iter_get_node(propItr, SORD_PREDICATE);
+
+                    if (sord_node_equals(propNode, computesEventProp) ||
+                        sord_node_equals(propNode, computesFeatureProp) ||
+                        sord_node_equals(propNode, computesSignalProp)) {
+
+                        const SordNode *computesNode =
+                            sord_iter_get_node(propItr, SORD_OBJECT);
+
+                        if (sord_node_get_type(computesNode) != SORD_URI ||
+                            !sord_node_get_string(computesNode)) {
+                            std::cerr << "Ignoring non-URI computes node"
+                                      << std::endl;
+                            continue;
+                        }
+
+                        std::string typeURI =
+                            (const char *)sord_node_get_string(computesNode);
+
+                        std::cerr << "Found type <" << typeURI
+                                  << "> for output \"" << outputId
+                                  << "\" of plugin \"" << pluginId
+                                  << "\" in library " << libraryId
+                                  << std::endl;
+                        
+                        StaticOutputDescriptor desc;
+                        desc.typeURI = typeURI;
+                        info[outputId] = desc;
+
+                        break; // only interested in one "computes" property
+                    }
+                }
+                        
+                sord_iter_free(propItr);
+            }
+
+            sord_iter_free(outputItr);
+        }
+            
+        sord_iter_free(pluginItr);
     }
 
     bool decomposePluginKey(std::string pluginKey,
