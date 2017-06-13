@@ -15,7 +15,7 @@ COMMON_OBJS	:= ext/json11/json11.o vamp-capnp/piper.capnp.o
 TEST_SRCS 	:= test/main.cpp test/vamp-client/tst_PluginStub.cpp
 TEST_OBJS	:= $(TEST_SRCS:.cpp=.o)
 
-all:	bin bin/piper-convert bin/piper-vamp-simple-server bin/test-suite
+all:	bin bin/piper-convert bin/piper-vamp-simple-server bin/piper-vamp-stub-generator bin/test-suite
 
 bin:
 	mkdir bin
@@ -24,6 +24,9 @@ bin/piper-convert: vamp-server/convert.o $(COMMON_OBJS)
 	c++ $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 bin/piper-vamp-simple-server: vamp-server/simple-server.o $(COMMON_OBJS)
+	c++ $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+
+bin/piper-vamp-stub-generator: vamp-stubber/stubber.o $(COMMON_OBJS)
 	c++ $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 bin/test-suite: $(TEST_OBJS)
@@ -97,7 +100,24 @@ vamp-server/simple-server.o: vamp-support/PluginHandleMapper.h
 vamp-server/simple-server.o: vamp-support/AssignedPluginHandleMapper.h
 vamp-server/simple-server.o: vamp-support/DefaultPluginOutputIdMapper.h
 vamp-server/simple-server.o: vamp-support/LoaderRequests.h
-vamp-server/simple-server.o: vamp-support/RdfTypes.h vamp-support/RdfTypes.h
+vamp-server/simple-server.o: vamp-support/RdfTypes.h
+vamp-stubber/stubber.o: vamp-json/VampJson.h
+vamp-stubber/stubber.o: vamp-support/StaticOutputDescriptor.h
+vamp-stubber/stubber.o: vamp-support/PluginStaticData.h
+vamp-stubber/stubber.o: vamp-support/StaticOutputDescriptor.h
+vamp-stubber/stubber.o: vamp-support/PluginConfiguration.h
+vamp-stubber/stubber.o: vamp-support/RequestResponse.h
+vamp-stubber/stubber.o: vamp-support/PluginStaticData.h
+vamp-stubber/stubber.o: vamp-support/PluginConfiguration.h
+vamp-stubber/stubber.o: vamp-support/PluginHandleMapper.h
+vamp-stubber/stubber.o: vamp-support/PluginOutputIdMapper.h
+vamp-stubber/stubber.o: vamp-support/PluginOutputIdMapper.h
+vamp-stubber/stubber.o: vamp-support/RequestResponseType.h
+vamp-stubber/stubber.o: vamp-support/RequestOrResponse.h
+vamp-stubber/stubber.o: vamp-support/RequestResponseType.h
+vamp-stubber/stubber.o: vamp-support/RequestResponse.h
+vamp-stubber/stubber.o: vamp-support/LoaderRequests.h vamp-support/RdfTypes.h
+vamp-stubber/stubber.o: vamp-support/RdfTypes.h
 ext/json11/json11.o: ext/json11/json11.hpp
 ext/json11/test.o: ext/json11/json11.hpp
 test/vamp-client/tst_PluginStub.o: vamp-client/Loader.h
