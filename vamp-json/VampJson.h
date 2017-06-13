@@ -653,6 +653,7 @@ public:
 
         } else if (!j["rights"].is_null() &&
                    !j["rights"].is_string()) {
+
             err = "string expected for rights";
 
         } else if (!j["category"].is_null() &&
@@ -674,11 +675,6 @@ public:
                    !j["inputDomain"].is_string()) {
 
             err = "string expected for inputDomain";
-
-        } else if (!j["basicOutputInfo"].is_null() &&
-                   !j["basicOutputInfo"].is_array()) {
-            
-            err = "array expected for basicOutputInfo";
 
         } else if (!j["staticOutputInfo"].is_null() &&
                    !j["staticOutputInfo"].is_object()) {
