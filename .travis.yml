@@ -14,7 +14,7 @@ os:
 addons:
   apt:
     packages:
-      - qt5-default
+      - qt5-default libsord-dev
       
 before_install:
   - ( cd ../ ; git clone -b output-type-uri https://github.com/piper-audio/piper )
