@@ -38,7 +38,6 @@
 #include "vamp-support/RequestOrResponse.h"
 #include "vamp-support/CountingPluginHandleMapper.h"
 #include "vamp-support/LoaderRequests.h"
-#include "vamp-support/RdfTypes.h"
 
 #include <iostream>
 #include <sstream>
