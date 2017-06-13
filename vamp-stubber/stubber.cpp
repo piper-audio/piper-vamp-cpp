@@ -175,10 +175,21 @@ emitFor(string soname, const ListResponse &resp, bool debug)
         "static std::string soname(\"" << soname << "\");\n"
         "\n";
 
-    bool first = true;
+    // The same plugin key may appear more than once in the available
+    // list, if the same plugin is installed in more than one location
+    // on the Vamp path. To avoid emitting its wrapper definition
+    // multiple times, we need to keep a record of which ones we've
+    // emitted for each stage
+    set<string> emitted;
     
     for (const auto &plugin: resp.available) {
-        PlausibleMetadata pm = inventPlausibleMetadata(plugin.pluginKey);
+
+        string key = plugin.pluginKey;
+        if (emitted.find(key) != emitted.end()) {
+            continue;
+        }
+        
+        PlausibleMetadata pm = inventPlausibleMetadata(key);
         cout << "static PiperAdapter<"
              << pm.className
              << "> // replace with the actual Vamp plugin class name for \""
@@ -186,7 +197,7 @@ emitFor(string soname, const ListResponse &resp, bool debug)
              << "(\n    soname,\n    ";
         
         string catString = "{ ";
-        first = true;
+        bool first = true;
         for (auto c: plugin.category) {
             if (!first) catString += ", ";
             catString += "\"" + c + "\"";
@@ -210,17 +221,24 @@ emitFor(string soname, const ListResponse &resp, bool debug)
         }
         cout << "\n    }\n";
         cout << "    );\n\n";
+        emitted.insert(key);
     }
 
     cout << "static PiperPluginLibrary library({\n    ";
-    first = true;
+    emitted.clear();
     for (const auto &plugin: resp.available) {
-        PlausibleMetadata pm = inventPlausibleMetadata(plugin.pluginKey);
-        if (!first) {
+
+        string key = plugin.pluginKey;
+        if (emitted.find(key) != emitted.end()) {
+            continue;
+        }
+
+        PlausibleMetadata pm = inventPlausibleMetadata(key);
+        if (!emitted.empty()) {
             cout << ",\n    ";
         }
         cout << "&" << pm.adapterName;
-        first = false;
+        emitted.insert(key);
     }
     cout << "\n});\n\n";
     cout << "PIPER_EXPORT_LIBRARY(library);\n" << endl;
