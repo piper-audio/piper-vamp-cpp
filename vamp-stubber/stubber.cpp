@@ -204,8 +204,8 @@ emitFor(string soname, const ListResponse &resp, bool debug)
             cout << "    ";
             string outputId = o.first;
             const StaticOutputDescriptor &desc = o.second;
-            cout << "{ \"" << outputId << "\", { \""
-                 << desc.typeURI << "\" } }";
+            cout << "{ \"" << outputId << "\",\n            { \""
+                 << desc.typeURI << "\" }\n        }";
             first = false;
         }
         cout << "\n    }\n";
