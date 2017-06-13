@@ -264,7 +264,7 @@ public:
         StaticOutputDescriptor sd;
         if (!j.is_object()) {
             err = "object expected for static output descriptor";
-            return {};
+            return sd;
         }
 
         sd.typeURI = j["typeURI"].string_value();
