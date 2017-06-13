@@ -322,7 +322,13 @@ int main(int argc, char **argv)
     }
     
     string libname = arg;
-
+    
+    auto li = libname.rfind('.');
+    if (li != std::string::npos) {
+        cerr << "NOTE: library name is to be specified without extension, dropping \"" << libname.substr(li) << "\"" << endl;
+        libname = libname.substr(0, li);
+    }
+    
     try {            
         initFds(false);
     } catch (exception &e) {
@@ -336,6 +342,16 @@ int main(int argc, char **argv)
 
     resumeOutput();
 
+    if (resp.available.empty()) {
+        cerr << "ERROR: No plugin(s) found in library named \""
+             << libname << "\"\nCheck that the library name is correct and the right files are in $VAMP_PATH.\nThat would mean either "
+             << libname << ".so, " << libname << ".dll, or " << libname
+             << ".dylib (depending on your platform), as well as "
+             << libname << ".n3 and " << libname << ".cat."
+             << endl;
+        exit(1);
+    }
+    
     emitFor(libname, resp);
     
     exit(0);
