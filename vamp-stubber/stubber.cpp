@@ -74,12 +74,11 @@ static void usage(bool successful = false)
 {
     cerr << "\n" << myname <<
         ": Emit stub version of main code\nfor a Piper Adapter implementation of a Vamp plugin library\n\n"
-        "    Usage: " << myname << " [-d] <soname>\n"
+        "    Usage: " << myname << " [-d] <libname>\n"
         "           " << myname << " -v\n"
         "           " << myname << " -h\n\n"
         "    where\n"
-        "       <soname>: the Vamp plugin library name to emit stub conversion code for\n"
-        "       -d: also print debug information to stderr\n"
+        "       <libname>: the Vamp plugin library name to emit stub conversion code for\n"
         "       -v: print version number to stdout and exit\n"
         "       -h: print this text to stderr and exit\n\n";
     if (successful) exit(0);
@@ -139,10 +138,10 @@ static void resumeOutput()
 }
 
 ListResponse
-makeRequest(string soname, bool debug)
+makeRequest(string libname)
 {
     ListRequest req;
-    req.from.push_back(soname);
+    req.from.push_back(libname);
     return LoaderRequests().listPluginData(req);
 }
 
@@ -155,14 +154,47 @@ struct PlausibleMetadata
 PlausibleMetadata
 inventPlausibleMetadata(string key)
 {
+    string className, adapterName;
+    bool initial = true, interCap = false;
+
+    int idIdx = 0;
+    for (int i = 0; i < int(key.size()); ++i) {
+        char c = key[i];
+        if (c == ':') {
+            idIdx = i + 1;
+            break;
+        }
+    }
+    
+    for (int i = idIdx; i < int(key.size()); ++i) {
+        char c = key[i];
+        if (isalpha(c)) {
+            if (initial || interCap) {
+                className += toupper(c);
+            } else {
+                className += c;
+            }
+            if (interCap) {
+                adapterName += toupper(c);
+            } else {
+                adapterName += c;
+            }
+            interCap = false;
+        } else {
+            interCap = true;
+        }
+        initial = false;
+    }
+    adapterName += "Adapter";
+    
     PlausibleMetadata pm;
-    pm.className = "MyPlugin";//!!!
-    pm.adapterName = "myPluginAdapter";//!!!
+    pm.className = className;
+    pm.adapterName = adapterName;
     return pm;
 }
 
 void
-emitFor(string soname, const ListResponse &resp, bool debug)
+emitFor(string libname, const ListResponse &resp)
 {
     cout <<
         "\n#include \"PiperExport.h\"\n"
@@ -172,7 +204,7 @@ emitFor(string soname, const ListResponse &resp, bool debug)
         "using piper_vamp_js::PiperAdapter;\n"
         "using piper_vamp_js::PiperPluginLibrary;\n"
         "\n"
-        "static std::string soname(\"" << soname << "\");\n"
+        "static std::string libname(\"" << libname << "\");\n"
         "\n";
 
     // The same plugin key may appear more than once in the available
@@ -194,7 +226,7 @@ emitFor(string soname, const ListResponse &resp, bool debug)
              << pm.className
              << "> // replace with the actual Vamp plugin class name for \""
              << plugin.basic.identifier << "\" plugin\n" << pm.adapterName
-             << "(\n    soname,\n    ";
+             << "(\n    libname,\n    ";
         
         string catString = "{ ";
         bool first = true;
@@ -208,15 +240,18 @@ emitFor(string soname, const ListResponse &resp, bool debug)
 
         cout << "{\n    ";
         first = true;
-        for (auto o: plugin.staticOutputInfo) {
+        for (auto o: plugin.basicOutputInfo) {
             if (!first) {
                 cout << ",\n    ";
             }
             cout << "    ";
-            string outputId = o.first;
-            const StaticOutputDescriptor &desc = o.second;
-            cout << "{ \"" << outputId << "\",\n            { \""
-                 << desc.typeURI << "\" }\n        }";
+            string outputId = o.identifier;
+            cout << "{ \"" << outputId << "\",\n            { \"";
+            if (plugin.staticOutputInfo.find(outputId) !=
+                plugin.staticOutputInfo.end()) {
+                cout << plugin.staticOutputInfo.at(outputId).typeURI;
+            }
+            cout << "\" }\n        }";
             first = false;
         }
         cout << "\n    }\n";
@@ -250,8 +285,6 @@ int main(int argc, char **argv)
         usage();
     }
 
-    bool debug = false;
-    
     string arg = argv[1];
     if (arg == "-h") {
         if (argc == 2) {
@@ -265,16 +298,9 @@ int main(int argc, char **argv)
         } else {
             usage();
         }
-    } else if (arg == "-d") {
-        if (argc == 2) {
-            usage();
-        } else {
-            debug = true;
-            arg = argv[2];
-        }
     }
     
-    string soname = arg;
+    string libname = arg;
 
     try {            
         initFds(false);
@@ -285,11 +311,11 @@ int main(int argc, char **argv)
 
     suspendOutput();
 
-    ListResponse resp = makeRequest(soname, debug);
+    ListResponse resp = makeRequest(libname);
 
     resumeOutput();
 
-    emitFor(soname, resp, debug);
+    emitFor(libname, resp);
     
     exit(0);
 }
