@@ -196,24 +196,20 @@ inventPlausibleMetadata(string key)
 void
 emitFor(string libname, const ListResponse &resp)
 {
-    cout <<
-        "\n#include \"PiperExport.h\"\n"
-        "\n"
-        "// #include your own plugin headers here\n"
-        "\n"
-        "using piper_vamp_js::PiperAdapter;\n"
-        "using piper_vamp_js::PiperPluginLibrary;\n"
-        "\n"
-        "static std::string libname(\"" << libname << "\");\n"
-        "\n";
-
     // The same plugin key may appear more than once in the available
     // list, if the same plugin is installed in more than one location
     // on the Vamp path. To avoid emitting its wrapper definition
     // multiple times, we need to keep a record of which ones we've
     // emitted for each stage
     set<string> emitted;
-    
+
+    cout <<
+        "\n#include \"PiperExport.h\"\n"
+        "\n"
+        "// !!! The following #include(s) are guesses. Replace them with the\n"
+        "//     real header files in which your plugin classes are defined.\n"
+        "//\n";
+
     for (const auto &plugin: resp.available) {
 
         string key = plugin.pluginKey;
@@ -222,10 +218,35 @@ emitFor(string libname, const ListResponse &resp)
         }
         
         PlausibleMetadata pm = inventPlausibleMetadata(key);
+
+        cout << "#include \"" << pm.className << ".h\"\n";
+        
+        emitted.insert(key);
+    }
+
+    cout <<
+        "\n"
+        "using piper_vamp_js::PiperAdapter;\n"
+        "using piper_vamp_js::PiperPluginLibrary;\n"
+        "\n"
+        "static std::string libname(\"" << libname << "\");\n"
+        "\n";
+
+    emitted.clear();
+    for (const auto &plugin: resp.available) {
+
+        string key = plugin.pluginKey;
+        if (emitted.find(key) != emitted.end()) {
+            continue;
+        }
+        
+        PlausibleMetadata pm = inventPlausibleMetadata(key);
+        cout << "// !!! Replace " << pm.className << " in the following line with the real\n"
+            "//     name of the class implementing the \"" << plugin.basic.identifier << "\" plugin.\n"
+            "//\n";
         cout << "static PiperAdapter<"
              << pm.className
-             << "> // replace with the actual Vamp plugin class name for \""
-             << plugin.basic.identifier << "\" plugin\n" << pm.adapterName
+             << ">\n" << pm.adapterName
              << "(\n    libname,\n    ";
         
         string catString = "{ ";
