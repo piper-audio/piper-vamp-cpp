@@ -36,9 +36,9 @@ bin/test-suite: $(TEST_OBJS)
 vamp-capnp/piper.capnp.o:	vamp-capnp/piper.capnp.c++
 	c++ $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
-vamp-capnp/piper.capnp.h:	vamp-capnp/piper.capnp.c++
+vamp-capnp/piper.capnp.c++:	vamp-capnp/piper.capnp.h
 
-vamp-capnp/piper.capnp.c++: $(PIPER_DIR)/capnp/piper.capnp
+vamp-capnp/piper.capnp.h: $(PIPER_DIR)/capnp/piper.capnp
 	capnpc --src-prefix=$(PIPER_DIR)/capnp -oc++:vamp-capnp $<
 
 test:	all
