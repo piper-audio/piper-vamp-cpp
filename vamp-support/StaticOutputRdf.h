@@ -34,8 +34,8 @@
     authorization.
 */
 
-#ifndef PIPER_RDF_TYPES_H
-#define PIPER_RDF_TYPES_H
+#ifndef PIPER_STATIC_OUTPUT_RDF_H
+#define PIPER_STATIC_OUTPUT_RDF_H
 
 #include "StaticOutputDescriptor.h"
 
@@ -51,14 +51,14 @@ namespace piper_vamp {
 //!!! exists before parsing it to avoid spurious error messages;
 //!!! refactoring
 
-class RdfTypes
+class StaticOutputRdf
 {
 public:
-    RdfTypes() :
+    StaticOutputRdf() :
         m_world(sord_world_new())
     {}
 
-    ~RdfTypes() {
+    ~StaticOutputRdf() {
         sord_world_free(m_world);
     }
     

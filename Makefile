@@ -97,7 +97,7 @@ vamp-server/simple-server.o: vamp-support/PluginHandleMapper.h
 vamp-server/simple-server.o: vamp-support/AssignedPluginHandleMapper.h
 vamp-server/simple-server.o: vamp-support/DefaultPluginOutputIdMapper.h
 vamp-server/simple-server.o: vamp-support/LoaderRequests.h
-vamp-server/simple-server.o: vamp-support/RdfTypes.h
+vamp-server/simple-server.o: vamp-support/StaticOutputRdf.h
 ext/json11/json11.o: ext/json11/json11.hpp
 ext/json11/test.o: ext/json11/json11.hpp
 test/vamp-client/tst_PluginStub.o: vamp-client/Loader.h

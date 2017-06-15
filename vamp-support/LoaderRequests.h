@@ -39,7 +39,7 @@
 
 #include "PluginStaticData.h"
 #include "PluginConfiguration.h"
-#include "RdfTypes.h"
+#include "StaticOutputRdf.h"
 
 #include <vamp-hostsdk/PluginLoader.h>
 
@@ -76,7 +76,7 @@ public:
 	    auto category = loader->getPluginCategory(key);
             PluginStaticData psd =
                 PluginStaticData::fromPlugin(key, category, p);
-            psd.staticOutputInfo = RdfTypes().loadStaticOutputInfo(key);
+            psd.staticOutputInfo = StaticOutputRdf().loadStaticOutputInfo(key);
 	    response.available.push_back(psd);
 	    delete p;
 	}
@@ -104,7 +104,7 @@ public:
 	     plugin);
         
         response.staticData.staticOutputInfo =
-            RdfTypes().loadStaticOutputInfo(req.pluginKey);
+            StaticOutputRdf().loadStaticOutputInfo(req.pluginKey);
 
 	int defaultChannels = 0;
 	if (plugin->getMinChannelCount() == plugin->getMaxChannelCount()) {
