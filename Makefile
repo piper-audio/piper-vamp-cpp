@@ -6,7 +6,7 @@ INCFLAGS	:= -Iext -Iext/sord -Iext/serd -I$(VAMPSDK_DIR) -I. -I/usr/local/includ
 
 OPTFLAGS	:= -O3
 
-CFLAGS		:= -Wall $(OPTFLAGS) $(INCFLAGS)
+CFLAGS		:= -Wall -std=c99 $(OPTFLAGS) $(INCFLAGS)
 CXXFLAGS	:= -Wall -Wextra -Werror -Wno-error=unused-parameter -std=c++11 $(OPTFLAGS) $(INCFLAGS)
 
 LDFLAGS		:= -L$(VAMPSDK_DIR) -L/usr/local/lib -lvamp-hostsdk -lcapnp -lkj 
@@ -46,7 +46,7 @@ test:	all
 	vamp-server/test.sh
 
 clean:
-	rm -f */*.o
+	rm -f */*.o */*/*.o
 
 distclean:	clean
 	rm -rf bin/*
