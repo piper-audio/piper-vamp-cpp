@@ -14,7 +14,7 @@ MOC_DIR = ../o
 VAMPSDK_DIR = ../../../vamp-plugin-sdk
 PIPER_DIR = ../../../piper
 
-QMAKE_CXXFLAGS = -I$$VAMPSDK_DIR -I/usr/local/lib -I.. -I../..
+QMAKE_CXXFLAGS = -I$$VAMPSDK_DIR -I/usr/local/include -I.. -I../..
 
 LIBS += $$VAMPSDK_DIR/libvamp-hostsdk.a -L/usr/local/lib -lcapnp -lkj
 
