@@ -4,7 +4,7 @@
     Piper C++
 
     Centre for Digital Music, Queen Mary, University of London.
-    Copyright 2015-2016 QMUL.
+    Copyright 2015-2017 QMUL.
   
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -131,6 +131,12 @@ public:
     }
 
     static void
+    buildStaticOutputDescriptor(piper::StaticOutputDescriptor::Builder &b,
+                                const StaticOutputDescriptor &sd) {
+        b.setTypeURI(sd.typeURI);
+    }
+    
+    static void
     buildConfiguredOutputDescriptor(piper::ConfiguredOutputDescriptor::Builder &b,
                                     const Vamp::Plugin::OutputDescriptor &od) {
 
@@ -163,13 +169,23 @@ public:
 
     static void
     buildOutputDescriptor(piper::OutputDescriptor::Builder &b,
-                          const Vamp::Plugin::OutputDescriptor &od) {
+                          const Vamp::Plugin::OutputDescriptor &od,
+                          const StaticOutputDescriptor &sd) {
 
         auto basic = b.initBasic();
         buildBasicDescriptor(basic, od);
 
         auto configured = b.initConfigured();
         buildConfiguredOutputDescriptor(configured, od);
+
+        auto statc = b.initStatic();
+        buildStaticOutputDescriptor(statc, sd);
+    }
+
+    static void
+    readStaticOutputDescriptor(StaticOutputDescriptor &sd,
+                               const piper::StaticOutputDescriptor::Reader &r) {
+        sd.typeURI = r.getTypeURI();
     }
     
     static void
@@ -205,9 +221,11 @@ public:
 
     static void
     readOutputDescriptor(Vamp::Plugin::OutputDescriptor &od,
+                         StaticOutputDescriptor &sd,
                          const piper::OutputDescriptor::Reader &r) {
 
         readBasicDescriptor(od, r.getBasic());
+        readStaticOutputDescriptor(sd, r.getStatic());
         readConfiguredOutputDescriptor(od, r.getConfigured());
     }
 
@@ -414,6 +432,17 @@ public:
             auto od = olist[i];
             buildBasicDescriptor(od, vouts[i]);
         }
+
+        const auto &vstatic = d.staticOutputInfo;
+        auto slist = b.initStaticOutputInfo(unsigned(vstatic.size()));
+        int i = 0;
+        for (const auto &vi: vstatic) {
+            auto spair = slist[i];
+            spair.setOutput(vi.first);
+            auto sdata = spair.initStatic();
+            sdata.setTypeURI(vi.second.typeURI);
+            ++i;
+        }
     }
 
     static void
@@ -459,6 +488,14 @@ public:
             PluginStaticData::Basic b;
             readBasicDescriptor(b, o);
             d.basicOutputInfo.push_back(b);
+        }
+
+        d.staticOutputInfo.clear();
+        auto sp = r.getStaticOutputInfo();
+        for (auto s: sp) {
+            std::string id = s.getOutput();
+            std::string typeURI = s.getStatic().getTypeURI();
+            d.staticOutputInfo[id] = { typeURI };
         }
     }
 
@@ -640,10 +677,19 @@ public:
 
         b.setHandle(pmapper.pluginToHandle(cr.plugin));
         auto olist = b.initOutputs(unsigned(cr.outputs.size()));
+
         for (int i = 0; i < int(cr.outputs.size()); ++i) {
+
+            auto id = cr.outputs[i].identifier;
+            StaticOutputDescriptor sd;
+            if (cr.staticOutputInfo.find(id) != cr.staticOutputInfo.end()) {
+                sd = cr.staticOutputInfo.at(id);
+            }
+
             auto od = olist[i];
-            buildOutputDescriptor(od, cr.outputs[i]);
+            buildOutputDescriptor(od, cr.outputs[i], sd);
         }
+            
         auto framing = b.initFraming();
         framing.setStepSize(cr.framing.stepSize);
         framing.setBlockSize(cr.framing.blockSize);
@@ -656,11 +702,16 @@ public:
 
         cr.plugin = pmapper.handleToPlugin(r.getHandle());
         cr.outputs.clear();
+        cr.staticOutputInfo.clear();
         auto oo = r.getOutputs();
         for (const auto &o: oo) {
             Vamp::Plugin::OutputDescriptor desc;
-            readOutputDescriptor(desc, o);
+            StaticOutputDescriptor sd;
+            readOutputDescriptor(desc, sd, o);
             cr.outputs.push_back(desc);
+            if (sd.typeURI != "") {
+                cr.staticOutputInfo[desc.identifier] = { sd.typeURI };
+            }
         }
         cr.framing.stepSize = r.getFraming().getStepSize();
         cr.framing.blockSize = r.getFraming().getBlockSize();

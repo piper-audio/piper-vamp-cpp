@@ -56,6 +56,18 @@
 #include <memory>
 #include <initializer_list>
 
+#ifdef _MSC_VER
+    #if _MSC_VER <= 1800 // VS 2013
+        #ifndef noexcept
+            #define noexcept throw()
+        #endif
+
+        #ifndef snprintf
+            #define snprintf _snprintf_s
+        #endif
+    #endif
+#endif
+
 namespace json11 {
 
 enum JsonParse {
@@ -165,8 +177,17 @@ public:
     // Parse multiple objects, concatenated or separated by whitespace
     static std::vector<Json> parse_multi(
         const std::string & in,
+        std::string::size_type & parser_stop_pos,
         std::string & err,
         JsonParse strategy = JsonParse::STANDARD);
+
+    static inline std::vector<Json> parse_multi(
+        const std::string & in,
+        std::string & err,
+        JsonParse strategy = JsonParse::STANDARD) {
+        std::string::size_type parser_stop_pos;
+        return parse_multi(in, parser_stop_pos, err, strategy);
+    }
 
     bool operator== (const Json &rhs) const;
     bool operator<  (const Json &rhs) const;

@@ -30,6 +30,12 @@ expected="$tmpdir/expected"
 expected_less_strict="$tmpdir/expected-less-strict"
 obtained="$tmpdir/obtained"
 
+fail() {
+    local msg="$1"
+    echo " !! $msg!" 1>&2
+    exit 1
+}
+
 validate() {
     local file="$1"
     local schemaname="$2"
@@ -37,7 +43,7 @@ validate() {
 	echo " * validating against schema $schemaname... " 1>&2
         jsonschema -i "$file" "$schemadir/$schemaname.json" 1>&2 && \
             echo " -> validated against schema $schemaname" 1>&2 || \
-            echo " !! failed to validate $schemaname!" 1>&2
+            fail "failed to validate $schemaname"
     else
         echo "(schema directory $schemadir not found, skipping validation)" 1>&2
     fi
@@ -74,9 +80,9 @@ EOF
 # Expected output, apart from the plugin list which seems a bit
 # fragile to check here
 cat > "$expected" <<EOF
-{"id": 6, "jsonrpc": "2.0", "method": "load", "result": {"defaultConfiguration": {"channelCount": 1, "framing": {"blockSize": 1024, "stepSize": 1024}, "parameterValues": {"sensitivity": 40, "threshold": 3}}, "handle": 1, "staticData": {"basic": {"description": "Detect percussive note onsets by identifying broadband energy rises", "identifier": "percussiononsets", "name": "Simple Percussion Onset Detector"}, "basicOutputInfo": [{"description": "Percussive note onset locations", "identifier": "onsets", "name": "Onsets"}, {"description": "Broadband energy rise detection function", "identifier": "detectionfunction", "name": "Detection Function"}], "category": ["Time", "Onsets"], "inputDomain": "TimeDomain", "key": "vamp-example-plugins:percussiononsets", "maker": "Vamp SDK Example Plugins", "maxChannelCount": 1, "minChannelCount": 1, "parameters": [{"basic": {"description": "Energy rise within a frequency bin necessary to count toward broadband total", "identifier": "threshold", "name": "Energy rise threshold"}, "defaultValue": 3, "extents": {"max": 20, "min": 0}, "unit": "dB", "valueNames": []}, {"basic": {"description": "Sensitivity of peak detector applied to broadband detection function", "identifier": "sensitivity", "name": "Sensitivity"}, "defaultValue": 40, "extents": {"max": 100, "min": 0}, "unit": "%", "valueNames": []}], "programs": [], "rights": "Code copyright 2006 Queen Mary, University of London, after Dan Barry et al 2005.  Freely redistributable (BSD license)", "version": 2}}}
+{"id": 6, "jsonrpc": "2.0", "method": "load", "result": {"defaultConfiguration": {"channelCount": 1, "framing": {"blockSize": 1024, "stepSize": 1024}, "parameterValues": {"sensitivity": 40, "threshold": 3}}, "handle": 1, "staticData": {"basic": {"description": "Detect percussive note onsets by identifying broadband energy rises", "identifier": "percussiononsets", "name": "Simple Percussion Onset Detector"}, "basicOutputInfo": [{"description": "Percussive note onset locations", "identifier": "onsets", "name": "Onsets"}, {"description": "Broadband energy rise detection function", "identifier": "detectionfunction", "name": "Detection Function"}], "category": ["Time", "Onsets"], "inputDomain": "TimeDomain", "key": "vamp-example-plugins:percussiononsets", "maker": "Vamp SDK Example Plugins", "maxChannelCount": 1, "minChannelCount": 1, "parameters": [{"basic": {"description": "Energy rise within a frequency bin necessary to count toward broadband total", "identifier": "threshold", "name": "Energy rise threshold"}, "defaultValue": 3, "extents": {"max": 20, "min": 0}, "unit": "dB", "valueNames": []}, {"basic": {"description": "Sensitivity of peak detector applied to broadband detection function", "identifier": "sensitivity", "name": "Sensitivity"}, "defaultValue": 40, "extents": {"max": 100, "min": 0}, "unit": "%", "valueNames": []}], "programs": [], "rights": "Code copyright 2006 Queen Mary, University of London, after Dan Barry et al 2005.  Freely redistributable (BSD license)", "staticOutputInfo": {"detectionfunction": {"typeURI": "http://purl.org/ontology/af/OnsetDetectionFunction"}, "onsets": {"typeURI": "http://purl.org/ontology/af/Onset"}}, "version": 2}}}
 {"error": {"code": 0, "message": "error in process request: plugin has not been configured"}, "jsonrpc": "2.0", "method": "process"}
-{"id": "weevil", "jsonrpc": "2.0", "method": "configure", "result": {"framing": {"blockSize": 8, "stepSize": 8}, "handle": 1, "outputList": [{"basic": {"description": "Percussive note onset locations", "identifier": "onsets", "name": "Onsets"}, "configured": {"binCount": 0, "binNames": [], "hasDuration": false, "sampleRate": 44100, "sampleType": "VariableSampleRate", "unit": ""}}, {"basic": {"description": "Broadband energy rise detection function", "identifier": "detectionfunction", "name": "Detection Function"}, "configured": {"binCount": 1, "binNames": [""], "hasDuration": false, "quantizeStep": 1, "sampleRate": 86.1328125, "sampleType": "FixedSampleRate", "unit": ""}}]}}
+{"id": "weevil", "jsonrpc": "2.0", "method": "configure", "result": {"framing": {"blockSize": 8, "stepSize": 8}, "handle": 1, "outputList": [{"basic": {"description": "Percussive note onset locations", "identifier": "onsets", "name": "Onsets"}, "configured": {"binCount": 0, "binNames": [], "hasDuration": false, "sampleRate": 44100, "sampleType": "VariableSampleRate", "unit": ""}, "static": {}}, {"basic": {"description": "Broadband energy rise detection function", "identifier": "detectionfunction", "name": "Detection Function"}, "configured": {"binCount": 1, "binNames": [""], "hasDuration": false, "quantizeStep": 1, "sampleRate": 86.1328125, "sampleType": "FixedSampleRate", "unit": ""}, "static": {}}]}}
 {"error": {"code": 0, "message": "error in configure request: unknown plugin handle supplied to configure"}, "id": 9, "jsonrpc": "2.0", "method": "configure"}
 {"jsonrpc": "2.0", "method": "process", "result": {"features": {}, "handle": 1}}
 {"jsonrpc": "2.0", "method": "finish", "result": {"features": {"detectionfunction": [{"featureValues": [0], "timestamp": {"n": 11609977, "s": 0}}]}, "handle": 1}}

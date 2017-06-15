@@ -662,6 +662,9 @@ int main(int argc, char **argv)
 
     if (debug) {
         cerr << myname << " " << pid << ": waiting for format: " << format << endl;
+        if (format == "json") {
+            cerr << myname << " " << pid << ": (to test the server, try {\"method\": \"list\"})" << endl;
+        }
     }
     
     while (true) {

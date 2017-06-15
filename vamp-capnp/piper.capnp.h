@@ -6,7 +6,7 @@
 
 #include <capnp/generated-header-support.h>
 
-#if CAPNP_VERSION != 6000
+#if CAPNP_VERSION != 7000
 #error "Version mismatch between generated code and library headers.  You must use the same version of the Cap'n Proto compiler and library."
 #endif
 
@@ -23,6 +23,7 @@ enum class SampleType_eca23e4a04bdfeb2: uint16_t {
   VARIABLE_SAMPLE_RATE,
 };
 CAPNP_DECLARE_ENUM(SampleType, eca23e4a04bdfeb2);
+CAPNP_DECLARE_SCHEMA(a88eab3ec4264cba);
 CAPNP_DECLARE_SCHEMA(b2d0c825aac8249c);
 CAPNP_DECLARE_SCHEMA(902c6065e1be824a);
 CAPNP_DECLARE_SCHEMA(f50fb3b9c1bf75f4);
@@ -32,6 +33,7 @@ enum class InputDomain_f50fb3b9c1bf75f4: uint16_t {
 };
 CAPNP_DECLARE_ENUM(InputDomain, f50fb3b9c1bf75f4);
 CAPNP_DECLARE_SCHEMA(b83ac85463e6caa1);
+CAPNP_DECLARE_SCHEMA(c4c9a0371fe76e1c);
 CAPNP_DECLARE_SCHEMA(84d515888a427d07);
 CAPNP_DECLARE_SCHEMA(c6f3f05f2bc614ba);
 CAPNP_DECLARE_SCHEMA(d6a172208c9a1760);
@@ -104,6 +106,21 @@ struct ParameterDescriptor {
 
 typedef ::capnp::schemas::SampleType_eca23e4a04bdfeb2 SampleType;
 
+struct StaticOutputDescriptor {
+  StaticOutputDescriptor() = delete;
+
+  class Reader;
+  class Builder;
+  class Pipeline;
+
+  struct _capnpPrivate {
+    CAPNP_DECLARE_STRUCT_HEADER(a88eab3ec4264cba, 0, 1)
+    #if !CAPNP_LITE
+    static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
+    #endif  // !CAPNP_LITE
+  };
+};
+
 struct ConfiguredOutputDescriptor {
   ConfiguredOutputDescriptor() = delete;
 
@@ -127,7 +144,7 @@ struct OutputDescriptor {
   class Pipeline;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(902c6065e1be824a, 0, 2)
+    CAPNP_DECLARE_STRUCT_HEADER(902c6065e1be824a, 0, 3)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -142,9 +159,25 @@ struct ExtractorStaticData {
   class Reader;
   class Builder;
   class Pipeline;
+  struct SOPair;
 
   struct _capnpPrivate {
-    CAPNP_DECLARE_STRUCT_HEADER(b83ac85463e6caa1, 2, 8)
+    CAPNP_DECLARE_STRUCT_HEADER(b83ac85463e6caa1, 2, 9)
+    #if !CAPNP_LITE
+    static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
+    #endif  // !CAPNP_LITE
+  };
+};
+
+struct ExtractorStaticData::SOPair {
+  SOPair() = delete;
+
+  class Reader;
+  class Builder;
+  class Pipeline;
+
+  struct _capnpPrivate {
+    CAPNP_DECLARE_STRUCT_HEADER(c4c9a0371fe76e1c, 0, 2)
     #if !CAPNP_LITE
     static constexpr ::capnp::_::RawBrandedSchema const* brand() { return &schema->defaultBrand; }
     #endif  // !CAPNP_LITE
@@ -792,6 +825,87 @@ private:
 };
 #endif  // !CAPNP_LITE
 
+class StaticOutputDescriptor::Reader {
+public:
+  typedef StaticOutputDescriptor Reads;
+
+  Reader() = default;
+  inline explicit Reader(::capnp::_::StructReader base): _reader(base) {}
+
+  inline ::capnp::MessageSize totalSize() const {
+    return _reader.totalSize().asPublic();
+  }
+
+#if !CAPNP_LITE
+  inline ::kj::StringTree toString() const {
+    return ::capnp::_::structString(_reader, *_capnpPrivate::brand());
+  }
+#endif  // !CAPNP_LITE
+
+  inline bool hasTypeURI() const;
+  inline  ::capnp::Text::Reader getTypeURI() const;
+
+private:
+  ::capnp::_::StructReader _reader;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::_::PointerHelpers;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::List;
+  friend class ::capnp::MessageBuilder;
+  friend class ::capnp::Orphanage;
+};
+
+class StaticOutputDescriptor::Builder {
+public:
+  typedef StaticOutputDescriptor Builds;
+
+  Builder() = delete;  // Deleted to discourage incorrect usage.
+                       // You can explicitly initialize to nullptr instead.
+  inline Builder(decltype(nullptr)) {}
+  inline explicit Builder(::capnp::_::StructBuilder base): _builder(base) {}
+  inline operator Reader() const { return Reader(_builder.asReader()); }
+  inline Reader asReader() const { return *this; }
+
+  inline ::capnp::MessageSize totalSize() const { return asReader().totalSize(); }
+#if !CAPNP_LITE
+  inline ::kj::StringTree toString() const { return asReader().toString(); }
+#endif  // !CAPNP_LITE
+
+  inline bool hasTypeURI();
+  inline  ::capnp::Text::Builder getTypeURI();
+  inline void setTypeURI( ::capnp::Text::Reader value);
+  inline  ::capnp::Text::Builder initTypeURI(unsigned int size);
+  inline void adoptTypeURI(::capnp::Orphan< ::capnp::Text>&& value);
+  inline ::capnp::Orphan< ::capnp::Text> disownTypeURI();
+
+private:
+  ::capnp::_::StructBuilder _builder;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+  friend class ::capnp::Orphanage;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::_::PointerHelpers;
+};
+
+#if !CAPNP_LITE
+class StaticOutputDescriptor::Pipeline {
+public:
+  typedef StaticOutputDescriptor Pipelines;
+
+  inline Pipeline(decltype(nullptr)): _typeless(nullptr) {}
+  inline explicit Pipeline(::capnp::AnyPointer::Pipeline&& typeless)
+      : _typeless(kj::mv(typeless)) {}
+
+private:
+  ::capnp::AnyPointer::Pipeline _typeless;
+  friend class ::capnp::PipelineHook;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+};
+#endif  // !CAPNP_LITE
+
 class ConfiguredOutputDescriptor::Reader {
 public:
   typedef ConfiguredOutputDescriptor Reads;
@@ -957,6 +1071,9 @@ public:
   inline bool hasConfigured() const;
   inline  ::piper::ConfiguredOutputDescriptor::Reader getConfigured() const;
 
+  inline bool hasStatic() const;
+  inline  ::piper::StaticOutputDescriptor::Reader getStatic() const;
+
 private:
   ::capnp::_::StructReader _reader;
   template <typename, ::capnp::Kind>
@@ -999,6 +1116,13 @@ public:
   inline void adoptConfigured(::capnp::Orphan< ::piper::ConfiguredOutputDescriptor>&& value);
   inline ::capnp::Orphan< ::piper::ConfiguredOutputDescriptor> disownConfigured();
 
+  inline bool hasStatic();
+  inline  ::piper::StaticOutputDescriptor::Builder getStatic();
+  inline void setStatic( ::piper::StaticOutputDescriptor::Reader value);
+  inline  ::piper::StaticOutputDescriptor::Builder initStatic();
+  inline void adoptStatic(::capnp::Orphan< ::piper::StaticOutputDescriptor>&& value);
+  inline ::capnp::Orphan< ::piper::StaticOutputDescriptor> disownStatic();
+
 private:
   ::capnp::_::StructBuilder _builder;
   template <typename, ::capnp::Kind>
@@ -1019,6 +1143,7 @@ public:
 
   inline  ::piper::Basic::Pipeline getBasic();
   inline  ::piper::ConfiguredOutputDescriptor::Pipeline getConfigured();
+  inline  ::piper::StaticOutputDescriptor::Pipeline getStatic();
 private:
   ::capnp::AnyPointer::Pipeline _typeless;
   friend class ::capnp::PipelineHook;
@@ -1075,6 +1200,9 @@ public:
 
   inline bool hasBasicOutputInfo() const;
   inline  ::capnp::List< ::piper::Basic>::Reader getBasicOutputInfo() const;
+
+  inline bool hasStaticOutputInfo() const;
+  inline  ::capnp::List< ::piper::ExtractorStaticData::SOPair>::Reader getStaticOutputInfo() const;
 
 private:
   ::capnp::_::StructReader _reader;
@@ -1174,6 +1302,13 @@ public:
   inline void adoptBasicOutputInfo(::capnp::Orphan< ::capnp::List< ::piper::Basic>>&& value);
   inline ::capnp::Orphan< ::capnp::List< ::piper::Basic>> disownBasicOutputInfo();
 
+  inline bool hasStaticOutputInfo();
+  inline  ::capnp::List< ::piper::ExtractorStaticData::SOPair>::Builder getStaticOutputInfo();
+  inline void setStaticOutputInfo( ::capnp::List< ::piper::ExtractorStaticData::SOPair>::Reader value);
+  inline  ::capnp::List< ::piper::ExtractorStaticData::SOPair>::Builder initStaticOutputInfo(unsigned int size);
+  inline void adoptStaticOutputInfo(::capnp::Orphan< ::capnp::List< ::piper::ExtractorStaticData::SOPair>>&& value);
+  inline ::capnp::Orphan< ::capnp::List< ::piper::ExtractorStaticData::SOPair>> disownStaticOutputInfo();
+
 private:
   ::capnp::_::StructBuilder _builder;
   template <typename, ::capnp::Kind>
@@ -1193,6 +1328,98 @@ public:
       : _typeless(kj::mv(typeless)) {}
 
   inline  ::piper::Basic::Pipeline getBasic();
+private:
+  ::capnp::AnyPointer::Pipeline _typeless;
+  friend class ::capnp::PipelineHook;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+};
+#endif  // !CAPNP_LITE
+
+class ExtractorStaticData::SOPair::Reader {
+public:
+  typedef SOPair Reads;
+
+  Reader() = default;
+  inline explicit Reader(::capnp::_::StructReader base): _reader(base) {}
+
+  inline ::capnp::MessageSize totalSize() const {
+    return _reader.totalSize().asPublic();
+  }
+
+#if !CAPNP_LITE
+  inline ::kj::StringTree toString() const {
+    return ::capnp::_::structString(_reader, *_capnpPrivate::brand());
+  }
+#endif  // !CAPNP_LITE
+
+  inline bool hasOutput() const;
+  inline  ::capnp::Text::Reader getOutput() const;
+
+  inline bool hasStatic() const;
+  inline  ::piper::StaticOutputDescriptor::Reader getStatic() const;
+
+private:
+  ::capnp::_::StructReader _reader;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::_::PointerHelpers;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::List;
+  friend class ::capnp::MessageBuilder;
+  friend class ::capnp::Orphanage;
+};
+
+class ExtractorStaticData::SOPair::Builder {
+public:
+  typedef SOPair Builds;
+
+  Builder() = delete;  // Deleted to discourage incorrect usage.
+                       // You can explicitly initialize to nullptr instead.
+  inline Builder(decltype(nullptr)) {}
+  inline explicit Builder(::capnp::_::StructBuilder base): _builder(base) {}
+  inline operator Reader() const { return Reader(_builder.asReader()); }
+  inline Reader asReader() const { return *this; }
+
+  inline ::capnp::MessageSize totalSize() const { return asReader().totalSize(); }
+#if !CAPNP_LITE
+  inline ::kj::StringTree toString() const { return asReader().toString(); }
+#endif  // !CAPNP_LITE
+
+  inline bool hasOutput();
+  inline  ::capnp::Text::Builder getOutput();
+  inline void setOutput( ::capnp::Text::Reader value);
+  inline  ::capnp::Text::Builder initOutput(unsigned int size);
+  inline void adoptOutput(::capnp::Orphan< ::capnp::Text>&& value);
+  inline ::capnp::Orphan< ::capnp::Text> disownOutput();
+
+  inline bool hasStatic();
+  inline  ::piper::StaticOutputDescriptor::Builder getStatic();
+  inline void setStatic( ::piper::StaticOutputDescriptor::Reader value);
+  inline  ::piper::StaticOutputDescriptor::Builder initStatic();
+  inline void adoptStatic(::capnp::Orphan< ::piper::StaticOutputDescriptor>&& value);
+  inline ::capnp::Orphan< ::piper::StaticOutputDescriptor> disownStatic();
+
+private:
+  ::capnp::_::StructBuilder _builder;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::ToDynamic_;
+  friend class ::capnp::Orphanage;
+  template <typename, ::capnp::Kind>
+  friend struct ::capnp::_::PointerHelpers;
+};
+
+#if !CAPNP_LITE
+class ExtractorStaticData::SOPair::Pipeline {
+public:
+  typedef SOPair Pipelines;
+
+  inline Pipeline(decltype(nullptr)): _typeless(nullptr) {}
+  inline explicit Pipeline(::capnp::AnyPointer::Pipeline&& typeless)
+      : _typeless(kj::mv(typeless)) {}
+
+  inline  ::piper::StaticOutputDescriptor::Pipeline getStatic();
 private:
   ::capnp::AnyPointer::Pipeline _typeless;
   friend class ::capnp::PipelineHook;
@@ -3839,6 +4066,40 @@ inline ::capnp::Orphan< ::capnp::List< ::capnp::Text>> ParameterDescriptor::Buil
       ::capnp::bounded<2>() * ::capnp::POINTERS));
 }
 
+inline bool StaticOutputDescriptor::Reader::hasTypeURI() const {
+  return !_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline bool StaticOutputDescriptor::Builder::hasTypeURI() {
+  return !_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline  ::capnp::Text::Reader StaticOutputDescriptor::Reader::getTypeURI() const {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline  ::capnp::Text::Builder StaticOutputDescriptor::Builder::getTypeURI() {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void StaticOutputDescriptor::Builder::setTypeURI( ::capnp::Text::Reader value) {
+  ::capnp::_::PointerHelpers< ::capnp::Text>::set(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
+}
+inline  ::capnp::Text::Builder StaticOutputDescriptor::Builder::initTypeURI(unsigned int size) {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::init(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), size);
+}
+inline void StaticOutputDescriptor::Builder::adoptTypeURI(
+    ::capnp::Orphan< ::capnp::Text>&& value) {
+  ::capnp::_::PointerHelpers< ::capnp::Text>::adopt(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::capnp::Text> StaticOutputDescriptor::Builder::disownTypeURI() {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::disown(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+
 inline bool ConfiguredOutputDescriptor::Reader::hasUnit() const {
   return !_reader.getPointerField(
       ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
@@ -4129,6 +4390,45 @@ inline void OutputDescriptor::Builder::adoptConfigured(
 inline ::capnp::Orphan< ::piper::ConfiguredOutputDescriptor> OutputDescriptor::Builder::disownConfigured() {
   return ::capnp::_::PointerHelpers< ::piper::ConfiguredOutputDescriptor>::disown(_builder.getPointerField(
       ::capnp::bounded<1>() * ::capnp::POINTERS));
+}
+
+inline bool OutputDescriptor::Reader::hasStatic() const {
+  return !_reader.getPointerField(
+      ::capnp::bounded<2>() * ::capnp::POINTERS).isNull();
+}
+inline bool OutputDescriptor::Builder::hasStatic() {
+  return !_builder.getPointerField(
+      ::capnp::bounded<2>() * ::capnp::POINTERS).isNull();
+}
+inline  ::piper::StaticOutputDescriptor::Reader OutputDescriptor::Reader::getStatic() const {
+  return ::capnp::_::PointerHelpers< ::piper::StaticOutputDescriptor>::get(_reader.getPointerField(
+      ::capnp::bounded<2>() * ::capnp::POINTERS));
+}
+inline  ::piper::StaticOutputDescriptor::Builder OutputDescriptor::Builder::getStatic() {
+  return ::capnp::_::PointerHelpers< ::piper::StaticOutputDescriptor>::get(_builder.getPointerField(
+      ::capnp::bounded<2>() * ::capnp::POINTERS));
+}
+#if !CAPNP_LITE
+inline  ::piper::StaticOutputDescriptor::Pipeline OutputDescriptor::Pipeline::getStatic() {
+  return  ::piper::StaticOutputDescriptor::Pipeline(_typeless.getPointerField(2));
+}
+#endif  // !CAPNP_LITE
+inline void OutputDescriptor::Builder::setStatic( ::piper::StaticOutputDescriptor::Reader value) {
+  ::capnp::_::PointerHelpers< ::piper::StaticOutputDescriptor>::set(_builder.getPointerField(
+      ::capnp::bounded<2>() * ::capnp::POINTERS), value);
+}
+inline  ::piper::StaticOutputDescriptor::Builder OutputDescriptor::Builder::initStatic() {
+  return ::capnp::_::PointerHelpers< ::piper::StaticOutputDescriptor>::init(_builder.getPointerField(
+      ::capnp::bounded<2>() * ::capnp::POINTERS));
+}
+inline void OutputDescriptor::Builder::adoptStatic(
+    ::capnp::Orphan< ::piper::StaticOutputDescriptor>&& value) {
+  ::capnp::_::PointerHelpers< ::piper::StaticOutputDescriptor>::adopt(_builder.getPointerField(
+      ::capnp::bounded<2>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::piper::StaticOutputDescriptor> OutputDescriptor::Builder::disownStatic() {
+  return ::capnp::_::PointerHelpers< ::piper::StaticOutputDescriptor>::disown(_builder.getPointerField(
+      ::capnp::bounded<2>() * ::capnp::POINTERS));
 }
 
 inline bool ExtractorStaticData::Reader::hasKey() const {
@@ -4470,6 +4770,113 @@ inline void ExtractorStaticData::Builder::adoptBasicOutputInfo(
 inline ::capnp::Orphan< ::capnp::List< ::piper::Basic>> ExtractorStaticData::Builder::disownBasicOutputInfo() {
   return ::capnp::_::PointerHelpers< ::capnp::List< ::piper::Basic>>::disown(_builder.getPointerField(
       ::capnp::bounded<7>() * ::capnp::POINTERS));
+}
+
+inline bool ExtractorStaticData::Reader::hasStaticOutputInfo() const {
+  return !_reader.getPointerField(
+      ::capnp::bounded<8>() * ::capnp::POINTERS).isNull();
+}
+inline bool ExtractorStaticData::Builder::hasStaticOutputInfo() {
+  return !_builder.getPointerField(
+      ::capnp::bounded<8>() * ::capnp::POINTERS).isNull();
+}
+inline  ::capnp::List< ::piper::ExtractorStaticData::SOPair>::Reader ExtractorStaticData::Reader::getStaticOutputInfo() const {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::piper::ExtractorStaticData::SOPair>>::get(_reader.getPointerField(
+      ::capnp::bounded<8>() * ::capnp::POINTERS));
+}
+inline  ::capnp::List< ::piper::ExtractorStaticData::SOPair>::Builder ExtractorStaticData::Builder::getStaticOutputInfo() {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::piper::ExtractorStaticData::SOPair>>::get(_builder.getPointerField(
+      ::capnp::bounded<8>() * ::capnp::POINTERS));
+}
+inline void ExtractorStaticData::Builder::setStaticOutputInfo( ::capnp::List< ::piper::ExtractorStaticData::SOPair>::Reader value) {
+  ::capnp::_::PointerHelpers< ::capnp::List< ::piper::ExtractorStaticData::SOPair>>::set(_builder.getPointerField(
+      ::capnp::bounded<8>() * ::capnp::POINTERS), value);
+}
+inline  ::capnp::List< ::piper::ExtractorStaticData::SOPair>::Builder ExtractorStaticData::Builder::initStaticOutputInfo(unsigned int size) {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::piper::ExtractorStaticData::SOPair>>::init(_builder.getPointerField(
+      ::capnp::bounded<8>() * ::capnp::POINTERS), size);
+}
+inline void ExtractorStaticData::Builder::adoptStaticOutputInfo(
+    ::capnp::Orphan< ::capnp::List< ::piper::ExtractorStaticData::SOPair>>&& value) {
+  ::capnp::_::PointerHelpers< ::capnp::List< ::piper::ExtractorStaticData::SOPair>>::adopt(_builder.getPointerField(
+      ::capnp::bounded<8>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::capnp::List< ::piper::ExtractorStaticData::SOPair>> ExtractorStaticData::Builder::disownStaticOutputInfo() {
+  return ::capnp::_::PointerHelpers< ::capnp::List< ::piper::ExtractorStaticData::SOPair>>::disown(_builder.getPointerField(
+      ::capnp::bounded<8>() * ::capnp::POINTERS));
+}
+
+inline bool ExtractorStaticData::SOPair::Reader::hasOutput() const {
+  return !_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline bool ExtractorStaticData::SOPair::Builder::hasOutput() {
+  return !_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS).isNull();
+}
+inline  ::capnp::Text::Reader ExtractorStaticData::SOPair::Reader::getOutput() const {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_reader.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline  ::capnp::Text::Builder ExtractorStaticData::SOPair::Builder::getOutput() {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::get(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+inline void ExtractorStaticData::SOPair::Builder::setOutput( ::capnp::Text::Reader value) {
+  ::capnp::_::PointerHelpers< ::capnp::Text>::set(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), value);
+}
+inline  ::capnp::Text::Builder ExtractorStaticData::SOPair::Builder::initOutput(unsigned int size) {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::init(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), size);
+}
+inline void ExtractorStaticData::SOPair::Builder::adoptOutput(
+    ::capnp::Orphan< ::capnp::Text>&& value) {
+  ::capnp::_::PointerHelpers< ::capnp::Text>::adopt(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::capnp::Text> ExtractorStaticData::SOPair::Builder::disownOutput() {
+  return ::capnp::_::PointerHelpers< ::capnp::Text>::disown(_builder.getPointerField(
+      ::capnp::bounded<0>() * ::capnp::POINTERS));
+}
+
+inline bool ExtractorStaticData::SOPair::Reader::hasStatic() const {
+  return !_reader.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS).isNull();
+}
+inline bool ExtractorStaticData::SOPair::Builder::hasStatic() {
+  return !_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS).isNull();
+}
+inline  ::piper::StaticOutputDescriptor::Reader ExtractorStaticData::SOPair::Reader::getStatic() const {
+  return ::capnp::_::PointerHelpers< ::piper::StaticOutputDescriptor>::get(_reader.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
+}
+inline  ::piper::StaticOutputDescriptor::Builder ExtractorStaticData::SOPair::Builder::getStatic() {
+  return ::capnp::_::PointerHelpers< ::piper::StaticOutputDescriptor>::get(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
+}
+#if !CAPNP_LITE
+inline  ::piper::StaticOutputDescriptor::Pipeline ExtractorStaticData::SOPair::Pipeline::getStatic() {
+  return  ::piper::StaticOutputDescriptor::Pipeline(_typeless.getPointerField(1));
+}
+#endif  // !CAPNP_LITE
+inline void ExtractorStaticData::SOPair::Builder::setStatic( ::piper::StaticOutputDescriptor::Reader value) {
+  ::capnp::_::PointerHelpers< ::piper::StaticOutputDescriptor>::set(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), value);
+}
+inline  ::piper::StaticOutputDescriptor::Builder ExtractorStaticData::SOPair::Builder::initStatic() {
+  return ::capnp::_::PointerHelpers< ::piper::StaticOutputDescriptor>::init(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
+}
+inline void ExtractorStaticData::SOPair::Builder::adoptStatic(
+    ::capnp::Orphan< ::piper::StaticOutputDescriptor>&& value) {
+  ::capnp::_::PointerHelpers< ::piper::StaticOutputDescriptor>::adopt(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS), kj::mv(value));
+}
+inline ::capnp::Orphan< ::piper::StaticOutputDescriptor> ExtractorStaticData::SOPair::Builder::disownStatic() {
+  return ::capnp::_::PointerHelpers< ::piper::StaticOutputDescriptor>::disown(_builder.getPointerField(
+      ::capnp::bounded<1>() * ::capnp::POINTERS));
 }
 
 inline  ::int32_t RealTime::Reader::getSec() const {

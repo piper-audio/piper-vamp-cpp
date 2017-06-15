@@ -4,7 +4,7 @@
     Piper C++
 
     Centre for Digital Music, Queen Mary, University of London.
-    Copyright 2015-2016 QMUL.
+    Copyright 2015-2017 QMUL.
   
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -47,6 +47,7 @@
 #include <vamp-hostsdk/Plugin.h>
 #include <vamp-hostsdk/PluginLoader.h>
 
+#include "vamp-support/StaticOutputDescriptor.h"
 #include "vamp-support/PluginStaticData.h"
 #include "vamp-support/PluginConfiguration.h"
 #include "vamp-support/RequestResponse.h"
@@ -216,6 +217,15 @@ public:
     }
 
     static json11::Json
+    fromStaticOutputDescriptor(const StaticOutputDescriptor &sd) {
+        json11::Json::object jo;
+        if (sd.typeURI != "") {
+            jo["typeURI"] = sd.typeURI;
+        }
+        return json11::Json(jo);
+    }
+    
+    static json11::Json
     fromConfiguredOutputDescriptor(const Vamp::Plugin::OutputDescriptor &desc) {
         json11::Json::object jo {
             { "unit", desc.unit },
@@ -238,12 +248,27 @@ public:
     }
     
     static json11::Json
-    fromOutputDescriptor(const Vamp::Plugin::OutputDescriptor &desc) {
+    fromOutputDescriptor(const Vamp::Plugin::OutputDescriptor &desc,
+                         const StaticOutputDescriptor &sd) {
         json11::Json::object jo {
             { "basic", fromBasicDescriptor(desc) },
+            { "static", fromStaticOutputDescriptor(sd) },
             { "configured", fromConfiguredOutputDescriptor(desc) }
         };
         return json11::Json(jo);
+    }
+
+    static StaticOutputDescriptor
+    toStaticOutputDescriptor(json11::Json j, std::string &err) {
+
+        StaticOutputDescriptor sd;
+        if (!j.is_object()) {
+            err = "object expected for static output descriptor";
+            return sd;
+        }
+
+        sd.typeURI = j["typeURI"].string_value();
+        return sd;
     }
     
     static Vamp::Plugin::OutputDescriptor
@@ -296,7 +321,7 @@ public:
         return od;
     }
     
-    static Vamp::Plugin::OutputDescriptor
+    static std::pair<Vamp::Plugin::OutputDescriptor, StaticOutputDescriptor>
     toOutputDescriptor(json11::Json j, std::string &err) {
 
         Vamp::Plugin::OutputDescriptor od;
@@ -311,7 +336,13 @@ public:
         toBasicDescriptor(j["basic"], od, err);
         if (failed(err)) return {};
 
-        return od;
+        StaticOutputDescriptor sd;
+        if (j["static"] != json11::Json()) {
+            sd = toStaticOutputDescriptor(j["static"], err);
+            if (failed(err)) return {};
+        }
+
+        return { od, sd };
     }
 
     static json11::Json
@@ -569,10 +600,36 @@ public:
         auto vouts = d.basicOutputInfo;
         for (auto &o: vouts) outinfo.push_back(fromBasicDescriptor(o));
         jo["basicOutputInfo"] = outinfo;
-    
+
+        json11::Json::object statinfo;
+        auto souts = d.staticOutputInfo;
+        for (auto &s: souts) {
+            statinfo[s.first] = fromStaticOutputDescriptor(s.second);
+        }
+        jo["staticOutputInfo"] = statinfo;
+        
         return json11::Json(jo);
     }
 
+    static StaticOutputInfo
+    toStaticOutputInfo(json11::Json j, std::string &err) {
+
+        if (j == json11::Json()) return {};
+
+        if (!j.is_object()) {
+            err = "object expected for static output info";
+            return {};
+        }
+
+        StaticOutputInfo sinfo;
+        auto items = j.object_items();
+        for (auto i: items) {
+            sinfo[i.first] = toStaticOutputDescriptor(i.second, err);
+            if (failed(err)) return {};
+        }
+        return sinfo;                    
+    }
+    
     static PluginStaticData
     toPluginStaticData(json11::Json j, std::string &err) {
 
@@ -596,6 +653,7 @@ public:
 
         } else if (!j["rights"].is_null() &&
                    !j["rights"].is_string()) {
+
             err = "string expected for rights";
 
         } else if (!j["category"].is_null() &&
@@ -618,10 +676,10 @@ public:
 
             err = "string expected for inputDomain";
 
-        } else if (!j["basicOutputInfo"].is_null() &&
-                   !j["basicOutputInfo"].is_array()) {
+        } else if (!j["staticOutputInfo"].is_null() &&
+                   !j["staticOutputInfo"].is_object()) {
             
-            err = "array expected for basicOutputInfo";
+            err = "object expected for staticOutputInfo";
 
         } else {
 
@@ -670,7 +728,12 @@ public:
                 if (failed(err)) return {};
                 psd.basicOutputInfo.push_back(b);
             }
-            
+
+            StaticOutputInfo sinfo =
+                toStaticOutputInfo(j["staticOutputInfo"], err);
+            if (failed(err)) return {};
+            psd.staticOutputInfo = sinfo;
+
             return psd;
         }
 
@@ -968,7 +1031,12 @@ public:
         
         json11::Json::array outs;
         for (auto &d: cr.outputs) {
-            outs.push_back(fromOutputDescriptor(d));
+            auto id = d.identifier;
+            StaticOutputDescriptor sd;
+            if (cr.staticOutputInfo.find(id) != cr.staticOutputInfo.end()) {
+                sd = cr.staticOutputInfo.at(id);
+            }
+            outs.push_back(fromOutputDescriptor(d, sd));
         }
         jo["outputList"] = outs;
 
@@ -1001,8 +1069,10 @@ public:
         cr.plugin = pmapper.handleToPlugin(j["handle"].int_value());
 
         for (const auto &o: j["outputList"].array_items()) {
-            cr.outputs.push_back(toOutputDescriptor(o, err));
+            auto odpair = toOutputDescriptor(o, err);
             if (failed(err)) return {};
+            cr.outputs.push_back(odpair.first);
+            cr.staticOutputInfo[odpair.first.identifier] = odpair.second;
         }
 
         cr.framing.stepSize = int(round(j["framing"]["stepSize"].number_value()));

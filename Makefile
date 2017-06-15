@@ -2,15 +2,18 @@
 VAMPSDK_DIR	:= ../vamp-plugin-sdk
 PIPER_DIR	:= ../piper
 
-INCFLAGS	:= -Iext -I$(VAMPSDK_DIR) -I. -I/usr/local/include
-CXXFLAGS	:= -Wall -Wextra -Werror -g3 -std=c++11 $(INCFLAGS)
+INCFLAGS	:= -Iext -Iext/sord -Iext/serd -I$(VAMPSDK_DIR) -I. -I/usr/local/include
 
-#LDFLAGS		:= -L$(VAMPSDK_DIR) -L/usr/local/lib -lvamp-hostsdk -lcapnp -lkj 
-LDFLAGS		:= $(VAMPSDK_DIR)/libvamp-hostsdk.a -lcapnp -lkj 
+OPTFLAGS	:= -O3
+
+CFLAGS		:= -Wall $(OPTFLAGS) $(INCFLAGS)
+CXXFLAGS	:= -Wall -Wextra -Werror -Wno-error=unused-parameter -std=c++11 $(OPTFLAGS) $(INCFLAGS)
+
+LDFLAGS		:= -L$(VAMPSDK_DIR) -L/usr/local/lib -lvamp-hostsdk -lcapnp -lkj 
 
 LDFLAGS		+= -ldl
 
-COMMON_OBJS	:= ext/json11/json11.o vamp-capnp/piper.capnp.o
+COMMON_OBJS	:= ext/json11/json11.o ext/sord/sord-single.o vamp-capnp/piper.capnp.o
 
 TEST_SRCS 	:= test/main.cpp test/vamp-client/tst_PluginStub.cpp
 TEST_OBJS	:= $(TEST_SRCS:.cpp=.o)
@@ -33,9 +36,9 @@ bin/test-suite: $(TEST_OBJS)
 vamp-capnp/piper.capnp.o:	vamp-capnp/piper.capnp.c++
 	c++ $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
-vamp-capnp/piper.capnp.h:	vamp-capnp/piper.capnp.c++
+vamp-capnp/piper.capnp.c++:	vamp-capnp/piper.capnp.h
 
-vamp-capnp/piper.capnp.c++: $(PIPER_DIR)/capnp/piper.capnp
+vamp-capnp/piper.capnp.h: $(PIPER_DIR)/capnp/piper.capnp
 	capnpc --src-prefix=$(PIPER_DIR)/capnp -oc++:vamp-capnp $<
 
 test:	all
@@ -57,7 +60,10 @@ depend:
 # DO NOT DELETE
 
 vamp-capnp/piper-capnp.o: vamp-capnp/piper.capnp.c++ vamp-capnp/piper.capnp.h
-vamp-server/convert.o: vamp-json/VampJson.h vamp-support/PluginStaticData.h
+vamp-server/convert.o: vamp-json/VampJson.h
+vamp-server/convert.o: vamp-support/StaticOutputDescriptor.h
+vamp-server/convert.o: vamp-support/PluginStaticData.h
+vamp-server/convert.o: vamp-support/StaticOutputDescriptor.h
 vamp-server/convert.o: vamp-support/PluginConfiguration.h
 vamp-server/convert.o: vamp-support/RequestResponse.h
 vamp-server/convert.o: vamp-support/PluginStaticData.h
@@ -74,7 +80,9 @@ vamp-server/convert.o: vamp-support/PreservingPluginHandleMapper.h
 vamp-server/convert.o: vamp-support/PluginHandleMapper.h
 vamp-server/convert.o: vamp-support/PreservingPluginOutputIdMapper.h
 vamp-server/simple-server.o: vamp-json/VampJson.h
+vamp-server/simple-server.o: vamp-support/StaticOutputDescriptor.h
 vamp-server/simple-server.o: vamp-support/PluginStaticData.h
+vamp-server/simple-server.o: vamp-support/StaticOutputDescriptor.h
 vamp-server/simple-server.o: vamp-support/PluginConfiguration.h
 vamp-server/simple-server.o: vamp-support/RequestResponse.h
 vamp-server/simple-server.o: vamp-support/PluginStaticData.h
@@ -92,6 +100,7 @@ vamp-server/simple-server.o: vamp-support/PluginHandleMapper.h
 vamp-server/simple-server.o: vamp-support/AssignedPluginHandleMapper.h
 vamp-server/simple-server.o: vamp-support/DefaultPluginOutputIdMapper.h
 vamp-server/simple-server.o: vamp-support/LoaderRequests.h
+vamp-server/simple-server.o: vamp-support/StaticOutputRdf.h
 ext/json11/json11.o: ext/json11/json11.hpp
 ext/json11/test.o: ext/json11/json11.hpp
 test/vamp-client/tst_PluginStub.o: vamp-client/Loader.h
@@ -102,6 +111,7 @@ test/vamp-client/tst_PluginStub.o: vamp-client/PluginClient.h
 test/vamp-client/tst_PluginStub.o: vamp-support/PluginConfiguration.h
 test/vamp-client/tst_PluginStub.o: vamp-client/PiperVampPlugin.h
 test/vamp-client/tst_PluginStub.o: vamp-support/PluginStaticData.h
+test/vamp-client/tst_PluginStub.o: vamp-support/StaticOutputDescriptor.h
 test/vamp-client/tst_PluginStub.o: vamp-client/PluginClient.h
 vamp-client/qt/test.o: vamp-client/qt/ProcessQtTransport.h
 vamp-client/qt/test.o: vamp-client/SynchronousTransport.h
@@ -114,6 +124,7 @@ vamp-client/qt/test.o: vamp-support/PluginConfiguration.h
 vamp-client/qt/test.o: vamp-client/PluginClient.h
 vamp-client/qt/test.o: vamp-client/PiperVampPlugin.h
 vamp-client/qt/test.o: vamp-support/PluginStaticData.h
+vamp-client/qt/test.o: vamp-support/StaticOutputDescriptor.h
 vamp-client/qt/test.o: vamp-support/PluginConfiguration.h
 vamp-client/qt/test.o: vamp-client/SynchronousTransport.h
 vamp-client/qt/test.o: vamp-support/AssignedPluginHandleMapper.h
