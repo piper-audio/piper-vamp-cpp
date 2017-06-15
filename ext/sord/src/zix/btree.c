@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "zix/btree.h"
+#include "btree.h"
 
 // #define ZIX_BTREE_DEBUG 1
 

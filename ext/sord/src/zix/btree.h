@@ -19,7 +19,7 @@
 
 #include <stddef.h>
 
-#include "zix/common.h"
+#include "common.h"
 
 #ifdef __cplusplus
 extern "C" {

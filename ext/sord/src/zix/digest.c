@@ -14,7 +14,7 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-#include "zix/digest.h"
+#include "digest.h"
 
 #ifdef __SSE4_2__
 #    include <smmintrin.h>

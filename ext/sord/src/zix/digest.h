@@ -20,7 +20,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "zix/common.h"
+#include "common.h"
 
 #ifdef __cplusplus
 extern "C" {

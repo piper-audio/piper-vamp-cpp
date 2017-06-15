@@ -2,15 +2,18 @@
 VAMPSDK_DIR	:= ../vamp-plugin-sdk
 PIPER_DIR	:= ../piper
 
-INCFLAGS	:= -Iext -I/usr/include/sord-0 -I/usr/include/serd-0 -I$(VAMPSDK_DIR) -I. -I/usr/local/include
-CXXFLAGS	:= -Wall -Wextra -Werror -Wno-error=unused-parameter -g3 -std=c++11 $(INCFLAGS)
+INCFLAGS	:= -Iext -Iext/sord -Iext/serd -I$(VAMPSDK_DIR) -I. -I/usr/local/include
 
-#LDFLAGS		:= -L$(VAMPSDK_DIR) -L/usr/local/lib -lvamp-hostsdk -lcapnp -lkj 
-LDFLAGS		:= $(VAMPSDK_DIR)/libvamp-hostsdk.a -lcapnp -lkj -lsord-0 -lserd-0
+OPTFLAGS	:= -O3
+
+CFLAGS		:= -Wall $(OPTFLAGS) $(INCFLAGS)
+CXXFLAGS	:= -Wall -Wextra -Werror -Wno-error=unused-parameter -std=c++11 $(OPTFLAGS) $(INCFLAGS)
+
+LDFLAGS		:= -L$(VAMPSDK_DIR) -L/usr/local/lib -lvamp-hostsdk -lcapnp -lkj 
 
 LDFLAGS		+= -ldl
 
-COMMON_OBJS	:= ext/json11/json11.o vamp-capnp/piper.capnp.o
+COMMON_OBJS	:= ext/json11/json11.o ext/sord/sord-single.o vamp-capnp/piper.capnp.o
 
 TEST_SRCS 	:= test/main.cpp test/vamp-client/tst_PluginStub.cpp
 TEST_OBJS	:= $(TEST_SRCS:.cpp=.o)
