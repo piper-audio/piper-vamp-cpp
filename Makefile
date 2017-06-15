@@ -9,7 +9,7 @@ OPTFLAGS	:= -O3
 CFLAGS		:= -Wall -std=c99 $(OPTFLAGS) $(INCFLAGS)
 CXXFLAGS	:= -Wall -Wextra -Werror -Wno-error=unused-parameter -std=c++11 $(OPTFLAGS) $(INCFLAGS)
 
-LDFLAGS		:= -L$(VAMPSDK_DIR) -L/usr/local/lib -lvamp-hostsdk -lcapnp -lkj 
+LDFLAGS		:= $(VAMPSDK_DIR)/libvamp-hostsdk.a -L/usr/local/lib -lcapnp -lkj 
 
 LDFLAGS		+= -ldl
 

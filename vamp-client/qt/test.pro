@@ -14,9 +14,9 @@ MOC_DIR = ../o
 VAMPSDK_DIR = ../../../vamp-plugin-sdk
 PIPER_DIR = ../../../piper
 
-QMAKE_CXXFLAGS = -I$$VAMPSDK_DIR -I.. -I../..
+QMAKE_CXXFLAGS = -I$$VAMPSDK_DIR -I/usr/local/lib -I.. -I../..
 
-LIBS += -L/usr/local/lib -lcapnp -lkj -L$$VAMPSDK_DIR -lvamp-hostsdk
+LIBS += $$VAMPSDK_DIR/libvamp-hostsdk.a -L/usr/local/lib -lcapnp -lkj
 
 # Using the "console" CONFIG flag above should ensure this happens for
 # normal Windows builds, but this may be necessary when cross-compiling
