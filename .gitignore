@@ -5,4 +5,6 @@ o/
 *~
 vamp-client/qt/Makefile
 vamp-client/qt/test
+vamp-capnp/piper.capnp.c++
+vamp-capnp/piper.capnp.h
 bin/
