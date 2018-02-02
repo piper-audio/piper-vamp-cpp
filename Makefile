@@ -4,7 +4,7 @@ PIPER_DIR	:= ../piper
 
 INCFLAGS	:= -Iext -Iext/sord -Iext/serd -I$(VAMPSDK_DIR) -I. -I/usr/local/include
 
-OPTFLAGS	:= -O3
+OPTFLAGS	:= -O3 -fPIC
 
 CFLAGS		:= -Wall -std=c99 $(OPTFLAGS) $(INCFLAGS)
 CXXFLAGS	:= -Wall -Wextra -Werror -Wno-error=unused-parameter -std=c++11 $(OPTFLAGS) $(INCFLAGS)
