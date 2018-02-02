@@ -28,7 +28,7 @@ before_install:
   - ( cd ../vamp-plugin-sdk ; if [[ "$TRAVIS_OS_NAME" = "osx" ]] ; then make -f build/Makefile.osx sdkstatic plugins ; else ./configure --disable-programs && make sdkstatic plugins; fi )
 
 install:
-  - sudo pip install jsonschema
+  - sudo pip2 install jsonschema
 
 script:
   - VAMP_PATH=$(pwd)/../vamp-plugin-sdk/examples ./test.sh
