@@ -159,7 +159,11 @@ private:
         // in which pluginKey == libraryId + ":" + pluginId
         
         std::string libraryId, pluginId;
-        decomposePluginKey(pluginKey, libraryId, pluginId);
+        if (!decomposePluginKey(pluginKey, libraryId, pluginId)) {
+            std::cerr << "Failed to decompose plugin key \"" << pluginKey
+                      << "\"" << std::endl;
+            return;
+        }
 
         typedef const uint8_t *S;
         
@@ -306,7 +310,6 @@ private:
         pluginId = pluginKey.substr(i + 1);
         return true;
     }
-                            
 };
 
 }
