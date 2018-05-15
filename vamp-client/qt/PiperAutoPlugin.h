@@ -101,7 +101,7 @@ public:
         try {
             LoadResponse resp = m_client.load(req);
             m_plugin = resp.plugin;
-        } catch (ServerCrashed c) {
+        } catch (const ServerCrashed &c) {
             log(std::string("PiperAutoPlugin: Server crashed: ") + c.what());
             m_plugin = 0;
         }

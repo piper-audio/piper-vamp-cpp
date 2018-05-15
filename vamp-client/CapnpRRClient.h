@@ -365,7 +365,9 @@ private:
         size_t wordSize = sizeof(capnp::word);
         size_t words = buffer.size() / wordSize;
         kj::Array<capnp::word> karr(kj::heapArray<capnp::word>(words));
-        memcpy(karr.begin(), buffer.data(), words * wordSize);
+        memcpy(reinterpret_cast<char *>(karr.begin()),
+               buffer.data(),
+               words * wordSize);
         return karr;
     }
 
