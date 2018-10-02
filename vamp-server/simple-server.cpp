@@ -155,6 +155,7 @@ static void suspendOutput()
 
 static void resumeOutput()
 {
+    fflush(stdout);
 #ifdef _WIN32
     _dup2(normalFd, 1);
 #else
