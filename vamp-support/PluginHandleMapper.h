@@ -60,7 +60,14 @@ namespace piper_vamp {
 class PluginHandleMapper
 {
 public:
-    typedef uint32_t Handle; // unsigned to avoid undefined behaviour on possible wrap
+    /**
+     * The handle type. This is 32-bit rather than 64-bit in order to
+     * be representable as a JSON number without rounding, and is
+     * unsigned to avoid C++ undefined behaviour in places where it
+     * could wrap around.
+     */
+    typedef uint32_t Handle;
+    
     const Handle INVALID_HANDLE = 0;
 
     virtual ~PluginHandleMapper() noexcept { }

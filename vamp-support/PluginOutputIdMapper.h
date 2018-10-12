@@ -42,6 +42,10 @@
 
 namespace piper_vamp {
 
+/**
+ * Interface for an object that maps between a plugin's output id (a
+ * string) and output index (index of the output in the output list).
+ */
 class PluginOutputIdMapper
 {
 public:

@@ -42,18 +42,40 @@
 
 namespace piper_vamp {
 
-//!!! document -- this is a passthrough thing for a single plugin
-//!!! handle only, it does not use actually valid Plugin pointers at
-//!!! all. Or, better, reimplement in a way that doesn't involve
-//!!! such alarmingly invalid reinterpret_casts
-
+/**
+ * A PluginHandleMapper that accepts a handle in the handleToPlugin
+ * method, storing it for later, and returns the same handle from
+ * pluginToHandle when given the same plugin pointer as it had earlier
+ * returned from handleToPlugin. It can only remember one handle, and
+ * knows nothing about actual plugins - the plugin pointer it returns
+ * is nominal and must never be dereferenced.
+ */
 class PreservingPluginHandleMapper : public PluginHandleMapper
 {
+    class NotAPlugin : public Vamp::Plugin
+    {
+        #define STR(x) std::string get##x() const { return "not-a-plugin"; }
+    public:
+        STR(Identifier) STR(Name) STR(Description) STR(Maker) STR(Copyright)
+        int getPluginVersion() const { return 1; }
+        bool initialise(size_t, size_t, size_t) { return false; }
+        void reset() { }
+        InputDomain getInputDomain() const { return TimeDomain; }
+        OutputList getOutputDescriptors() const { return {}; }
+        FeatureSet process(const float *const *, Vamp::RealTime) { return {}; }
+        FeatureSet getRemainingFeatures() { return {}; }
+        NotAPlugin() : Plugin(1) { }
+    };
+    
 public:
     PreservingPluginHandleMapper() :
-        m_handle(0),
-        m_plugin(0),
+        m_handle(INVALID_HANDLE),
+        m_plugin(nullptr),
         m_omapper(std::make_shared<PreservingPluginOutputIdMapper>()) { }
+
+    virtual ~PreservingPluginHandleMapper() {
+        delete m_plugin;
+    }
 
     virtual Handle pluginToHandle(Vamp::Plugin *p) const noexcept {
         if (!p) return INVALID_HANDLE;
@@ -69,10 +91,23 @@ public:
 
     virtual Vamp::Plugin *handleToPlugin(Handle h) const noexcept {
         if (h == INVALID_HANDLE) return nullptr;
+        if (h == m_handle) return m_plugin;
+        if (m_handle != INVALID_HANDLE) {
+            std::cerr << "PreservingPluginHandleMapper: m_handle " << m_handle
+                      << " is non-null when a new handle is provided, but "
+                      << "this stupid stub class can only handle one handle"
+                      << std::endl;
+            return nullptr;
+        }
 	m_handle = h;
-        //!!! see comment at top
-	m_plugin = reinterpret_cast<Vamp::Plugin *>(h);
-	return m_plugin;
+        // We allocate something here, just so that we can
+        // sanity-check in the pluginToHandle call that the thing
+        // passed in is likely to be the pointer we returned from
+        // handleToPlugin earlier. Allocating an actual plugin allows
+        // us to return it without running afoul of strict-aliasing
+        // rules or the C++ object memory model.
+        m_plugin = new NotAPlugin();
+        return m_plugin;
     }
 
     virtual const std::shared_ptr<PluginOutputIdMapper> pluginToOutputIdMapper
@@ -89,7 +124,7 @@ public:
     
 private:
     mutable Handle m_handle;
-    mutable Vamp::Plugin *m_plugin;
+    mutable NotAPlugin *m_plugin;
     std::shared_ptr<PreservingPluginOutputIdMapper> m_omapper;
 };
 

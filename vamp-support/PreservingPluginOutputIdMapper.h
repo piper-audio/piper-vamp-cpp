@@ -41,9 +41,12 @@
 
 namespace piper_vamp {
 
-//!!! document -- this is a passthrough thing that invents its
-//!!! numerical ids, they have no correspondence with any real plugin
-
+/**
+ * A PluginOutputIdMapper that knows nothing about actual plugin IDs,
+ * but that accepts any string as an argument to idToIndex, returns an
+ * entirely invented index that is consistent for that string, and
+ * maps back to the same string through indexToId.
+ */
 class PreservingPluginOutputIdMapper : public PluginOutputIdMapper
 {
 public:
