@@ -244,7 +244,7 @@ public:
                 return false;
             }
             
-        } catch (const std::exception &e) {
+        } catch (const std::exception &) {
             m_state = Failed;
             throw;
         }
@@ -269,7 +269,7 @@ public:
 
         try {
             m_client->reset(this, m_config);
-        } catch (const std::exception &e) {
+        } catch (const std::exception &) {
             m_state = Failed;
             throw;
         }
@@ -352,7 +352,7 @@ public:
 
         try {
             return m_client->process(this, vecbuf, timestamp);
-        } catch (const std::exception &e) {
+        } catch (const std::exception &) {
             m_state = Failed;
             throw;
         }
@@ -376,7 +376,7 @@ public:
 
         try {
             return m_client->finish(this);
-        } catch (const std::exception &e) {
+        } catch (const std::exception &) {
             m_state = Failed;
             throw;
         }
