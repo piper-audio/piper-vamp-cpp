@@ -44,7 +44,8 @@ namespace piper_vamp {
 
 //!!! document -- this is a passthrough thing for a single plugin
 //!!! handle only, it does not use actually valid Plugin pointers at
-//!!! all
+//!!! all. Or, better, reimplement in a way that doesn't involve
+//!!! such alarmingly invalid reinterpret_casts
 
 class PreservingPluginHandleMapper : public PluginHandleMapper
 {
@@ -69,6 +70,7 @@ public:
     virtual Vamp::Plugin *handleToPlugin(Handle h) const noexcept {
         if (h == INVALID_HANDLE) return nullptr;
 	m_handle = h;
+        //!!! see comment at top
 	m_plugin = reinterpret_cast<Vamp::Plugin *>(h);
 	return m_plugin;
     }
