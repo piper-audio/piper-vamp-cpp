@@ -1,7 +1,7 @@
 
 TEMPLATE = app
 
-CONFIG += qt stl c++14 exceptions console warn_on
+CONFIG += qt stl c++11 c++14 exceptions console warn_on
 QT -= xml network gui widgets
 
 !win32 {
