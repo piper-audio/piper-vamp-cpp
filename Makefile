@@ -7,7 +7,9 @@ INCFLAGS	:= -Iext -Iext/sord -Iext/serd -I$(VAMPSDK_DIR) -I. -I/usr/local/includ
 OPTFLAGS	:= -O3 -fPIC
 
 CFLAGS		:= -Wall -std=c99 $(OPTFLAGS) $(INCFLAGS)
-CXXFLAGS	:= -Wall -Wextra -Werror -Wno-error=unused-parameter -std=c++11 $(OPTFLAGS) $(INCFLAGS)
+CXXFLAGS	:= -Wall -Wextra -Werror -Wno-error=unused-parameter -std=c++1y $(OPTFLAGS) $(INCFLAGS)
+
+CXX		?= c++
 
 LDFLAGS		:= $(VAMPSDK_DIR)/libvamp-hostsdk.a -L/usr/local/lib -lcapnp -lkj 
 
@@ -24,17 +26,17 @@ bin:
 	mkdir bin
 
 bin/piper-convert: vamp-server/convert.o $(COMMON_OBJS)
-	c++ $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 bin/piper-vamp-simple-server: vamp-server/simple-server.o $(COMMON_OBJS)
-	c++ $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 bin/test-suite: $(TEST_OBJS)
-	c++ $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 	bin/test-suite
 
 vamp-capnp/piper.capnp.o:	vamp-capnp/piper.capnp.c++
-	c++ $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
 vamp-capnp/piper.capnp.c++:	vamp-capnp/piper.capnp.h
 
