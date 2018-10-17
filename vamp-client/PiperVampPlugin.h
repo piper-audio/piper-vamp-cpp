@@ -344,10 +344,17 @@ public:
         }
 
         std::vector<std::vector<float> > vecbuf;
+
+        int bufferSize;
+        if (m_psd.inputDomain == FrequencyDomain) {
+            bufferSize = 2 * (m_config.framing.blockSize / 2) + 2;
+        } else {
+            bufferSize = m_config.framing.blockSize;
+        }
+        
         for (int c = 0; c < m_config.channelCount; ++c) {
             vecbuf.push_back(std::vector<float>
-                             (inputBuffers[c],
-                              inputBuffers[c] + m_config.framing.blockSize));
+                             (inputBuffers[c], inputBuffers[c] + bufferSize));
         }
 
         try {
