@@ -520,12 +520,26 @@ handleRequest(const RequestOrResponse &request, bool debug)
         }
                 
         const float **fbuffers = new const float *[channels];
+
+        bool frequencyDomain =
+            (preq.plugin->getInputDomain() == Vamp::Plugin::FrequencyDomain);
+        int blockSize = mapper.getBlockSize(h);
+        int inputBufferSize;
+        if (frequencyDomain) {
+            inputBufferSize = 2 * (blockSize / 2) + 2;
+        } else {
+            inputBufferSize = blockSize;
+        }
+        
         for (int i = 0; i < channels; ++i) {
-            if (int(preq.inputBuffers[i].size()) != mapper.getBlockSize(h)) {
+            if (int(preq.inputBuffers[i].size()) != inputBufferSize) {
                 ostringstream os;
-                os << "wrong block size supplied to process ("
-                   << preq.inputBuffers[i].size()
-                   << ", expecting " << mapper.getBlockSize(h) << ")" << ends;
+                os << "wrong buffer size passed to process call as "
+                   << (frequencyDomain ? "frequency" : "time")
+                   << "-domain input on channel " << i << " with block size "
+                   << blockSize << " (expected " << inputBufferSize
+                   << " values, obtained " << preq.inputBuffers[i].size()
+                   << ")" << ends;
                 delete[] fbuffers;
                 throw runtime_error(os.str());
             }
