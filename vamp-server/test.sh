@@ -71,7 +71,7 @@ cat > "$input" <<EOF
 {"method":"load","id":6,"params": {"key":"vamp-example-plugins:percussiononsets","inputSampleRate":44100,"adapterFlags":["AdaptInputDomain","AdaptBufferSize"]}}
 {"method":"process","params": {"handle": 1, "processInput": { "timestamp": {"s": 0, "n": 0}, "inputBuffers": [ [1,2,3,4,5,6,7,8] ]}}}
 {"method":"configure","id":"weevil","params":{"handle":1,"configuration":{"framing":{"blockSize": 8,"stepSize":8}, "channelCount": 1, "parameterValues": {"sensitivity": 40, "threshold": 3}}}}
-{"method":"configure","id":9,"params":{"handle":-9999,"configuration":{"framing":{"blockSize": 8,"stepSize":8}, "channelCount": 1, "parameterValues": {"sensitivity": 40, "threshold": 3}}}}
+{"method":"configure","id":9,"params":{"handle":9999,"configuration":{"framing":{"blockSize": 8,"stepSize":8}, "channelCount": 1, "parameterValues": {"sensitivity": 40, "threshold": 3}}}}
 {"method":"process","params": {"handle": 1, "processInput": { "timestamp": {"s": 0, "n": 0}, "inputBuffers": [ [1,2,3,4,5,6,7,8] ]}}}
 {"method":"finish","params": {"handle": 1}}
 {"method":"finish","id":"blah","params": {"handle": 1}}
