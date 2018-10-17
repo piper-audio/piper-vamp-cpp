@@ -64,18 +64,18 @@ int main(int argc, char **argv)
         cerr << endl << "*** Test: starting transport" << endl;
         piper_vamp::client::ProcessQtTransport transport(server, format, logger);
         if (!transport.isOK()) {
-            cerr << "ERROR: Transport failed to start" << endl;
+            cerr << "--- ERROR: Transport failed to start" << endl;
             return 1;
         }
-        cerr << "OK" << endl;
+        cerr << "+++ OK" << endl;
 
         cerr << endl << "*** Test: constructing client" << endl;
         piper_vamp::client::CapnpRRClient client(&transport, logger);
-        cerr << "OK" << endl;
+        cerr << "+++ OK" << endl;
 
         cerr << endl << "*** Test: listing plugins" << endl;
         piper_vamp::ListResponse lr = client.list({});
-        cerr << "OK; plugins are:" << endl;
+        cerr << "+++ OK; plugins are:" << endl;
         int i = 1;
         for (const auto &p: lr.available) {
             cerr << i++ << ". [" << p.pluginKey << "] " << p.basic.name << endl;
@@ -125,10 +125,10 @@ int main(int argc, char **argv)
                     piper_vamp::LoadResponse resp = client.load(req);
                     plugin = resp.plugin;
                     if (!plugin) {
-                        cerr << "ERROR: plugin is null" << endl;
+                        cerr << "--- ERROR: plugin is null" << endl;
                         return 1;
                     }
-                    cerr << "OK" << endl;
+                    cerr << "+++ OK" << endl;
 
                 } else {
                 
@@ -139,10 +139,10 @@ int main(int argc, char **argv)
                         new piper_vamp::client::PiperAutoPlugin
                         (server, id, 16, adapterFlags, logger);
                     if (!ap->isOK()) {
-                        cerr << "ERROR: PiperAutoPlugin creation failed" << endl;
+                        cerr << "--- ERROR: PiperAutoPlugin creation failed" << endl;
                         return 1;
                     }
-                    cerr << "OK" << endl;
+                    cerr << "+++ OK" << endl;
 
                     plugin = ap;
                 }
@@ -150,15 +150,15 @@ int main(int argc, char **argv)
                 if (domain == frequencyDomainClientSide) {
                     cerr << "*** Test: creating input-domain adapter" << endl;
                     plugin = new Vamp::HostExt::PluginInputDomainAdapter(plugin);
-                    cerr << "OK" << endl;
+                    cerr << "+++ OK" << endl;
                 }
 
                 cerr << endl << "*** Test: initialising plugin" << endl;
                 if (!plugin->initialise(1, 4, 4)) {
-                    cerr << "ERROR: initialisation failed" << endl;
+                    cerr << "--- ERROR: initialisation failed" << endl;
                     return 1;
                 }
-                cerr << "OK" << endl;
+                cerr << "+++ OK" << endl;
 
                 for (int round = 1; round <= 2; ++round) {
                     cerr << endl << "*** Test: processing"
@@ -170,9 +170,9 @@ int main(int argc, char **argv)
                     float *bd = buf.data();
                     Vamp::Plugin::FeatureSet features = plugin->process
                         (&bd, Vamp::RealTime::zeroTime);
-                    cerr << "OK, process succeeded" << endl;
+                    cerr << "+++ OK, process succeeded" << endl;
                     if (features[0].size() != 1) {
-                        cerr << "ERROR: wrong number of features on output 0"
+                        cerr << "--- ERROR: wrong number of features on output 0"
                              << " (expected 1, obtained " << features[0].size() << ")"
                              << endl;
                         return 1;
@@ -192,7 +192,7 @@ int main(int argc, char **argv)
                     }
                     
                     if (features[0][0].values.size() != expected.size()) {
-                        cerr << "ERROR: wrong size for feature on output 0"
+                        cerr << "--- ERROR: wrong size for feature on output 0"
                              << " (expected " << expected.size()
                              << ", obtained "
                              << features[0][0].values.size() << ")" << endl;
@@ -200,7 +200,7 @@ int main(int argc, char **argv)
                     }
                     for (size_t i = 0; i < expected.size(); ++i) {
                         if (features[0][0].values[i] != expected[i]) {
-                            cerr << "ERROR: wrong value for index " << i
+                            cerr << "--- ERROR: wrong value for index " << i
                                  << " of feature on output 0"
                                  << " (expected " << expected[i]
                                  << ", obtained "
@@ -213,25 +213,25 @@ int main(int argc, char **argv)
                             return 1;
                         }
                     }
-                    cerr << "OK, results are correct" << endl;
+                    cerr << "+++ OK, results are correct" << endl;
 
                     (void)plugin->getRemainingFeatures();
 
                     if (round == 1) {
                         cerr << endl << "*** Test: resetting plugin for round 2" << endl;
                         plugin->reset();
-                        cerr << "OK" << endl;
+                        cerr << "+++ OK" << endl;
                     }
                 }
 
                 cerr << endl << "*** Test: deleting plugin" << endl;
                 delete plugin;
-                cerr << "OK" << endl;
+                cerr << "+++ OK" << endl;
             }
         }
 
     } catch (const exception &e) {
-        cerr << "ERROR: Exception caught: " << e.what() << endl;
+        cerr << "--- ERROR: Exception caught: " << e.what() << endl;
         return 1;
     }
 
