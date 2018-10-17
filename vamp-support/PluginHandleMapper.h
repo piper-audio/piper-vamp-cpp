@@ -82,7 +82,7 @@ public:
      * Look up and return the plugin for a given handle.
      * If the given handle is INVALID_HANDLE or not known, return nullptr.
      */
-    virtual Vamp::Plugin *handleToPlugin(Handle)  const noexcept = 0;
+    virtual Vamp::Plugin *handleToPlugin(Handle) const noexcept = 0;
 
     /**
      * Return a shared pointer to a PluginOutputIdMapper
