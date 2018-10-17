@@ -982,7 +982,8 @@ public:
         }
 
         LoadResponse resp;
-        resp.plugin = pmapper.handleToPlugin(j["handle"].int_value());
+        auto h = j["handle"].int_value();
+        resp.plugin = pmapper.handleToPlugin(h);
         resp.staticData = toPluginStaticData(j["staticData"], err);
         if (failed(err)) return {};
         resp.defaultConfiguration = toPluginConfiguration(j["defaultConfiguration"],
@@ -1015,7 +1016,8 @@ public:
         }
 
         ConfigurationRequest cr;
-        cr.plugin = pmapper.handleToPlugin(j["handle"].int_value());
+        auto h = j["handle"].int_value();
+        cr.plugin = pmapper.handleToPlugin(h);
         cr.configuration = toPluginConfiguration(j["configuration"], err);
         if (failed(err)) return {};
         return cr;
@@ -1066,7 +1068,8 @@ public:
             return {};
         }
         
-        cr.plugin = pmapper.handleToPlugin(j["handle"].int_value());
+        auto h = j["handle"].int_value();
+        cr.plugin = pmapper.handleToPlugin(h);
 
         for (const auto &o: j["outputList"].array_items()) {
             auto odpair = toOutputDescriptor(o, err);
@@ -1130,7 +1133,8 @@ public:
         }
 
         ProcessRequest r;
-        r.plugin = pmapper.handleToPlugin(j["handle"].int_value());
+        auto h = j["handle"].int_value();
+        r.plugin = pmapper.handleToPlugin(h);
 
         r.timestamp = toRealTime(input["timestamp"], err);
         if (failed(err)) return {};
@@ -1545,8 +1549,8 @@ public:
         checkRpcRequestType(j, "finish", err);
         if (failed(err)) return {};
         FinishRequest req;
-        req.plugin = pmapper.handleToPlugin
-            (j["params"]["handle"].int_value());
+        auto h = j["params"]["handle"].int_value();
+        req.plugin = pmapper.handleToPlugin(h);
         return req;
     }
     

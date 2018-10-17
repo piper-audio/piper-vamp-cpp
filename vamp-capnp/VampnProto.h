@@ -643,7 +643,8 @@ public:
                      const piper::LoadResponse::Reader &r,
                      const PluginHandleMapper &pmapper) {
 
-        resp.plugin = pmapper.handleToPlugin(r.getHandle());
+        auto h = r.getHandle();
+        resp.plugin = pmapper.handleToPlugin(h);
         readExtractorStaticData(resp.staticData, r.getStaticData());
         readConfiguration(resp.defaultConfiguration,
                           r.getDefaultConfiguration());
@@ -700,7 +701,8 @@ public:
                               const piper::ConfigurationResponse::Reader &r,
                               const PluginHandleMapper &pmapper) {
 
-        cr.plugin = pmapper.handleToPlugin(r.getHandle());
+        auto h = r.getHandle();
+        cr.plugin = pmapper.handleToPlugin(h);
         cr.outputs.clear();
         cr.staticOutputInfo.clear();
         auto oo = r.getOutputs();
@@ -1085,8 +1087,8 @@ public:
         if (getRequestResponseType(r) != RRType::Finish) {
             throw std::logic_error("not a finish request");
         }
-        req.plugin = pmapper.handleToPlugin
-            (r.getRequest().getFinish().getHandle());
+        auto h = r.getRequest().getFinish().getHandle();
+        req.plugin = pmapper.handleToPlugin(h);
     }
 
     static void
