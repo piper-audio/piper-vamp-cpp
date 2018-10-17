@@ -78,7 +78,7 @@ static string myname = "piper-vamp-simple-server";
 
 static void version()
 {
-    cout << "1.0" << endl;
+    cout << "2.0" << endl;
     exit(0);
 }
 
