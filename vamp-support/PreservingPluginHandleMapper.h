@@ -94,7 +94,8 @@ public:
         if (h == m_handle) return m_plugin;
         if (m_handle != INVALID_HANDLE) {
             std::cerr << "PreservingPluginHandleMapper: m_handle " << m_handle
-                      << " is non-null when a new handle is provided, but "
+                      << " is non-null when a new handle (" << h
+                      << ") is provided, but "
                       << "this stupid stub class can only handle one handle"
                       << std::endl;
             return nullptr;
