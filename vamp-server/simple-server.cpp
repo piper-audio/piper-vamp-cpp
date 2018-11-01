@@ -91,9 +91,9 @@ static void usage(bool successful = false)
         "           " << myname << " -h\n\n"
         "    where\n"
         "       <format>: the format to read and write messages in (\"json\" or \"capnp\")\n"
-        "       -d: also print debug information to stderr\n"
-        "       -v: print version number to stdout and exit\n"
-        "       -h: print this text to stderr and exit\n\n"
+        "       -d, --debug: also print debug information to stderr\n"
+        "       -v, --version: print version number to stdout and exit\n"
+        "       -h, --help: print this text to stderr and exit\n\n"
         "Expects Piper request messages in either Cap'n Proto or JSON format on stdin,\n"
         "and writes response messages in the same format to stdout.\n\n"
         "This server is intended for simple process separation. It's only suitable for\n"
@@ -639,19 +639,19 @@ int main(int argc, char **argv)
     bool debug = false;
     
     string arg = argv[1];
-    if (arg == "-h") {
+    if (arg == "-h" || arg == "--help") {
         if (argc == 2) {
             usage(true);
         } else {
             usage();
         }
-    } else if (arg == "-v") {
+    } else if (arg == "-v" || arg == "--version") {
         if (argc == 2) {
             version();
         } else {
             usage();
         }
-    } else if (arg == "-d") {
+    } else if (arg == "-d" || arg == "--debug") {
         if (argc == 2) {
             usage();
         } else {
