@@ -58,21 +58,21 @@ public:
         m_sub.removePlugin(h);
     }
     
-    Handle pluginToHandle(Vamp::Plugin *p) const noexcept {
+    Handle pluginToHandle(Vamp::Plugin *p) const noexcept override {
         return m_sub.pluginToHandle(p);
     }
     
-    Vamp::Plugin *handleToPlugin(Handle h) const noexcept {
+    Vamp::Plugin *handleToPlugin(Handle h) const noexcept override {
         return m_sub.handleToPlugin(h);
     }
 
     const std::shared_ptr<PluginOutputIdMapper> pluginToOutputIdMapper
-    (Vamp::Plugin *p) const noexcept {
+    (Vamp::Plugin *p) const noexcept override {
         return m_sub.pluginToOutputIdMapper(p);
     }
 
     const std::shared_ptr<PluginOutputIdMapper> handleToOutputIdMapper
-    (Handle h) const noexcept {
+    (Handle h) const noexcept override {
         return m_sub.handleToOutputIdMapper(h);
     }
 

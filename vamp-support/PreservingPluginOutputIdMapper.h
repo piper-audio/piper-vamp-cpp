@@ -52,7 +52,7 @@ class PreservingPluginOutputIdMapper : public PluginOutputIdMapper
 public:
     PreservingPluginOutputIdMapper() { }
 
-    virtual int idToIndex(std::string outputId) const noexcept {
+    int idToIndex(std::string outputId) const noexcept override {
 	int n = int(m_ids.size());
 	int i = 0;
 	while (i < n) {
@@ -65,7 +65,7 @@ public:
 	return i;
     }
 
-    virtual std::string indexToId(int index) const noexcept {
+    std::string indexToId(int index) const noexcept override {
         if (index < 0 || size_t(index) >= m_ids.size()) return "";
 	return m_ids[index];
     }

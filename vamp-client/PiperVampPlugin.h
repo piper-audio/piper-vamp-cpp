@@ -129,35 +129,35 @@ public:
         }
     }
     
-    virtual std::string getIdentifier() const {
+    std::string getIdentifier() const override {
         return m_psd.basic.identifier;
     }
 
-    virtual std::string getName() const {
+    std::string getName() const override {
         return m_psd.basic.name;
     }
 
-    virtual std::string getDescription() const {
+    std::string getDescription() const override {
         return m_psd.basic.description;
     }
 
-    virtual std::string getMaker() const {
+    std::string getMaker() const override {
         return m_psd.maker;
     }
 
-    virtual std::string getCopyright() const {
+    std::string getCopyright() const override {
         return m_psd.copyright;
     }
 
-    virtual int getPluginVersion() const {
+    int getPluginVersion() const override {
         return m_psd.pluginVersion;
     }
 
-    virtual ParameterList getParameterDescriptors() const {
+    ParameterList getParameterDescriptors() const override {
         return m_psd.parameters;
     }
 
-    virtual float getParameter(std::string name) const {
+    float getParameter(std::string name) const override {
         if (m_config.parameterValues.find(name) != m_config.parameterValues.end()) {
             return m_config.parameterValues.at(name);
         } else {
@@ -165,7 +165,7 @@ public:
         }
     }
 
-    virtual void setParameter(std::string name, float value) {
+    void setParameter(std::string name, float value) override {
         if (m_state == Failed) {
             throw std::logic_error("Plugin is in failed state");
         }
@@ -176,15 +176,15 @@ public:
         m_config.parameterValues[name] = value;
     }
 
-    virtual ProgramList getPrograms() const {
+    ProgramList getPrograms() const override {
         return m_psd.programs;
     }
 
-    virtual std::string getCurrentProgram() const {
+    std::string getCurrentProgram() const override {
         return m_config.currentProgram;
     }
     
-    virtual void selectProgram(std::string program) {
+    void selectProgram(std::string program) override {
         if (m_state == Failed) {
             throw std::logic_error("Plugin is in failed state");
         }
@@ -195,9 +195,9 @@ public:
         m_config.currentProgram = program;
     }
 
-    virtual bool initialise(size_t inputChannels,
+    bool initialise(size_t inputChannels,
                             size_t stepSize,
-                            size_t blockSize) {
+                            size_t blockSize) override {
 
         if (m_state == Failed) {
             throw std::logic_error("Plugin is in failed state");
@@ -257,7 +257,7 @@ public:
         }
     }
 
-    virtual void reset() {
+    void reset() override {
         
         if (m_state == Failed) {
             throw std::logic_error("Plugin is in failed state");
@@ -277,33 +277,33 @@ public:
         m_state = Configured;
     }
 
-    virtual InputDomain getInputDomain() const {
+    InputDomain getInputDomain() const override {
         return m_psd.inputDomain;
     }
 
-    virtual size_t getPreferredBlockSize() const {
+    size_t getPreferredBlockSize() const override {
         // Return this from m_config instead of m_defaultConfig, so
         // that it gets updated in the event of an initialise() call
         // that fails for the wrong value
         return m_config.framing.blockSize;
     }
 
-    virtual size_t getPreferredStepSize() const {
+    size_t getPreferredStepSize() const override {
         // Return this from m_config instead of m_defaultConfig, so
         // that it gets updated in the event of an initialise() call
         // that fails for the wrong value
         return m_config.framing.stepSize;
     }
 
-    virtual size_t getMinChannelCount() const {
+    size_t getMinChannelCount() const override {
         return m_psd.minChannelCount;
     }
 
-    virtual size_t getMaxChannelCount() const {
+    size_t getMaxChannelCount() const override {
         return m_psd.maxChannelCount;
     }
 
-    virtual OutputList getOutputDescriptors() const {
+    OutputList getOutputDescriptors() const override {
 
         if (m_state == Failed) {
             throw std::logic_error("Plugin is in failed state");
@@ -328,8 +328,8 @@ public:
         return staticOutputs;
     }
 
-    virtual FeatureSet process(const float *const *inputBuffers,
-                               Vamp::RealTime timestamp) {
+    FeatureSet process(const float *const *inputBuffers,
+                               Vamp::RealTime timestamp) override {
 
         if (m_state == Failed) {
             throw std::logic_error("Plugin is in failed state");
@@ -365,7 +365,7 @@ public:
         }
     }
 
-    virtual FeatureSet getRemainingFeatures() {
+    FeatureSet getRemainingFeatures() override {
 
         if (m_state == Failed) {
             throw std::logic_error("Plugin is in failed state");

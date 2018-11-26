@@ -82,14 +82,14 @@ public:
         return (m_rplugins.find(p) != m_rplugins.end());
     }
     
-    Handle pluginToHandle(Vamp::Plugin *p) const noexcept {
+    Handle pluginToHandle(Vamp::Plugin *p) const noexcept override {
 	if (m_rplugins.find(p) == m_rplugins.end()) {
             return INVALID_HANDLE;
 	}
 	return m_rplugins.at(p);
     }
     
-    Vamp::Plugin *handleToPlugin(Handle h) const noexcept {
+    Vamp::Plugin *handleToPlugin(Handle h) const noexcept override {
 	if (m_plugins.find(h) == m_plugins.end()) {
             return nullptr;
 	}
@@ -97,12 +97,12 @@ public:
     }
 
     const std::shared_ptr<PluginOutputIdMapper> pluginToOutputIdMapper
-    (Vamp::Plugin *p) const noexcept {
+    (Vamp::Plugin *p) const noexcept override {
         return handleToOutputIdMapper(pluginToHandle(p));
     }
 
     const std::shared_ptr<PluginOutputIdMapper> handleToOutputIdMapper
-    (Handle h) const noexcept {
+    (Handle h) const noexcept override {
 	if (h != INVALID_HANDLE &&
             m_outputMappers.find(h) != m_outputMappers.end()) {
             return m_outputMappers.at(h);

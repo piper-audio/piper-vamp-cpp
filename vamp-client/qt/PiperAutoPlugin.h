@@ -117,94 +117,94 @@ public:
         return (m_plugin != nullptr);
     }
     
-    virtual std::string getIdentifier() const {
+    std::string getIdentifier() const override {
         return getPlugin()->getIdentifier();
     }
 
-    virtual std::string getName() const {
+    std::string getName() const override {
         return getPlugin()->getName();
     }
 
-    virtual std::string getDescription() const {
+    std::string getDescription() const override {
         return getPlugin()->getDescription();
     }
 
-    virtual std::string getMaker() const {
+    std::string getMaker() const override {
         return getPlugin()->getMaker();
     }
 
-    virtual std::string getCopyright() const {
+    std::string getCopyright() const override {
         return getPlugin()->getCopyright();
     }
 
-    virtual int getPluginVersion() const {
+    int getPluginVersion() const override {
         return getPlugin()->getPluginVersion();
     }
 
-    virtual ParameterList getParameterDescriptors() const {
+    ParameterList getParameterDescriptors() const override {
         return getPlugin()->getParameterDescriptors();
     }
 
-    virtual float getParameter(std::string name) const {
+    float getParameter(std::string name) const override {
         return getPlugin()->getParameter(name);
     }
 
-    virtual void setParameter(std::string name, float value) {
+    void setParameter(std::string name, float value) override {
         getPlugin()->setParameter(name, value);
     }
 
-    virtual ProgramList getPrograms() const {
+    ProgramList getPrograms() const override {
         return getPlugin()->getPrograms();
     }
 
-    virtual std::string getCurrentProgram() const {
+    std::string getCurrentProgram() const override {
         return getPlugin()->getCurrentProgram();
     }
     
-    virtual void selectProgram(std::string program) {
+    void selectProgram(std::string program) override {
         getPlugin()->selectProgram(program);
     }
 
-    virtual bool initialise(size_t inputChannels,
+    bool initialise(size_t inputChannels,
                             size_t stepSize,
-                            size_t blockSize) {
+                            size_t blockSize) override {
         return getPlugin()->initialise(inputChannels, stepSize, blockSize);
     }
 
-    virtual void reset() {
+    void reset() override {
         getPlugin()->reset();
     }
 
-    virtual InputDomain getInputDomain() const {
+    InputDomain getInputDomain() const override {
         return getPlugin()->getInputDomain();
     }
 
-    virtual size_t getPreferredBlockSize() const {
+    size_t getPreferredBlockSize() const override {
         return getPlugin()->getPreferredBlockSize();
     }
 
-    virtual size_t getPreferredStepSize() const {
+    size_t getPreferredStepSize() const override {
         return getPlugin()->getPreferredStepSize();
     }
 
-    virtual size_t getMinChannelCount() const {
+    size_t getMinChannelCount() const override {
         return getPlugin()->getMinChannelCount();
     }
 
-    virtual size_t getMaxChannelCount() const {
+    size_t getMaxChannelCount() const override {
         return getPlugin()->getMaxChannelCount();
     }
 
-    virtual OutputList getOutputDescriptors() const {
+    OutputList getOutputDescriptors() const override {
         return getPlugin()->getOutputDescriptors();
     }
 
-    virtual FeatureSet process(const float *const *inputBuffers,
-                               Vamp::RealTime timestamp) {
+    FeatureSet process(const float *const *inputBuffers,
+                               Vamp::RealTime timestamp) override {
         return getPlugin()->process(inputBuffers, timestamp);
     }
 
-    virtual FeatureSet getRemainingFeatures() {
+    FeatureSet getRemainingFeatures() override {
         return getPlugin()->getRemainingFeatures();
     }
 

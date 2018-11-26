@@ -49,7 +49,7 @@ public:
 	}
     }
 
-    virtual int idToIndex(std::string outputId) const noexcept {
+    int idToIndex(std::string outputId) const noexcept override {
 	int n = int(m_ids.size());
 	for (int i = 0; i < n; ++i) {
 	    if (outputId == m_ids[i]) {
@@ -59,7 +59,7 @@ public:
 	return -1;
     }
 
-    virtual std::string indexToId(int index) const noexcept {
+    std::string indexToId(int index) const noexcept override {
         if (index < 0 || size_t(index) >= m_ids.size()) return "";
 	return m_ids[index];
     }

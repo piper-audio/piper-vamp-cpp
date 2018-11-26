@@ -54,16 +54,16 @@ class PreservingPluginHandleMapper : public PluginHandleMapper
 {
     class NotAPlugin : public Vamp::Plugin
     {
-        #define STR(x) std::string get##x() const { return "not-a-plugin"; }
+        #define STR(x) std::string get##x() const override { return "not-a-plugin"; }
     public:
         STR(Identifier) STR(Name) STR(Description) STR(Maker) STR(Copyright)
-        int getPluginVersion() const { return 1; }
-        bool initialise(size_t, size_t, size_t) { return false; }
-        void reset() { }
-        InputDomain getInputDomain() const { return TimeDomain; }
-        OutputList getOutputDescriptors() const { return {}; }
-        FeatureSet process(const float *const *, Vamp::RealTime) { return {}; }
-        FeatureSet getRemainingFeatures() { return {}; }
+        int getPluginVersion() const override { return 1; }
+        bool initialise(size_t, size_t, size_t) override { return false; }
+        void reset() override { }
+        InputDomain getInputDomain() const override { return TimeDomain; }
+        OutputList getOutputDescriptors() const override { return {}; }
+        FeatureSet process(const float *const *, Vamp::RealTime) override { return {}; }
+        FeatureSet getRemainingFeatures() override { return {}; }
         NotAPlugin() : Plugin(1) { }
     };
     
@@ -77,7 +77,7 @@ public:
         delete m_plugin;
     }
 
-    virtual Handle pluginToHandle(Vamp::Plugin *p) const noexcept {
+    Handle pluginToHandle(Vamp::Plugin *p) const noexcept override {
         if (!p) return INVALID_HANDLE;
 	if (p == m_plugin) return m_handle;
 	else {
@@ -89,7 +89,7 @@ public:
 	}
     }
 
-    virtual Vamp::Plugin *handleToPlugin(Handle h) const noexcept {
+    Vamp::Plugin *handleToPlugin(Handle h) const noexcept override {
         if (h == INVALID_HANDLE) return nullptr;
         if (h == m_handle) return m_plugin;
         if (m_handle != INVALID_HANDLE) {
@@ -111,14 +111,14 @@ public:
         return m_plugin;
     }
 
-    virtual const std::shared_ptr<PluginOutputIdMapper> pluginToOutputIdMapper
-    (Vamp::Plugin *p) const noexcept {
+    const std::shared_ptr<PluginOutputIdMapper> pluginToOutputIdMapper
+    (Vamp::Plugin *p) const noexcept override {
         if (!p) return {};
         return m_omapper;
     }
         
-    virtual const std::shared_ptr<PluginOutputIdMapper> handleToOutputIdMapper
-    (Handle h) const noexcept {
+    const std::shared_ptr<PluginOutputIdMapper> handleToOutputIdMapper
+    (Handle h) const noexcept override {
         if (h == INVALID_HANDLE) return {};
         return m_omapper;
     }
