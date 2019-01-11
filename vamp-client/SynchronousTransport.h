@@ -56,6 +56,12 @@ class LogCallback
 {
 public:
     virtual ~LogCallback() { }
+
+    /**
+     * Log a message. The logger should terminate the message
+     * appropriately after logging; the caller is not expected to end
+     * it with \n or similar.
+     */
     virtual void log(std::string) const = 0;
 };
 

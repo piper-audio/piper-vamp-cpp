@@ -74,7 +74,12 @@ public:
 
         m_process = new QProcess();
         m_process->setReadChannel(QProcess::StandardOutput);
-        m_process->setProcessChannelMode(QProcess::ForwardedErrorChannel);
+
+        if (m_logger) {
+            m_process->setProcessChannelMode(QProcess::SeparateChannels);
+        } else {
+            m_process->setProcessChannelMode(QProcess::ForwardedErrorChannel);
+        }
 
         m_process->start(QString::fromStdString(processName),
                          { QString::fromStdString(formatArg) });
@@ -91,6 +96,7 @@ public:
                     log("Server process " + processName +
                         " failed on startup with error code " + e.toStdString());
                 }
+                logServerErrors();
                 delete m_process;
                 m_process = nullptr;
             }
@@ -98,6 +104,7 @@ public:
 
         if (m_process) {
             log("Server process " + processName + " started OK");
+            logServerErrors();
         }
     }
 
@@ -110,6 +117,7 @@ public:
                 m_process->waitForFinished();
                 log("Server process exited normally");
             }
+            logServerErrors();
             delete m_process;
         }
     }
@@ -182,12 +190,14 @@ public:
                 if (responseStarted) {
                     if (duringResponseTimeout > 0 && ms > duringResponseTimeout) {
                         log("Server timed out during response");
+                        logServerErrors();
                         m_crashed = true;
                         throw RequestTimedOut();
                     }
                 } else {
                     if (beforeResponseTimeout > 0 && ms > beforeResponseTimeout) {
                         log("Server timed out before response");
+                        logServerErrors();
                         m_crashed = true;
                         throw RequestTimedOut();
                     }
@@ -239,6 +249,7 @@ public:
             }
         }
 
+        logServerErrors();
         return buffer;
     }
     
@@ -252,6 +263,28 @@ private:
     void log(std::string message) const {
         if (m_logger) m_logger->log(message);
         else std::cerr << message << std::endl;
+    }
+
+    void logServerErrors() const {
+        if (!m_logger || !m_process) return;
+
+        m_process->setReadChannel(QProcess::StandardError);
+
+        qint64 byteCount = m_process->bytesAvailable();
+        if (byteCount == 0) {
+            m_process->setReadChannel(QProcess::StandardOutput);
+            return;
+        }
+
+        QByteArray buffer = m_process->read(byteCount);
+        std::string str(buffer.toStdString());
+        if (str.size() > 0 && str[str.size()-1] == '\n') {
+            str.resize(str.size()-1);
+        }
+        m_logger->log("Piper server stderr output follows:\n" + str);
+        m_logger->log("Piper server stderr output ends");
+
+        m_process->setReadChannel(QProcess::StandardOutput);
     }
 };
 
