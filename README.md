@@ -37,6 +37,6 @@ directories for copyright details
 Written by Chris Cannam and Lucas Thompson at the Centre for Digital
 Music, Queen Mary, University of London.
 
-Copyright (c) 2015-2017 Queen Mary, University of London, provided
+Copyright (c) 2015-2019 Queen Mary, University of London, provided
 under a BSD-style licence. See the file COPYING for details.
 
