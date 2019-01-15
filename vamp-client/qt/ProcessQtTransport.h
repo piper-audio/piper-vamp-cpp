@@ -277,7 +277,7 @@ private:
         }
 
         QByteArray buffer = m_process->read(byteCount);
-        std::string str(buffer.toStdString());
+        std::string str(buffer.constData(), buffer.size());
         if (str.size() > 0 && str[str.size()-1] == '\n') {
             str.resize(str.size()-1);
         }
