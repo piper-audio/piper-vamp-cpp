@@ -277,10 +277,10 @@ private:
         }
 
         QByteArray buffer = m_process->read(byteCount);
-        std::string str(buffer.constData(), buffer.size());
-        if (str.size() > 0 && str[str.size()-1] == '\n') {
-            str.resize(str.size()-1);
+        while (buffer.endsWith('\n') || buffer.endsWith('\r')) {
+            buffer.chop(1);
         }
+        std::string str(buffer.constData(), buffer.size());
         m_logger->log("Piper server stderr output follows:\n" + str);
         m_logger->log("Piper server stderr output ends");
 
