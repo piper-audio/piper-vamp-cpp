@@ -42,7 +42,7 @@
 #include <QProcess>
 #include <QString>
 #include <QMutex>
-#include <QTime>
+#include <QElapsedTimer>
 
 #include <iostream>
 
@@ -155,14 +155,14 @@ public:
         std::vector<char> buffer;
         bool complete = false;
 
-        QTime t;
+        QElapsedTimer t;
         t.start();
 
         // We don't like to timeout at all while waiting for a
         // response -- we'd like to wait as long as the server
         // continues running.
         //
-        int beforeResponseTimeout = 0; // ms, 0 = no timeout
+        qint64 beforeResponseTimeout = 0; // ms, 0 = no timeout
 
         // But if the call is marked as fast (i.e. just retrieving
         // info rather than calculating something) we will time out
@@ -176,12 +176,12 @@ public:
         // finished doing any real work. In each case the timeout is
         // measured since data was last read.
         //
-        int duringResponseTimeout = 5000; // ms, 0 = no timeout
+        qint64 duringResponseTimeout = 5000; // ms, 0 = no timeout
         
         while (!complete) {
 
             bool responseStarted = !buffer.empty(); // already have something
-            int ms = t.elapsed(); // time since start or since last read
+            qint64 ms = t.elapsed(); // time since start or since last read
             
             qint64 byteCount = m_process->bytesAvailable();
 
