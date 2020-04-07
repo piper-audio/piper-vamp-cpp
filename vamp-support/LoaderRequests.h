@@ -39,7 +39,9 @@
 
 #include "PluginStaticData.h"
 #include "PluginConfiguration.h"
+#include "PluginProgramParameters.h"
 #include "StaticOutputRdf.h"
+#include "RequestResponse.h"
 
 #include <vamp-hostsdk/PluginLoader.h>
 
@@ -116,7 +118,10 @@ public:
 	     defaultChannels,
 	     int(plugin->getPreferredStepSize()),
 	     int(plugin->getPreferredBlockSize()));
-	
+
+        response.programParameters = PluginProgramParameters::fromPlugin
+            (plugin, response.defaultConfiguration);
+        
 	return response;
     }
 

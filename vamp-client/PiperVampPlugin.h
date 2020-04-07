@@ -41,6 +41,7 @@
 
 #include "vamp-support/PluginStaticData.h"
 #include "vamp-support/PluginConfiguration.h"
+#include "vamp-support/PluginProgramParameters.h"
 
 #include "PluginClient.h"
 
@@ -107,7 +108,8 @@ public:
                     float inputSampleRate,
                     int adapterFlags,
                     PluginStaticData psd,
-                    PluginConfiguration defaultConfig) :
+                    PluginConfiguration defaultConfig,
+                    PluginProgramParameters programParameters) :
         Plugin(inputSampleRate),
         m_client(client),
         m_key(pluginKey),
@@ -115,7 +117,8 @@ public:
         m_state(Loaded),
         m_psd(psd),
         m_defaultConfig(defaultConfig),
-        m_config(defaultConfig)
+        m_config(defaultConfig),
+        m_programParameters(programParameters)
     { }
 
     virtual ~PiperVampPlugin() {
@@ -193,11 +196,18 @@ public:
             throw std::logic_error("Can't select program after plugin initialised");
         }
         m_config.currentProgram = program;
+
+        const auto &pp = m_programParameters.programParameters;
+        if (pp.find(program) != pp.end()) {
+            for (auto param: pp.at(program)) {
+                m_config.parameterValues[param.first] = param.second;
+            }
+        }
     }
 
     bool initialise(size_t inputChannels,
-                            size_t stepSize,
-                            size_t blockSize) override {
+                    size_t stepSize,
+                    size_t blockSize) override {
 
         if (m_state == Failed) {
             throw std::logic_error("Plugin is in failed state");
@@ -412,6 +422,7 @@ private:
     OutputList m_outputs;
     PluginConfiguration m_defaultConfig;
     PluginConfiguration m_config;
+    PluginProgramParameters m_programParameters;
 };
 
 }

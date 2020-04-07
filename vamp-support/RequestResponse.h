@@ -39,6 +39,7 @@
 
 #include "PluginStaticData.h"
 #include "PluginConfiguration.h"
+#include "PluginProgramParameters.h"
 
 #include <map>
 #include <string>
@@ -161,6 +162,13 @@ struct LoadResponse
      * only valid if plugin is non-0.
      */
     PluginConfiguration defaultConfiguration;
+
+    /**
+     * The parameter values associated with any program settings
+     * available for the plugin. The contents of this structure are
+     * only valid if plugin is non-0.
+     */
+    PluginProgramParameters programParameters;
 };
 
 /**

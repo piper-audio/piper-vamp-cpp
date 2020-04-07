@@ -86,7 +86,7 @@ public:
     StaticOutputInfo staticOutputInfo; // not found in the plugin, may
                                        // come from accompanying
                                        // (RDF?) metadata
-
+    
     static PluginStaticData
     fromPlugin(std::string pluginKey,
 	       std::vector<std::string> category,

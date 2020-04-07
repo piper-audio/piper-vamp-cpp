@@ -91,6 +91,9 @@ TEST_CASE("Init plugin with parameter dependent preferred framing sizes") {
     staticData.inputDomain = Vamp::Plugin::InputDomain::TimeDomain;
     staticData.basicOutputInfo = {{"output", "NA", "Not real"}};
 
+    PluginProgramParameters programParameters;
+    // none
+    
     StubClient stub {staticData};
     
     PiperVampPlugin vampPiperAdapter {
@@ -99,7 +102,8 @@ TEST_CASE("Init plugin with parameter dependent preferred framing sizes") {
         44100.0, // sample rate
         0, // adapter flags, don't care here
         staticData, 
-        defaultConfig 
+        defaultConfig,
+        programParameters
     };
     
     const auto initWithPreferredFraming = [&]() -> bool {
