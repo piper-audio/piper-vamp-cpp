@@ -195,7 +195,8 @@ public:
                                                    req.inputSampleRate,
                                                    req.adapterFlags,
                                                    resp.staticData,
-                                                   resp.defaultConfiguration);
+                                                   resp.defaultConfiguration,
+                                                   resp.programParameters);
 
         m_mapper.addPlugin(handle, plugin);
 
