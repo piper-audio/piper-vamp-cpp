@@ -65,11 +65,8 @@ struct PluginProgramParameters
         if (programs.empty()) return {};
 
         PluginProgramParameters pp;
-
         for (auto program: programs) {
-
             p->selectProgram(program);
-
             for (auto param: defaultConfiguration.parameterValues) {
                 auto id = param.first;
                 pp.programParameters[program][id] = p->getParameter(id);

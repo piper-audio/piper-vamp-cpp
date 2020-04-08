@@ -874,6 +874,53 @@ public:
     }
 
     static json11::Json
+    fromProgramParameters(const PluginProgramParameters &programParameters) {
+        
+        json11::Json::object jo;
+        for (const auto &pp: programParameters.programParameters) {
+            auto program = pp.first;
+            json11::Json::object po;
+            for (const auto &pv: pp.second) {
+                po[pv.first] = pv.second;
+            }
+            jo[program] = po;
+        }
+
+        return json11::Json(jo);
+    }
+
+    static PluginProgramParameters
+    toProgramParameters(json11::Json j, std::string &err) {
+
+        if (!j.is_object()) {
+            err = "object expected for program parameters";
+            return {};
+        }
+
+        PluginProgramParameters params;
+
+        auto pp = j.object_items();
+        for (auto program: pp) {
+            std::string name = program.first;
+            if (!program.second.is_object()) {
+                err = std::string("object expected for program parameter map ") +
+                    "(in program \"" + name + "\")";
+                return {};
+            }
+            for (auto p: program.second.object_items()) {
+                if (!p.second.is_number()) {
+                    err = std::string("number expected for program parameter value ") +
+                        "(in program \"" + name + "\")";
+                    return {};
+                }
+                params.programParameters[name][p.first] = p.second.number_value();
+            }
+        }
+
+        return params;
+    }
+    
+    static json11::Json
     fromListRequest(const ListRequest &req) {
         json11::Json::object jo;
         json11::Json::array arr;
@@ -966,6 +1013,8 @@ public:
         jo["staticData"] = fromPluginStaticData(resp.staticData);
         jo["defaultConfiguration"] =
             fromPluginConfiguration(resp.defaultConfiguration);
+        jo["programParameters"] =
+            fromProgramParameters(resp.programParameters);
         return json11::Json(jo);
     }
 
@@ -986,9 +1035,15 @@ public:
         resp.plugin = pmapper.handleToPlugin(h);
         resp.staticData = toPluginStaticData(j["staticData"], err);
         if (failed(err)) return {};
-        resp.defaultConfiguration = toPluginConfiguration(j["defaultConfiguration"],
-                                                          err);
+        resp.defaultConfiguration =
+            toPluginConfiguration(j["defaultConfiguration"], err);
         if (failed(err)) return {};
+        if (j.object_items().find("programParameters") !=
+            j.object_items().end()) {
+            resp.programParameters =
+                toProgramParameters(j["programParameters"], err);
+            if (failed(err)) return {};
+        }
         return resp;
     }
 

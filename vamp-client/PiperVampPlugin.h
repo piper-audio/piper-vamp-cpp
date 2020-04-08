@@ -120,7 +120,7 @@ public:
         m_config(defaultConfig),
         m_programParameters(programParameters)
     { }
-
+    
     virtual ~PiperVampPlugin() {
         if (m_state != Finished && m_state != Failed) {
             try {

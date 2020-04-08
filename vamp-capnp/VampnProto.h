@@ -534,6 +534,37 @@ public:
         c.framing.stepSize = r.getFraming().getStepSize();
         c.framing.blockSize = r.getFraming().getBlockSize();
     }
+
+    static void
+    buildProgramParameterMap(piper::LoadResponse::PPPair::Builder &b,
+                             const PluginProgramParameters &pparams,
+                             std::string program) {
+        b.setProgram(program);
+        if (pparams.programParameters.find(program) ==
+            pparams.programParameters.end()) {
+            b.initParameters(0);
+            return;
+        }
+        auto params = b.initParameters
+            (unsigned(pparams.programParameters.at(program).size()));
+        int i = 0;
+        for (auto pv: pparams.programParameters.at(program)) {
+            params[i].setParameter(pv.first);
+            params[i].setValue(pv.second);
+            ++i;
+        }
+    }
+    
+    static void
+    readProgramParameterMap(PluginProgramParameters &pparams,
+                            const piper::LoadResponse::PPPair::Reader &r) {
+
+        auto program = r.getProgram();
+        auto params = r.getParameters();
+        for (auto pv: params) {
+            pparams.programParameters[program][pv.getParameter()] = pv.getValue();
+        }
+    }
     
     static void
     buildListRequest(piper::ListRequest::Builder &r,
@@ -636,6 +667,16 @@ public:
         buildExtractorStaticData(sd, resp.staticData);
         auto conf = b.initDefaultConfiguration();
         buildConfiguration(conf, resp.defaultConfiguration);
+
+        auto pp = b.initProgramParameters
+            (unsigned(resp.programParameters.programParameters.size()));
+
+        int i = 0;
+        for (auto prog: resp.programParameters.programParameters) {
+            auto pb = pp[i];
+            buildProgramParameterMap(pb, resp.programParameters, prog.first);
+            ++i;
+        }
     }
 
     static void
@@ -648,6 +689,10 @@ public:
         readExtractorStaticData(resp.staticData, r.getStaticData());
         readConfiguration(resp.defaultConfiguration,
                           r.getDefaultConfiguration());
+
+        for (auto pp: r.getProgramParameters()) {
+            readProgramParameterMap(resp.programParameters, pp);
+        }
     }
 
     static void

@@ -188,7 +188,8 @@ public:
                                                        req.inputSampleRate,
                                                        req.adapterFlags,
                                                        resp.staticData,
-                                                       resp.defaultConfiguration);
+                                                       resp.defaultConfiguration,
+                                                       resp.programParameters);
 
         Vamp::Plugin *plugin = new PiperVampPlugin(this,
                                                    req.pluginKey,
@@ -339,11 +340,14 @@ public:
 
         PluginStaticData psd;
         PluginConfiguration defaultConfig;
+        PluginProgramParameters programParameters;
         PluginHandleMapper::Handle handle =
             serverLoad(plugin->getPluginKey(),
                        plugin->getInputSampleRate(),
                        plugin->getAdapterFlags(),
-                       psd, defaultConfig);
+                       psd,
+                       defaultConfig,
+                       programParameters);
 
         m_mapper.addPlugin(handle, plugin);
 
@@ -441,7 +445,8 @@ private:
     PluginHandleMapper::Handle
     serverLoad(std::string key, float inputSampleRate, int adapterFlags,
                PluginStaticData &psd,
-               PluginConfiguration &defaultConfig) {
+               PluginConfiguration &defaultConfig,
+               PluginProgramParameters &programParameters) {
 
         LoadRequest request;
         request.pluginKey = key;
@@ -465,6 +470,9 @@ private:
         const piper::LoadResponse::Reader &lr = reader.getResponse().getLoad();
         VampnProto::readExtractorStaticData(psd, lr.getStaticData());
         VampnProto::readConfiguration(defaultConfig, lr.getDefaultConfiguration());
+        for (auto pp: lr.getProgramParameters()) {
+            VampnProto::readProgramParameterMap(programParameters, pp);
+        }
         return lr.getHandle();
     };     
 
