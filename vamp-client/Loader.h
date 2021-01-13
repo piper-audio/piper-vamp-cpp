@@ -44,6 +44,7 @@ namespace client {
 class Loader
 {
 public:
+    virtual ~Loader() { }
     virtual ListResponse list(const ListRequest &) = 0;
     virtual LoadResponse load(const LoadRequest &) = 0;
 };

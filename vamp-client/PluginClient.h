@@ -52,6 +52,8 @@ class PiperVampPlugin;
 class PluginClient
 {
 public:
+    virtual ~PluginClient() { }
+    
     virtual
     ConfigurationResponse
     configure(PiperVampPlugin *plugin,
