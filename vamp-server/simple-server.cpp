@@ -461,16 +461,19 @@ handleRequest(const RequestOrResponse &request, bool debug)
     case RRType::Load:
         response.loadResponse =
             LoaderRequests().loadPlugin(request.loadRequest);
-        if (response.loadResponse.plugin != nullptr) {
-            mapper.addPlugin(response.loadResponse.plugin);
-            if (debug) {
-                cerr << "piper-vamp-server " << pid
-                     << ": loaded plugin, handle = "
-                     << mapper.pluginToHandle(response.loadResponse.plugin)
-                     << endl;
-            }
-            response.success = true;
+
+        if (!response.loadResponse.plugin) {
+            throw runtime_error("unable to load plugin");
         }
+            
+        mapper.addPlugin(response.loadResponse.plugin);
+        if (debug) {
+            cerr << "piper-vamp-server " << pid
+                 << ": loaded plugin, handle = "
+                 << mapper.pluginToHandle(response.loadResponse.plugin)
+                 << endl;
+        }
+        response.success = true;
         break;
         
     case RRType::Configure:
@@ -491,14 +494,16 @@ handleRequest(const RequestOrResponse &request, bool debug)
         }
 
         response.configurationResponse = LoaderRequests().configurePlugin(creq);
-        
-        if (!response.configurationResponse.outputs.empty()) {
-            mapper.markConfigured
-                (h,
-                 creq.configuration.channelCount,
-                 response.configurationResponse.framing.blockSize);
-            response.success = true;
+
+        if (response.configurationResponse.outputs.empty()) {
+            throw runtime_error("plugin failed to initialise");
         }
+        
+        mapper.markConfigured
+            (h,
+             creq.configuration.channelCount,
+             response.configurationResponse.framing.blockSize);
+        response.success = true;
         break;
     }
 
