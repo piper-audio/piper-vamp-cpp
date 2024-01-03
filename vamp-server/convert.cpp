@@ -150,20 +150,20 @@ writeJsonId(const RequestOrResponse::RpcId &id)
     }
 }
 
-template <typename Reader>
+template <typename Reader, typename Id>
 static RequestOrResponse::RpcId
 readCapnpId(const Reader &r)
 {
     int number;
     string tag;
     switch (r.getId().which()) {
-    case piper::RpcRequest::Id::Which::NUMBER:
+    case Id::Which::NUMBER:
         number = r.getId().getNumber();
         return { RequestOrResponse::RpcId::Number, number, "" };
-    case piper::RpcRequest::Id::Which::TAG:
+    case Id::Which::TAG:
         tag = r.getId().getTag();
         return { RequestOrResponse::RpcId::Tag, 0, tag };
-    case piper::RpcRequest::Id::Which::NONE:
+    case Id::Which::NONE:
         return { RequestOrResponse::RpcId::Absent, 0, "" };
     }
     return { RequestOrResponse::RpcId::Absent, 0, "" };
@@ -381,7 +381,8 @@ readRequestCapnp(kj::BufferedInputStreamWrapper &buffered)
     piper::RpcRequest::Reader reader = message.getRoot<piper::RpcRequest>();
     
     rr.type = VampnProto::getRequestResponseType(reader);
-    rr.id = readCapnpId(reader);
+    rr.id = readCapnpId<piper::RpcRequest::Reader, piper::RpcRequest::Id>
+        (reader);
 
     switch (rr.type) {
 
@@ -453,7 +454,8 @@ readResponseCapnp(kj::BufferedInputStreamWrapper &buffered)
     rr.type = VampnProto::getRequestResponseType(reader);
     rr.success = true;
     rr.errorText = "";
-    rr.id = readCapnpId(reader);
+    rr.id = readCapnpId<piper::RpcResponse::Reader, piper::RpcResponse::Id>
+        (reader);
     int errorCode = 0;
 
     switch (rr.type) {
