@@ -38,6 +38,7 @@
 #include "PluginOutputIdMapper.h"
 
 #include <vamp-hostsdk/Plugin.h>
+#include <cstdint>
 #include <memory>
 
 namespace piper_vamp {
